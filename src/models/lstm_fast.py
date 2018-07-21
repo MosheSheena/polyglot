@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-# this script trains a vanilla RNNLM with TensorFlow. 
+# this script trains a vanilla RNNLM with TensorFlow.
 # to call the script, do
 # python steps/tfrnnlm/lstm_fast.py --data-path=$datadir \
 #        --save-path=$savepath --vocab-path=$rnn.wordlist [--hidden-size=$size]
@@ -334,8 +334,8 @@ def run_epoch(session, model, eval_op=None, verbose=False):
     state = session.run(model.initial_state)
 
     fetches = {
-      "cost": model.cost,
-      "final_state": model.final_state,
+        "cost": model.cost,
+        "final_state": model.final_state,
     }
     if eval_op is not None:
         fetches["eval_op"] = eval_op
@@ -356,8 +356,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
         if verbose and step % (model.input.epoch_size // 10) == 10:
             print("%.3f perplexity: %.3f speed: %.0f wps" %
                   (step * 1.0 / model.input.epoch_size, np.exp(costs / iters),
-                   iters * model.input.batch_size / (time.time() - start_time))
-            )
+                   iters * model.input.batch_size / (time.time() - start_time)))
 
     return np.exp(costs / iters)
 
@@ -421,7 +420,7 @@ def main(_):
 
                 print("Epoch: %d Learning rate: %.3f" % (i + 1, session.run(m.lr)))
                 train_perplexity = run_epoch(session, m, eval_op=m.train_op,
-                                            verbose=True)
+                                             verbose=True)
 
                 print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
                 valid_perplexity = run_epoch(session, mvalid)
