@@ -5,3 +5,4 @@
 
 source ~/tensorflow/bin/activate
 pip install numpy
+pip install jsmin
