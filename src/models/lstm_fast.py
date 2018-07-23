@@ -133,20 +133,20 @@ class RnnlmModel(object):
             backwards compatibility, we add an argument check here:
             """
             if 'reuse' in inspect.getargspec(
-                    tf.contrib.rnn.BasicLSTMCell.__init__).args:
-                return tf.contrib.rnn.BasicLSTMCell(
+                    tf.nn.rnn_cell.BasicLSTMCell.__init__).args:
+                return tf.nn.rnn_cell.BasicLSTMCell(
                     size, forget_bias=0.0, state_is_tuple=True,
                     reuse=tf.get_variable_scope().reuse)
             else:
-                return tf.contrib.rnn.BasicLSTMCell(
+                return tf.nn.rnn_cell.BasicLSTMCell(
                     size, forget_bias=0.0, state_is_tuple=True)
 
         attn_cell = lstm_cell
         if is_training and config.keep_prob < 1:
             def attn_cell():
-                return tf.contrib.rnn.DropoutWrapper(
+                return tf.nn.rnn_cell.DropoutWrapper(
                     lstm_cell(), output_keep_prob=config.keep_prob)
-        self.cell = tf.contrib.rnn.MultiRNNCell(
+        self.cell = tf.nn.rnn_cell.MultiRNNCell(
             [attn_cell() for _ in range(config.num_layers)],
             state_is_tuple=True
         )
@@ -176,8 +176,8 @@ class RnnlmModel(object):
         # unpacking the input state context
         l = tf.unstack(state_placeholder, axis=0)
         test_input_state = tuple(
-                [tf.contrib.rnn.LSTMStateTuple(l[idx][0], l[idx][1])
-                    for idx in range(config.num_layers)]
+            [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
+                for idx in range(config.num_layers)]
         )
 
         with tf.device("/cpu:0"):
@@ -290,7 +290,7 @@ class RnnlmModel(object):
         optimizer = tf.train.GradientDescentOptimizer(self._lr)
         self._train_op = optimizer.apply_gradients(
             zip(grads, tvars),
-            global_step=tf.contrib.framework.get_or_create_global_step()
+            global_step=tf.train.get_or_create_global_step()
         )
 
         self._new_lr = tf.placeholder(tf.float32,

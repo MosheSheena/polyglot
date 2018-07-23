@@ -102,19 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-.idea/misc.xml
-.idea/modules.xml
-.idea/other.xml
-.idea/vcs.xml
-.idea/workspace.xml
-.idea/Bsc-Final-Project.iml
-results/checkpoint
-results/model.ckpt-11908.data-00000-of-00001
-results/events.out.tfevents.1532099304.amit-desktop
-results/events.out.tfevents.1532102128.instance-1
-results/graph.pbtxt
-results/model.ckpt-0.data-00000-of-00001
-results/model.ckpt-0.index
-results/model.ckpt-0.meta
-results/model.ckpt-11908.index
-results/model.ckpt-11908.meta
+
+# IntelliJ files
+.idea/
+
+# results folder which contains checkpoints and event files for TensorBoard
+results/
+
