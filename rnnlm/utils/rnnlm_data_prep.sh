@@ -41,11 +41,11 @@ if [ $# != 1 ]; then
 fi
 
 dir=$1
-srcdir=data/local/dict
+rnnlmdir=data/local/dict
 
 mkdir -p $dir
 
-cat $srcdir/lexicon.txt | awk '{print $1}' | sort -u | grep -v -w '!SIL' > $dir/wordlist.all
+cat $rnnlmdir/lexicon.txt | awk '{print $1}' | sort -u | grep -v -w '!SIL' > $dir/wordlist.all
 
 # Get training data with OOV words (w.r.t. our current vocab) replaced with <unk>,
 # as well as adding </s> symbols at the end of each sentence

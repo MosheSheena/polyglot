@@ -26,42 +26,15 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
-
 import inspect
 import time
 
 import numpy as np
 import tensorflow as tf
-from time import gmtime, strftime
 
-import reader
+from rnnlm.utils.new_softmax import new_softmax
 
-flags = tf.flags
-logging = tf.logging
-
-flags.DEFINE_integer("hidden-size", 200, "hidden dim of RNN")
-
-flags.DEFINE_string("data-path", None,
-                    "Where the training/test data is stored.")
-flags.DEFINE_string("vocab-path", None,
-                    "Where the wordlist file is stored.")
-flags.DEFINE_string("save-path", None,
-                    "Model output directory.")
-flags.DEFINE_bool("use-fp16", False,
-                  "Train using 16-bit floats instead of 32bit floats")
-
-# FLAGS = flags.FLAGS
-
-
-class Flags(object):
-    hidden_size = 200
-    data_path = ""
-    vocab_path = ""
-    save_path = ""
-    use_fp16 = False
-
-
-FLAGS = Flags()
+from rnnlm.models.lstm_fast import reader
 
 
 class Config(object):
@@ -81,26 +54,6 @@ class Config(object):
 
 def data_type():
     return tf.float16 if FLAGS.use_fp16 else tf.float32
-
-
-def new_softmax(labels, logits):
-    """
-    this new "softmax" function we show can train a "self-normalized" RNNLM
-    where the sum of the output is automatically (close to) 1.0
-    which saves a lot of computation for lattice-rescoring
-    """
-    target = tf.reshape(labels, [-1])
-    f_logits = tf.exp(logits)
-
-    # this is the negative part of the objf
-    row_sums = tf.reduce_sum(f_logits, 1)
-
-    t2 = tf.expand_dims(target, 1)
-    range = tf.expand_dims(tf.range(tf.shape(target)[0]), 1)
-    ind = tf.concat([range, t2], 1)
-    res = tf.gather_nd(logits, ind)
-
-    return -res + row_sums - 1
 
 
 class RnnlmInput(object):
@@ -366,15 +319,7 @@ def get_config():
 
 
 def main(_):
-    print(strftime("start time: %Y-%m-%d %H:%M:%S", gmtime()))
-    FLAGS.hidden_size = tf.flags.FLAGS.__getattr__('hidden-size')
-    FLAGS.data_path = tf.flags.FLAGS.__getattr__('data-path')
-    FLAGS.vocab_path = tf.flags.FLAGS.__getattr__('vocab-path')
-    FLAGS.save_path = tf.flags.FLAGS.__getattr__('save-path')
-    FLAGS.use_fp16 = tf.flags.FLAGS.__getattr__('use-fp16')
-
-    if not FLAGS.data_path:
-        raise ValueError("Must set --data_path to RNNLM data directory")
+    
 
     raw_data = reader.rnnlm_raw_data(FLAGS.data_path, FLAGS.vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
@@ -434,5 +379,5 @@ def main(_):
     print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
 
 
-if __name__ == "__main__":
-    tf.app.run()
+"""if __name__ == "__main__":
+    tf.app.run(argv=sys.argv[1:])"""
