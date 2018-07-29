@@ -107,26 +107,53 @@ def main():
         with tf.name_scope("Train"):
             train_input = RnnlmInput(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = create_model(None, None, hyperparams, True, train_input)
-                m_losses, m_metrics = create_loss(m, train_input.targets, None, hyperparams, train_input)
-                m_train_op, m_lr_update_op, current_lr, new_lr = create_optimizer(m, m_losses, True, hyperparams)
+                m = create_model(input_tensor=None,
+                                 mode=None,
+                                 hyperparams=hyperparams,
+                                 is_training=True,
+                                 rnnlm_input=train_input)
+                m_losses, m_metrics = create_loss(model=m,
+                                                  labels=train_input.targets,
+                                                  mode=None,
+                                                  hyperparams=hyperparams,
+                                                  rnnlm_input=train_input)
+                m_train_op, m_lr_update_op, current_lr, new_lr = create_optimizer(model=m,
+                                                                                  losses=m_losses,
+                                                                                  is_training=True,
+                                                                                  hyperparams=hyperparams)
             tf.summary.scalar("Training Loss", m_losses["cost"])
             tf.summary.scalar("Learning Rate", current_lr)
 
         with tf.name_scope("Valid"):
             valid_input = RnnlmInput(config=config, data=valid_data, name="ValidInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                mvalid = create_model(None, None, hyperparams, False, valid_input)
-                mvalid_losses, mvalid_metrics = create_loss(mvalid, valid_input.targets, None, hyperparams, valid_input)
-                create_optimizer(mvalid, mvalid_losses, False, hyperparams)
+                mvalid = create_model(input_tensor=None,
+                                      mode=None,
+                                      hyperparams=hyperparams,
+                                      is_training=False,
+                                      rnnlm_input=valid_input)
+                mvalid_losses, mvalid_metrics = create_loss(model=mvalid,
+                                                            labels=valid_input.targets,
+                                                            mode=None,
+                                                            hyperparams=hyperparams,
+                                                            rnnlm_input=valid_input)
+                create_optimizer(model=mvalid, losses=mvalid_losses, is_training=False, hyperparams=hyperparams)
             tf.summary.scalar("Validation Loss", mvalid_losses["cost"])
 
         # added 29/04/18
         with tf.name_scope("Test"):
             test_input = RnnlmInput(config=config, data=test_data, name="TestInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                mtest = create_model(None, None, hyperparams, False, test_input)
-                mtest_losses, mtest_metrics = create_loss(mtest, test_input.targets, None, hyperparams, test_input)
+                mtest = create_model(input_tensor=None,
+                                     mode=None,
+                                     hyperparams=hyperparams,
+                                     is_training=False,
+                                     rnnlm_input=test_input)
+                mtest_losses, mtest_metrics = create_loss(model=mtest,
+                                                          labels=test_input.targets,
+                                                          mode=None,
+                                                          hyperparams=hyperparams,
+                                                          rnnlm_input=test_input)
                 create_optimizer(mtest, mtest_losses, False, hyperparams)
         tf.summary.scalar("Test Loss", mtest_losses["cost"])
         # end of text edit 29/04/18
