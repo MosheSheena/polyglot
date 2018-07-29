@@ -79,7 +79,7 @@ def run_epoch(session, model, losses, rnnlm_input, eval_op=None, verbose=False):
 
 
 def assign_lr(session, lr_update, lr_value, _new_lr):
-    return session.run(lr_update, feed_dict={_new_lr: lr_value})
+    session.run(lr_update, feed_dict={_new_lr: lr_value})
 
 
 def main():
@@ -107,74 +107,74 @@ def main():
         with tf.name_scope("Train"):
             train_input = RnnlmInput(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = create_model(input_tensor=None,
-                                 mode=None,
-                                 hyperparams=hyperparams,
-                                 is_training=True,
-                                 rnnlm_input=train_input)
-                m_losses, m_metrics = create_loss(model=m,
-                                                  labels=train_input.targets,
-                                                  mode=None,
-                                                  hyperparams=hyperparams,
-                                                  rnnlm_input=train_input)
-                m_train_op, m_lr_update_op, current_lr, new_lr = create_optimizer(model=m,
-                                                                                  losses=m_losses,
-                                                                                  is_training=True,
-                                                                                  hyperparams=hyperparams)
-            tf.summary.scalar("Training Loss", m_losses["cost"])
+                training_model = create_model(input_tensor=None,
+                                              mode=None,
+                                              hyperparams=hyperparams,
+                                              is_training=True,
+                                              rnnlm_input=train_input)
+                training_losses, training_metrics = create_loss(model=training_model,
+                                                                labels=train_input.targets,
+                                                                mode=None,
+                                                                hyperparams=hyperparams,
+                                                                rnnlm_input=train_input)
+                train_op, lr_update_op, current_lr, new_lr = create_optimizer(model=training_model,
+                                                                              losses=training_losses,
+                                                                              is_training=True,
+                                                                              hyperparams=hyperparams)
+            tf.summary.scalar("Training Loss", training_losses["cost"])
             tf.summary.scalar("Learning Rate", current_lr)
 
         with tf.name_scope("Valid"):
             valid_input = RnnlmInput(config=config, data=valid_data, name="ValidInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                mvalid = create_model(input_tensor=None,
-                                      mode=None,
-                                      hyperparams=hyperparams,
-                                      is_training=False,
-                                      rnnlm_input=valid_input)
-                mvalid_losses, mvalid_metrics = create_loss(model=mvalid,
-                                                            labels=valid_input.targets,
-                                                            mode=None,
-                                                            hyperparams=hyperparams,
-                                                            rnnlm_input=valid_input)
-                create_optimizer(model=mvalid, losses=mvalid_losses, is_training=False, hyperparams=hyperparams)
-            tf.summary.scalar("Validation Loss", mvalid_losses["cost"])
+                valid_model = create_model(input_tensor=None,
+                                           mode=None,
+                                           hyperparams=hyperparams,
+                                           is_training=False,
+                                           rnnlm_input=valid_input)
+                valid_losses, valid_metrics = create_loss(model=valid_model,
+                                                          labels=valid_input.targets,
+                                                          mode=None,
+                                                          hyperparams=hyperparams,
+                                                          rnnlm_input=valid_input)
+                create_optimizer(model=valid_model, losses=valid_losses, is_training=False, hyperparams=hyperparams)
+            tf.summary.scalar("Validation Loss", valid_losses["cost"])
 
         # added 29/04/18
         with tf.name_scope("Test"):
             test_input = RnnlmInput(config=config, data=test_data, name="TestInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                mtest = create_model(input_tensor=None,
-                                     mode=None,
-                                     hyperparams=hyperparams,
-                                     is_training=False,
-                                     rnnlm_input=test_input)
-                mtest_losses, mtest_metrics = create_loss(model=mtest,
-                                                          labels=test_input.targets,
-                                                          mode=None,
-                                                          hyperparams=hyperparams,
-                                                          rnnlm_input=test_input)
-                create_optimizer(mtest, mtest_losses, False, hyperparams)
-        tf.summary.scalar("Test Loss", mtest_losses["cost"])
+                test_model = create_model(input_tensor=None,
+                                          mode=None,
+                                          hyperparams=hyperparams,
+                                          is_training=False,
+                                          rnnlm_input=test_input)
+                test_losses, test_metrics = create_loss(model=test_model,
+                                                        labels=test_input.targets,
+                                                        mode=None,
+                                                        hyperparams=hyperparams,
+                                                        rnnlm_input=test_input)
+                create_optimizer(test_model, test_losses, False, hyperparams)
+        tf.summary.scalar("Test Loss", test_losses["cost"])
         # end of text edit 29/04/18
 
         sv = tf.train.Supervisor(logdir=abs_save_path)
         with sv.managed_session() as session:
             for i in range(hyperparams.train.num_epochs):
-                lr_decay = hyperparams.train.learning_rate.decay ** max(i + 1 - hyperparams.train.learning_rate.decay_max_factor, 0.0)
-                new_lr_op = assign_lr(session, m_lr_update_op, hyperparams.train.learning_rate.start_value * lr_decay, new_lr)
+                lr_decay = hyperparams.train.learning_rate.decay ** max(
+                    i + 1 - hyperparams.train.learning_rate.decay_max_factor, 0.0)
+                assign_lr(session, lr_update_op, hyperparams.train.learning_rate.start_value * lr_decay, new_lr)
                 print("Epoch: %d Learning rate: %.3f" % (i + 1, session.run(current_lr)))
-                train_perplexity = run_epoch(session, m, m_losses, train_input, eval_op=m_train_op,
+                train_perplexity = run_epoch(session, training_model, training_losses, train_input, eval_op=train_op,
                                              verbose=True)
 
                 print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
-                valid_perplexity = run_epoch(session, mvalid, mvalid_losses, valid_input)
+                valid_perplexity = run_epoch(session, valid_model, valid_losses, valid_input)
                 print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
-            test_perplexity = run_epoch(session, mtest, mtest_losses, test_input)
+            test_perplexity = run_epoch(session, test_model, test_losses, test_input)
             print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
-
                 print("Saving model to %s." % abs_save_path)
                 sv.saver.save(session, abs_save_path)
     print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
