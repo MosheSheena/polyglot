@@ -198,6 +198,7 @@ def main():
             test_perplexity = run_epoch(session, test_model, test_losses, test_input)
             print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
+
                 print("Saving model to %s." % abs_save_path)
                 sv.saver.save(session, abs_save_path)
     print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
