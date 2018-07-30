@@ -12,6 +12,12 @@ def lstm_cell(hyperparams):
     the BasicLSTMCell will need a reuse parameter which is
     unfortunately not defined in TensorFlow 1.0. To maintain
     backwards compatibility, we add an argument check here:
+
+    Args:
+        hyperparams: (Dict2obj)
+
+    Returns:
+        BasicLSTMCell
     """
     if 'reuse' in inspect.getargspec(
             tf.nn.rnn_cell.BasicLSTMCell.__init__).args:
@@ -29,7 +35,18 @@ def attn_cell(hyperparams):
 
 
 def create_model(input_tensor, mode, hyperparams, is_training, rnnlm_input):
-    # TODO - remove param is_training, rnnlm_input
+    """
+
+    Args:
+        input_tensor: (Tensor)
+        mode: (tf.estimator.ModeKeys) Can be Train, Eval or Predict
+        hyperparams: (Dict2obj)
+        is_training: (bool) TODO - remove dependency
+        rnnlm_input: (RnnLMInput) TODO - remove dependency
+
+    Returns:
+        dict were each key (str) is a name of the tensor and value (Tensor) is the tensor in the model
+    """
 
     model = dict()
     with tf.variable_scope("lstm_fast") as scope:

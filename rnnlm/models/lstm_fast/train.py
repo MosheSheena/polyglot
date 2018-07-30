@@ -43,8 +43,20 @@ def get_config(hyperparameters):
     return Config(hyperparameters)
 
 
-def run_epoch(session, model, losses, rnnlm_input, eval_op=None, verbose=False):
-    """Runs the model on the given data."""
+def run_epoch(session: tf.Session, model, losses, rnnlm_input, eval_op=None, verbose=False):
+    """
+    Runs the model on the given data
+    Args:
+        session: (tf.Session)
+        model: (dict) name_of_tensor -> tensor
+        losses: (dict) name_of_loss -> loss_tensor
+        rnnlm_input: (RnnLMInput) object with the configurations TODO - remove dependency
+        eval_op: (tf.Tensor) the tensor operation to execute after building the graph and the loss - optional
+        verbose: (bool) print metrics after each batch
+
+    Returns:
+        The avg loss (perplexity) of the epoch
+    """
     start_time = time.time()
     costs = 0.0
     iters = 0
@@ -78,8 +90,19 @@ def run_epoch(session, model, losses, rnnlm_input, eval_op=None, verbose=False):
     return np.exp(costs / iters)
 
 
-def assign_lr(session, lr_update, lr_value, _new_lr):
-    session.run(lr_update, feed_dict={_new_lr: lr_value})
+def assign_lr(session, lr_update, lr_value, new_lr):
+    """
+    Assigns a new learning rate
+    Args:
+        session: (tf.Session)
+        lr_update: (Tensor) tf.assign op tensor
+        lr_value: (int) the new value for the learning rate
+        new_lr: (Placeholder) a placeholder for the learning rate
+
+    Returns:
+        None
+    """
+    session.run(lr_update, feed_dict={new_lr: lr_value})
 
 
 def main():
