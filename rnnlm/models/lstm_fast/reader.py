@@ -13,7 +13,7 @@ import tensorflow as tf
 
 def _read_words(filename):
     with tf.gfile.GFile(filename, "r") as f:
-        # return f.read().decode("utf-8").split() # can be changed because input data is english
+        # return f.read().decode("utf-8").split() # use this if data not in english
         return f.read().split()
 
 
@@ -41,14 +41,14 @@ def rnnlm_raw_data(data_path, vocab_path):
 
     train_path = os.path.join(data_path, "train")
     valid_path = os.path.join(data_path, "valid")
-    test_path = os.path.join(data_path, "test")  # added 23/04/18
+    test_path = os.path.join(data_path, "test")
 
     word_to_id = _build_vocab(vocab_path)
     train_data = _file_to_word_ids(train_path, word_to_id)
     valid_data = _file_to_word_ids(valid_path, word_to_id)
-    test_data = _file_to_word_ids(test_path, word_to_id)  # added 23/04/18
+    test_data = _file_to_word_ids(test_path, word_to_id)
     vocabulary_len = len(word_to_id)
-    # test data added 23/04/18
+    
     return train_data, valid_data, test_data, vocabulary_len, word_to_id, word_to_id
 
 
