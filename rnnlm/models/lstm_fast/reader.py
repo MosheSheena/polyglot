@@ -11,6 +11,40 @@ import os
 import tensorflow as tf
 
 
+def _int64_feature_wrap(int_values):
+    """
+    This wraps tf.train.feature.
+    This function in used in the process of writing tf records
+    Args:
+        int_values: (list) a list of integers
+
+    Returns:
+        (tf.train.Feature)
+    """
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=int_values))
+
+
+def write_tf_records(word_indices, destination_path):
+    """
+    Writes the data in a tf record format
+    Args:
+        word_indices: (list)
+        destination_path: (str) where to write the tf records files
+    Returns:
+
+    """
+    word_feature = _int64_feature_wrap(int_values=word_indices)
+    feature_dict = {
+        "words": word_feature
+    }
+    words = tf.train.Features(feature=feature_dict)
+
+    example = tf.train.Example(features=words)
+
+    with tf.python_io.TFRecordWriter(destination_path) as writer:
+        writer.write(example.SerializeToString())
+        
+
 def _read_words(filename):
     with tf.gfile.GFile(filename, "r") as f:
         # return f.read().decode("utf-8").split() # use this if data not in english
@@ -32,7 +66,8 @@ def rnnlm_raw_data(data_path, vocab_path):
     """Load RNNLM raw data from data directory "data_path".
 
     Args:
-      data_path: string path to the directory where train/valid files are stored
+      data_path: string path to the directory where train/valid/test files are stored
+      vocab_path: string path to the directory where the vocabulary is stored
 
     Returns:
       tuple (train_data, valid_data, test_data, vocabulary)
