@@ -1,5 +1,3 @@
-
-
 """Utilities for parsing RNNLM text files."""
 from __future__ import absolute_import
 from __future__ import division
@@ -43,7 +41,38 @@ def write_tf_records(word_indices, destination_path):
 
     with tf.python_io.TFRecordWriter(destination_path) as writer:
         writer.write(example.SerializeToString())
-        
+
+
+def _read_n_shifted_words(file_obj, n):
+    """
+    Generator function that reads n words each time from file.
+    Each yield contains a list of words shifted by 1
+    Args:
+        file_obj: opened file
+        n: (int) num of words to read from file
+
+    Returns:
+        list of n words from file
+    """
+    if n == 0:
+        return list(file_obj)
+    n_words = list()
+
+    for line in file_obj:
+        for word in line.split():
+            n_words.append(word)
+            if len(n_words) == n:
+                yield list(n_words)
+                n_words.pop(0)
+
+    # take care of the remainder of num_words % n
+    if len(n_words) % n != 0:
+        yield n_words
+
+
+def _words_to_ids(words, word_to_id):
+    return [word_to_id[word] for word in words if word in word_to_id]
+
 
 def _read_words(filename):
     with tf.gfile.GFile(filename, "r") as f:
