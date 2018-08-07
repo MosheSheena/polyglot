@@ -3,50 +3,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import collections
 import os
 
 import tensorflow as tf
 
-
-def _int64_feature_wrap(int_values):
-    """
-    This wraps tf.train.feature.
-    This function in used in the process of writing tf records
-    Args:
-        int_values: (list) a list of integers
-
-    Returns:
-        (tf.train.Feature)
-    """
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=int_values))
+READ_ENTIRE_FILE_MODE = -1
 
 
-def write_tf_records(word_indices, destination_path):
-    """
-    Writes the data in a tf record format
-    Args:
-        word_indices: (list)
-        destination_path: (str) where to write the tf records files
-    Returns:
-
-    """
-    word_feature = _int64_feature_wrap(int_values=word_indices)
-    feature_dict = {
-        "words": word_feature
-    }
-    words = tf.train.Features(feature=feature_dict)
-
-    example = tf.train.Example(features=words)
-
-    with tf.python_io.TFRecordWriter(destination_path) as writer:
-        writer.write(example.SerializeToString())
-
-
-def _read_n_shifted_words(file_obj, n):
+def read_n_shifted_words_gen(file_obj, n):
     """
     Generator function that reads n words each time from file.
     Each yield contains a list of words shifted by 1
+    if n = 0 it returns an empty list
+    if n is negative it returns all the words from file_obj
     Args:
         file_obj: opened file
         n: (int) num of words to read from file
@@ -54,34 +23,30 @@ def _read_n_shifted_words(file_obj, n):
     Returns:
         list of n words from file
     """
-    if n == 0:
-        return list(file_obj)
-    n_words = list()
+    if n < 0:
+        yield list(file_obj)
+    elif n == 0:
+        yield list()
+    else:
+        n_words = list()
 
-    for line in file_obj:
-        for word in line.split():
-            n_words.append(word)
-            if len(n_words) == n:
-                yield list(n_words)
-                n_words.pop(0)
+        for line in file_obj:
+            for word in line.split():
+                n_words.append(word)
+                if len(n_words) == n:
+                    yield list(n_words)
+                    # remove the first element
+                    # from here and on one element will be inserted to the list and will be yield
+                    n_words.pop(0)
 
-    # take care of the remainder of num_words % n
-    if len(n_words) % n != 0:
-        yield n_words
-
-
-def _words_to_ids(words, word_to_id):
-    return [word_to_id[word] for word in words if word in word_to_id]
-
-
-def _read_words(filename):
-    with tf.gfile.GFile(filename, "r") as f:
-        # return f.read().decode("utf-8").split() # use this if data not in english
-        return f.read().split()
+        # take care of the remainder of num_words % n
+        if len(n_words) % n != 0:
+            yield n_words
 
 
-def _build_vocab(filename):
-    words = _read_words(filename)
+def build_vocab(file_obj):
+    gen_words = read_n_shifted_words_gen(file_obj, READ_ENTIRE_FILE_MODE)
+    words = next(gen_words)
     word_to_id = dict(zip(words, range(len(words))))
     return word_to_id
 
