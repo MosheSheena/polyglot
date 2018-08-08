@@ -11,37 +11,15 @@ import numpy as np
 import os
 
 
-class Config(object):
-    """Small config."""
-
-    def __init__(self, hyperparameters):
-        self.init_scale = hyperparameters.train.w_init_scale
-        self.learning_rate = hyperparameters.train.learning_rate.start_value
-        self.max_grad_norm = hyperparameters.train.max_grad_norm
-        self.num_layers = hyperparameters.arch.num_hidden_layers
-        self.num_steps = hyperparameters.arch.hidden_layer_depth
-        self.hidden_size = hyperparameters.arch.hidden_layer_size
-        self.max_epoch = hyperparameters.train.learning_rate.decay_max_factor
-        self.max_max_epoch = hyperparameters.train.num_epochs
-        self.keep_prob = hyperparameters.arch.keep_prob
-        self.lr_decay = hyperparameters.train.learning_rate.decay
-        self.batch_size = hyperparameters.train.batch_size
-        self.vocab_size = hyperparameters.problem.vocab_size
-
-
 class RnnlmInput(object):
     """The input data."""
 
-    def __init__(self, config, data, name=None):
-        self.batch_size = batch_size = config.batch_size
-        self.num_steps = num_steps = config.num_steps
+    def __init__(self, hyperparams, data, name=None):
+        self.batch_size = batch_size = hyperparams.train.batch_size
+        self.num_steps = num_steps = hyperparams.arch.hidden_layer_depth
         self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
         self.input_data, self.targets = reader.rnnlm_producer(
             data, batch_size, num_steps, name=name)
-
-
-def get_config(hyperparameters):
-    return Config(hyperparameters)
 
 
 def run_epoch(session: tf.Session, model, losses, rnnlm_input, eval_op=None, verbose=False):
@@ -136,17 +114,12 @@ def main():
     raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
 
-    config = get_config(hyperparams)
-    eval_config = get_config(hyperparams)
-    eval_config.batch_size = 1
-    eval_config.num_steps = 1
-
     with tf.Graph().as_default():
-        initializer = tf.random_uniform_initializer(-config.init_scale,
-                                                    config.init_scale)
+        initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
+                                                    hyperparams.train.w_init_scale)
 
         with tf.name_scope("Train"):
-            train_input = RnnlmInput(config=config, data=train_data, name="TrainInput")
+            train_input = RnnlmInput(hyperparams=hyperparams, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
                 training_model = create_model(input_tensor=None,
                                               mode=None,
@@ -166,7 +139,7 @@ def main():
             tf.summary.scalar("Learning Rate", current_lr)
 
         with tf.name_scope("Valid"):
-            valid_input = RnnlmInput(config=config, data=valid_data, name="ValidInput")
+            valid_input = RnnlmInput(hyperparams=hyperparams, data=valid_data, name="ValidInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
                 valid_model = create_model(input_tensor=None,
                                            mode=None,
@@ -183,7 +156,7 @@ def main():
 
         # added 29/04/18
         with tf.name_scope("Test"):
-            test_input = RnnlmInput(config=config, data=test_data, name="TestInput")
+            test_input = RnnlmInput(hyperparams=hyperparams, data=test_data, name="TestInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
                 test_model = create_model(input_tensor=None,
                                           mode=None,
