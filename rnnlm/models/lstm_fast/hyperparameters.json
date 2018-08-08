@@ -4,7 +4,9 @@
         "vocab_path": "rnnlm/data/wordlist.rnn.final",
         "training_examples": 10000,
         "validation_examples": 1000,
-        "vocab_size": 10000
+        "vocab_size": 10000,
+        "tf_records_path": "tfrecords",
+        "convert_raw_to_tf_records": true
     },
     "train": {
         "w_init_scale": 0.1,

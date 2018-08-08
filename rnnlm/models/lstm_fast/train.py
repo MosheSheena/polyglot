@@ -5,6 +5,7 @@ from rnnlm.models.lstm_fast.loss import create_loss
 from rnnlm.models.lstm_fast.optimizer import create_optimizer
 from time import gmtime, strftime
 from rnnlm.models.lstm_fast import reader
+from rnnlm.models.lstm_fast import io_service
 import time
 import numpy as np
 import os
@@ -115,6 +116,23 @@ def main():
     abs_data_path = os.path.join(os.getcwd(), hyperparams.problem.data_path)
     abs_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
     abs_save_path = os.path.join(os.getcwd(), hyperparams.train.save_path)
+    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
+
+    if hyperparams.problem.convert_raw_to_tf_records:
+        io_service.raw_to_tf_records(raw_path=os.path.join(abs_data_path, "train"),
+                                     tf_record_path=abs_tf_record_path,
+                                     vocab_path=abs_vocab_path,
+                                     seq_len=hyperparams.train.num_steps)
+        io_service.raw_to_tf_records(raw_path=os.path.join(abs_data_path, "valid"),
+                                     tf_record_path=abs_tf_record_path,
+                                     vocab_path=abs_vocab_path,
+                                     seq_len=hyperparams.train.num_steps)
+        io_service.raw_to_tf_records(raw_path=os.path.join(abs_data_path, "test"),
+                                     tf_record_path=abs_tf_record_path,
+                                     vocab_path=abs_vocab_path,
+                                     seq_len=hyperparams.train.num_steps)
+
+    io_service.load_tf_records()
     raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
 
