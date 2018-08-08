@@ -15,7 +15,7 @@ def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len):
     vocab = reader.build_vocab(vocab_file)
     packed_vocab = [vocab]
 
-    gen_words = reader.read_n_shifted_words_gen(file_obj=raw_file, n=seq_len)
+    gen_words = reader.gen_shifted_word(file_obj=raw_file, seq_len=seq_len)
     writer.write_tf_records(gen_words=gen_words,
                             destination_path=tf_record_path,
                             preprocessor_feature_fn=_words_to_ids,
@@ -25,5 +25,5 @@ def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len):
 
 
 def load_tf_records(tf_record_path, batch_size):
-    dataset_iter = reader.read_tf_records(batch_size=batch_size)
-    return dataset_iter
+    dataset_iter = reader.read_tf_records(tf_record_path=tf_record_path, batch_size=batch_size)
+    return dataset_iter.initializer

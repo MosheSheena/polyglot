@@ -23,7 +23,7 @@ def write_tf_records(gen_words,
     """
     Writes the data in a tf record format
     Args:
-        gen_words: (generator) each call to next(gen_word) will yield a list of words shifted by 1
+        gen_words: (generator) each call to next(gen_word) will yield a tuple of x, y
         destination_path: (str) where to write the tf records files
         preprocessor_feature_fn: (func) (optional) preprocessor function for feature before writing
         preprocessor_feature_params: (args) (optional) MUST BE PACKED! for preprocessor function, this will be unpacked
@@ -34,15 +34,9 @@ def write_tf_records(gen_words,
     Returns:
         None
     """
-    writer = tf.python_io.TFRecordWriter(destination_path)
+    with tf.python_io.TFRecordWriter(destination_path) as writer:
 
-    x = next(gen_words)
-    y = next(gen_words)
-
-    while True:
-        try:
-            # check that y equals x shifted by 1
-            assert x[1:] == y[:-1]
+        for x, y in gen_words:
 
             if preprocessor_feature_fn is not None:
                 x = preprocessor_feature_fn(x, *preprocessor_feature_params)
@@ -60,11 +54,3 @@ def write_tf_records(gen_words,
             example = tf.train.Example(features=words)
 
             writer.write(example.SerializeToString())
-
-            # x = y since the words are shifted by 1 in time
-            x = y
-            y = next(gen_words)
-
-        except StopIteration:
-            break
-    writer.close()

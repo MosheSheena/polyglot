@@ -10,7 +10,7 @@ import tensorflow as tf
 READ_ENTIRE_FILE_MODE = -1
 
 
-def read_n_shifted_words_gen(file_obj, n):
+def _read_n_shifted_words_gen(file_obj, n):
     """
     Generator function that reads n words each time from file.
     Each yield contains a list of words shifted by 1
@@ -24,7 +24,7 @@ def read_n_shifted_words_gen(file_obj, n):
         list of n words from file
     """
     if n < 0:
-        yield list(file_obj)
+        yield list(file_obj.read().split())
     elif n == 0:
         yield list()
     else:
@@ -42,6 +42,24 @@ def read_n_shifted_words_gen(file_obj, n):
         # take care of the remainder of num_words % n
         if len(n_words) % n != 0:
             yield n_words
+
+
+def gen_shifted_word(file_obj, seq_len):
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len)
+    x = next(gen_words)
+    y = next(gen_words)
+    while True:
+        try:
+            if x[1:] != y[:-1] and len(x) != len(y):
+                raise StopIteration  # ignore remainder that is less than the sequence length
+            # check that y equals x shifted by 1
+            assert (x[1:] == y[:-1] and len(x) == len(y)) or "x ={}\ny={}\n".format(x[1:], y[:-1])
+            yield tuple([x, y])
+            # x = y since the words are shifted by 1 in time
+            x = y
+            y = next(gen_words)
+        except StopIteration:
+            break
 
 
 def _parse_fn(example_proto):
@@ -63,18 +81,17 @@ def _parse_fn(example_proto):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(batch_size):
+def read_tf_records(tf_record_path, batch_size):
     """
     reads for set of tf record files into a data set
     Args:
-        batch_size: (int) 
+        tf_record_path: (str) where to load the tf record file from
+        batch_size: (int)
     Returns:
         initialisable iterator for the dataset
     """
 
-    # use a tensor for file names - better when using different data for validation and test sets
-    tf_record_paths = tf.placeholder(tf.string, shape=[None], name="tf_record_paths")
-    dataset = tf.data.TFRecordDataset(tf_record_paths)
+    dataset = tf.data.TFRecordDataset(tf_record_path)
     dataset = dataset.map(_parse_fn)  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
@@ -82,15 +99,15 @@ def read_tf_records(batch_size):
 
 
 def build_vocab(file_obj):
-    gen_words = read_n_shifted_words_gen(file_obj, READ_ENTIRE_FILE_MODE)
+    gen_words = _read_n_shifted_words_gen(file_obj, READ_ENTIRE_FILE_MODE)
     words = next(gen_words)
     word_to_id = dict(zip(words, range(len(words))))
     return word_to_id
 
 
-def _file_to_word_ids(filename, word_to_id):
+"""def _file_to_word_ids(filename, word_to_id):
     data = _read_words(filename)
-    return [word_to_id[word] for word in data if word in word_to_id]
+    return [word_to_id[word] for word in data if word in word_to_id]"""
 
 
 def rnnlm_raw_data(data_path, vocab_path):
@@ -105,7 +122,7 @@ def rnnlm_raw_data(data_path, vocab_path):
       where each of the data objects can be passed to RNNLMIterator.
     """
 
-    train_path = os.path.join(data_path, "train")
+    """train_path = os.path.join(data_path, "train")
     valid_path = os.path.join(data_path, "valid")
     test_path = os.path.join(data_path, "test")
 
@@ -115,7 +132,7 @@ def rnnlm_raw_data(data_path, vocab_path):
     test_data = _file_to_word_ids(test_path, word_to_id)
     vocabulary_len = len(word_to_id)
     
-    return train_data, valid_data, test_data, vocabulary_len, word_to_id, word_to_id
+    return train_data, valid_data, test_data, vocabulary_len, word_to_id, word_to_id"""
 
 
 def rnnlm_producer(raw_data, batch_size, num_steps, name=None):

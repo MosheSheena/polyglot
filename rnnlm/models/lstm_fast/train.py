@@ -93,22 +93,32 @@ def main():
     abs_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
     abs_save_path = os.path.join(os.getcwd(), hyperparams.train.save_path)
     abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
+    
+    train_tf_record_path = os.path.join(abs_tf_record_path, "train.tfrecord")
+    valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
+    test_tf_record_path = os.path.join(abs_tf_record_path, "test.tfrecord")
 
     if hyperparams.problem.convert_raw_to_tf_records:
         io_service.raw_to_tf_records(raw_path=os.path.join(abs_data_path, "train"),
-                                     tf_record_path=abs_tf_record_path,
+                                     tf_record_path=train_tf_record_path,
                                      vocab_path=abs_vocab_path,
-                                     seq_len=hyperparams.train.num_steps)
+                                     seq_len=hyperparams.arch.hidden_layer_depth)
         io_service.raw_to_tf_records(raw_path=os.path.join(abs_data_path, "valid"),
-                                     tf_record_path=abs_tf_record_path,
+                                     tf_record_path=valid_tf_record_path,
                                      vocab_path=abs_vocab_path,
-                                     seq_len=hyperparams.train.num_steps)
+                                     seq_len=hyperparams.arch.hidden_layer_depth)
         io_service.raw_to_tf_records(raw_path=os.path.join(abs_data_path, "test"),
-                                     tf_record_path=abs_tf_record_path,
+                                     tf_record_path=test_tf_record_path,
                                      vocab_path=abs_vocab_path,
-                                     seq_len=hyperparams.train.num_steps)
+                                     seq_len=hyperparams.arch.hidden_layer_depth)
 
-    io_service.load_tf_records()
+    initiable_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
+                                                      batch_size=hyperparams.train.batch_size)
+    initiable_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
+                                                      batch_size=hyperparams.train.batch_size)
+    initiable_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
+                                                     batch_size=hyperparams.train.batch_size)
+
     raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
 

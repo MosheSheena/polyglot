@@ -1,4 +1,3 @@
-import os
 from rnnlm.models.lstm_fast import train
 
 
