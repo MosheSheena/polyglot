@@ -12,7 +12,7 @@ def create_loss(model, labels, mode, hyperparams, rnnlm_input):
     metrics = dict()
     losses = dict()
 
-    batch_size = rnnlm_input.batch_size
+    batch_size = hyperparams.train.batch_size
     num_steps = rnnlm_input.num_steps
 
     loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(

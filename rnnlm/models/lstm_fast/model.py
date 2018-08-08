@@ -53,13 +53,10 @@ def create_model(input_tensor, mode, hyperparams, is_training, rnnlm_input):
         # if is_training:
         #    scope.reuse_variables()
 
-        # batch_size = hyperparams.train.batch_size
-        # num_steps = hyperparams.arch.hidden_layer_depth
+        batch_size = hyperparams.train.batch_size
+        num_steps = hyperparams.arch.hidden_layer_depth
         size = hyperparams.arch.hidden_layer_size
         vocab_size = hyperparams.problem.vocab_size
-
-        batch_size = rnnlm_input.batch_size
-        num_steps = rnnlm_input.num_steps
 
         if is_training and hyperparams.arch.keep_prob < 1:
             cell_func = attn_cell

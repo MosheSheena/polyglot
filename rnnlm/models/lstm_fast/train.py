@@ -15,21 +15,19 @@ class RnnlmInput(object):
     """The input data."""
 
     def __init__(self, hyperparams, data, name=None):
-        self.batch_size = batch_size = hyperparams.train.batch_size
-        self.num_steps = num_steps = hyperparams.arch.hidden_layer_depth
-        self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
         self.input_data, self.targets = reader.rnnlm_producer(
-            data, batch_size, num_steps, name=name)
+            data, hyperparams.train.batch_size, hyperparams.arch.hidden_layer_depth, name=name)
 
 
-def run_epoch(session: tf.Session, model, losses, rnnlm_input, eval_op=None, verbose=False):
+def run_epoch(session, model, losses, hyperparams, epoch_size, eval_op=None, verbose=False):
     """
     Runs the model on the given data
     Args:
         session: (tf.Session)
         model: (dict) name_of_tensor -> tensor
         losses: (dict) name_of_loss -> loss_tensor
-        rnnlm_input: (RnnLMInput) object with the configurations TODO - remove dependency
+        epoch_size: (int)
+        hyperparams: (Dict2Obj)
         eval_op: (tf.Tensor) the tensor operation to execute after building the graph and the loss - optional
         verbose: (bool) print metrics after each batch
 
@@ -48,7 +46,7 @@ def run_epoch(session: tf.Session, model, losses, rnnlm_input, eval_op=None, ver
     if eval_op is not None:
         fetches["eval_op"] = eval_op
 
-    for step in range(rnnlm_input.epoch_size):
+    for step in range(epoch_size):
         feed_dict = {}
         for i, (c, h) in enumerate(model["initial_state"]):
             feed_dict[c] = state[i].c
@@ -59,12 +57,12 @@ def run_epoch(session: tf.Session, model, losses, rnnlm_input, eval_op=None, ver
         state = vals["final_state"]
 
         costs += cost
-        iters += rnnlm_input.num_steps
+        iters += hyperparams.arch.hidden_layer_depth
 
-        if verbose and step % (rnnlm_input.epoch_size // 10) == 10:
+        if verbose and step % (epoch_size // 10) == 10:
             print("%.3f perplexity: %.3f speed: %.0f wps" %
-                  (step * 1.0 / rnnlm_input.epoch_size, np.exp(costs / iters),
-                   iters * rnnlm_input.batch_size / (time.time() - start_time)))
+                  (step * 1.0 / epoch_size, np.exp(costs / iters),
+                   iters * hyperparams.train.batch_size / (time.time() - start_time)))
 
     return np.exp(costs / iters)
 
@@ -113,6 +111,14 @@ def main():
     io_service.load_tf_records()
     raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
+
+    size_train = len(train_data)
+    size_valid = len(valid_data)
+    size_test = len(test_data)
+
+    epoch_size_train = ((size_train // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth
+    epoch_size_valid = ((size_valid // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth
+    epoch_size_test = ((size_test // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth
 
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
@@ -179,14 +185,27 @@ def main():
                     i + 1 - hyperparams.train.learning_rate.decay_max_factor, 0.0)
                 assign_lr(session, lr_update_op, hyperparams.train.learning_rate.start_value * lr_decay, new_lr)
                 print("Epoch: %d Learning rate: %.3f" % (i + 1, session.run(current_lr)))
-                train_perplexity = run_epoch(session, training_model, training_losses, train_input, eval_op=train_op,
+                train_perplexity = run_epoch(session,
+                                             training_model,
+                                             training_losses,
+                                             hyperparams=hyperparams,
+                                             epoch_size=epoch_size_train,
+                                             eval_op=train_op,
                                              verbose=True)
 
                 print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
-                valid_perplexity = run_epoch(session, valid_model, valid_losses, valid_input)
+                valid_perplexity = run_epoch(session,
+                                             valid_model,
+                                             valid_losses,
+                                             hyperparams=hyperparams,
+                                             epoch_size=epoch_size_valid)
                 print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
-            test_perplexity = run_epoch(session, test_model, test_losses, test_input)
+            test_perplexity = run_epoch(session,
+                                        test_model,
+                                        test_losses,
+                                        hyperparams=hyperparams,
+                                        epoch_size=epoch_size_test)
             print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
 

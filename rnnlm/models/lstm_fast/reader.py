@@ -52,7 +52,7 @@ def _parse_fn(example_proto):
         example_proto: (tf.train.Example) example from tf record file
 
     Returns:
-        if tf.FixedLenFeature -> return a Tensor
+        if tf.FixedLenFeature -> return Tensor
         if tf.VarLenFeature -> return SparseTensor
     """
     read_features = {
