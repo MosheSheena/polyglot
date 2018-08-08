@@ -44,6 +44,40 @@ def read_n_shifted_words_gen(file_obj, n):
             yield n_words
 
 
+def _parse_fn(example_proto):
+    """
+    Parses a single example from tf record files into Tensor or SparseTensor
+
+    Args:
+        example_proto: (tf.train.Example) example from tf record file
+
+    Returns:
+        if tf.FixedLenFeature -> return a Tensor
+        if tf.VarLenFeature -> return SparseTensor
+    """
+    read_features = {
+        "x": tf.VarLenFeature(dtype=tf.int64),
+        "y": tf.VarLenFeature(dtype=tf.int64),
+    }
+    parsed_features = tf.parse_single_example(example_proto, read_features)
+    return parsed_features["x"], parsed_features["y"]
+
+
+def read_tf_records():
+    """
+    reads for set of tf record files into a data set
+    Args:
+
+    Returns:
+
+    """
+
+    # use a tensor for file names - better when using different data for validation and test sets
+    tf_record_paths = tf.placeholder(tf.string, shape=[None], name="tf_record_paths")
+    dataset = tf.data.TFRecordDataset(tf_record_paths)
+    dataset = dataset.map(_parse_fn)  # parse into tensors
+
+
 def build_vocab(file_obj):
     gen_words = read_n_shifted_words_gen(file_obj, READ_ENTIRE_FILE_MODE)
     words = next(gen_words)
