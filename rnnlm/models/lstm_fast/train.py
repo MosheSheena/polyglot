@@ -93,7 +93,7 @@ def main():
     abs_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
     abs_save_path = os.path.join(os.getcwd(), hyperparams.train.save_path)
     abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
-    
+
     train_tf_record_path = os.path.join(abs_tf_record_path, "train.tfrecord")
     valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
     test_tf_record_path = os.path.join(abs_tf_record_path, "test.tfrecord")
@@ -112,14 +112,19 @@ def main():
                                      vocab_path=abs_vocab_path,
                                      seq_len=hyperparams.arch.hidden_layer_depth)
 
-    initiable_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
-                                                      batch_size=hyperparams.train.batch_size)
-    initiable_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
-                                                      batch_size=hyperparams.train.batch_size)
-    initiable_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
-                                                     batch_size=hyperparams.train.batch_size)
+    next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
+                                                 batch_size=hyperparams.train.batch_size,
+                                                 seq_len=hyperparams.arch.hidden_layer_depth)
+    next_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
+                                                 batch_size=hyperparams.train.batch_size,
+                                                 seq_len=hyperparams.arch.hidden_layer_depth)
+    next_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
+                                                batch_size=hyperparams.train.batch_size,
+                                                seq_len=hyperparams.arch.hidden_layer_depth)
 
-    raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
+    # each call of session.run(next_iter) returns (x, y) where each one is a tensor of shape [batch_size, seq_len]
+
+    """raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
 
     size_train = len(train_data)
@@ -128,14 +133,14 @@ def main():
 
     epoch_size_train = ((size_train // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth
     epoch_size_valid = ((size_valid // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth
-    epoch_size_test = ((size_test // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth
+    epoch_size_test = ((size_test // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth"""
 
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
                                                     hyperparams.train.w_init_scale)
 
         with tf.name_scope("Train"):
-            train_input = RnnlmInput(hyperparams=hyperparams, data=train_data, name="TrainInput")
+            # train_input = RnnlmInput(hyperparams=hyperparams, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
                 training_model = create_model(input_tensor=None,
                                               mode=None,
@@ -218,7 +223,6 @@ def main():
                                         epoch_size=epoch_size_test)
             print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
-
                 print("Saving model to %s." % abs_save_path)
                 sv.saver.save(session, abs_save_path)
     print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))

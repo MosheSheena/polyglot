@@ -62,7 +62,7 @@ def gen_shifted_word(file_obj, seq_len):
             break
 
 
-def _parse_fn(example_proto):
+def _parse_fn(example_proto, seq_len):
     """
     Parses a single example from tf record files into Tensor or SparseTensor
 
@@ -74,28 +74,29 @@ def _parse_fn(example_proto):
         if tf.VarLenFeature -> return SparseTensor
     """
     read_features = {
-        "x": tf.VarLenFeature(dtype=tf.int64),
-        "y": tf.VarLenFeature(dtype=tf.int64),
+        "x": tf.FixedLenFeature(shape=[seq_len], dtype=tf.int64),
+        "y": tf.FixedLenFeature(shape=[seq_len], dtype=tf.int64),
     }
     parsed_features = tf.parse_single_example(example_proto, read_features)
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size):
+def read_tf_records(tf_record_path, batch_size, seq_len):
     """
     reads for set of tf record files into a data set
     Args:
         tf_record_path: (str) where to load the tf record file from
         batch_size: (int)
+        seq_len: (int)
     Returns:
-        initialisable iterator for the dataset
+        next_op for one shot iterator of the dataset
     """
 
     dataset = tf.data.TFRecordDataset(tf_record_path)
-    dataset = dataset.map(_parse_fn)  # parse into tensors
+    dataset = dataset.map(lambda x: _parse_fn(x, seq_len))  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
-    return dataset.make_initializable_iterator()
+    return dataset.make_one_shot_iterator().get_next()
 
 
 def build_vocab(file_obj):

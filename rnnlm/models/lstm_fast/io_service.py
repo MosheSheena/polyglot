@@ -24,6 +24,5 @@ def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len):
                             preprocessor_label_params=packed_vocab)
 
 
-def load_tf_records(tf_record_path, batch_size):
-    dataset_iter = reader.read_tf_records(tf_record_path=tf_record_path, batch_size=batch_size)
-    return dataset_iter.initializer
+def load_tf_records(tf_record_path, batch_size, seq_len):
+    return reader.read_tf_records(tf_record_path=tf_record_path, batch_size=batch_size, seq_len=seq_len)
