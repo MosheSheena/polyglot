@@ -12,15 +12,15 @@ from rnnlm.models.lstm_fast.optimizer import create_optimizer
 from rnnlm.models.lstm_fast import io_service
 
 
-def run_epoch(session, model, losses, hyperparams, epoch_size, eval_op=None, verbose=False):
+def run_epoch(session, model, losses, hyperparams, input_pipeline, eval_op=None, verbose=False):
     """
     Runs the model on the given data
     Args:
         session: (tf.Session)
         model: (dict) name_of_tensor -> tensor
         losses: (dict) name_of_loss -> loss_tensor
-        epoch_size: (int)
         hyperparams: (Dict2Obj)
+        input_pipeline: (tf.Iterator) the iterator from the tf.data.Dataset
         eval_op: (tf.Tensor) the tensor operation to execute after building the graph and the loss - optional
         verbose: (bool) print metrics after each batch
 
@@ -30,6 +30,7 @@ def run_epoch(session, model, losses, hyperparams, epoch_size, eval_op=None, ver
     start_time = time.time()
     costs = 0.0
     iters = 0
+    step = 0
     state = session.run(model["initial_state"])
 
     fetches = {
@@ -39,23 +40,29 @@ def run_epoch(session, model, losses, hyperparams, epoch_size, eval_op=None, ver
     if eval_op is not None:
         fetches["eval_op"] = eval_op
 
-    for step in range(epoch_size):
-        feed_dict = {}
-        for i, (c, h) in enumerate(model["initial_state"]):
-            feed_dict[c] = state[i].c
-            feed_dict[h] = state[i].h
+    while True:
+        try:
+            session.run(input_pipeline)
+            feed_dict = {}
+            for i, (c, h) in enumerate(model["initial_state"]):
+                feed_dict[c] = state[i].c
+                feed_dict[h] = state[i].h
 
-        vals = session.run(fetches, feed_dict)
-        cost = vals["cost"]
-        state = vals["final_state"]
+            vals = session.run(fetches, feed_dict)
+            cost = vals["cost"]
+            state = vals["final_state"]
 
-        costs += cost
-        iters += hyperparams.arch.hidden_layer_depth
+            costs += cost
+            iters += hyperparams.arch.hidden_layer_depth
 
-        if verbose and step % (epoch_size // 10) == 10:
-            print("%.3f perplexity: %.3f speed: %.0f wps" %
-                  (step * 1.0 / epoch_size, np.exp(costs / iters),
-                   iters * hyperparams.train.batch_size / (time.time() - start_time)))
+            # if verbose and step % (epoch_size // 10) == 10:
+            if verbose and step % 10 == 0:
+                print("perplexity: %.3f speed: %.0f wps" %
+                      (np.exp(costs / iters),
+                       iters * hyperparams.train.batch_size / (time.time() - start_time)))
+            step += 1
+        except tf.errors.OutOfRangeError:
+            break
 
     return np.exp(costs / iters)
 
@@ -187,7 +194,7 @@ def main():
                                              training_model,
                                              training_losses,
                                              hyperparams=hyperparams,
-                                             epoch_size=epoch_size_train,
+                                             input_pipeline=next_iter_train,
                                              eval_op=train_op,
                                              verbose=True)
 
@@ -196,14 +203,14 @@ def main():
                                              valid_model,
                                              valid_losses,
                                              hyperparams=hyperparams,
-                                             epoch_size=epoch_size_valid)
+                                             input_pipeline=next_iter_valid)
                 print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
             test_perplexity = run_epoch(session,
                                         test_model,
                                         test_losses,
                                         hyperparams=hyperparams,
-                                        epoch_size=epoch_size_test)
+                                        input_pipeline=next_iter_test)
             print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
                 print("Saving model to %s." % abs_save_path)
