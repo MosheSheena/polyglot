@@ -34,7 +34,7 @@ def attn_cell(hyperparams):
         lstm_cell(hyperparams), output_keep_prob=hyperparams.arch.keep_prob)
 
 
-def create_model(input_tensor, mode, hyperparams, is_training, rnnlm_input):
+def create_model(input_tensor, mode, hyperparams, is_training):
     """
 
     Args:
@@ -42,7 +42,6 @@ def create_model(input_tensor, mode, hyperparams, is_training, rnnlm_input):
         mode: (tf.estimator.ModeKeys) Can be Train, Eval or Predict
         hyperparams: (Dict2obj)
         is_training: (bool) TODO - remove dependency
-        rnnlm_input: (RnnLMInput) TODO - remove dependency
 
     Returns:
         dict were each key (str) is a name of the tensor and value (Tensor) is the tensor in the model
@@ -101,7 +100,7 @@ def create_model(input_tensor, mode, hyperparams, is_training, rnnlm_input):
                 "embedding", [vocab_size, size], dtype=data_type(hyperparams))
 
             inputs = tf.nn.embedding_lookup(embedding,
-                                            rnnlm_input.input_data)
+                                            input_tensor)
             test_inputs = tf.nn.embedding_lookup(embedding,
                                                  test_word_in)
 

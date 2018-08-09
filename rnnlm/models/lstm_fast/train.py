@@ -1,22 +1,15 @@
 import tensorflow as tf
-from rnnlm.utils.hyperparams import load_params
-from rnnlm.models.lstm_fast.model import create_model
-from rnnlm.models.lstm_fast.loss import create_loss
-from rnnlm.models.lstm_fast.optimizer import create_optimizer
+
 from time import gmtime, strftime
-from rnnlm.models.lstm_fast import reader
-from rnnlm.models.lstm_fast import io_service
 import time
 import numpy as np
 import os
 
-
-class RnnlmInput(object):
-    """The input data."""
-
-    def __init__(self, hyperparams, data, name=None):
-        self.input_data, self.targets = reader.rnnlm_producer(
-            data, hyperparams.train.batch_size, hyperparams.arch.hidden_layer_depth, name=name)
+from rnnlm.utils.hyperparams import load_params
+from rnnlm.models.lstm_fast.model import create_model
+from rnnlm.models.lstm_fast.loss import create_loss
+from rnnlm.models.lstm_fast.optimizer import create_optimizer
+from rnnlm.models.lstm_fast import io_service
 
 
 def run_epoch(session, model, losses, hyperparams, epoch_size, eval_op=None, verbose=False):
@@ -112,18 +105,6 @@ def main():
                                      vocab_path=abs_vocab_path,
                                      seq_len=hyperparams.arch.hidden_layer_depth)
 
-    next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
-                                                 batch_size=hyperparams.train.batch_size,
-                                                 seq_len=hyperparams.arch.hidden_layer_depth)
-    next_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
-                                                 batch_size=hyperparams.train.batch_size,
-                                                 seq_len=hyperparams.arch.hidden_layer_depth)
-    next_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
-                                                batch_size=hyperparams.train.batch_size,
-                                                seq_len=hyperparams.arch.hidden_layer_depth)
-
-    # each call of session.run(next_iter) returns (x, y) where each one is a tensor of shape [batch_size, seq_len]
-
     """raw_data = reader.rnnlm_raw_data(abs_data_path, abs_vocab_path)
     train_data, valid_data, test_data, _, word_map, _ = raw_data
 
@@ -136,22 +117,32 @@ def main():
     epoch_size_test = ((size_test // hyperparams.train.batch_size) - 1) // hyperparams.arch.hidden_layer_depth"""
 
     with tf.Graph().as_default():
+
+        next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
+                                                     batch_size=hyperparams.train.batch_size,
+                                                     seq_len=hyperparams.arch.hidden_layer_depth)
+        next_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
+                                                     batch_size=hyperparams.train.batch_size,
+                                                     seq_len=hyperparams.arch.hidden_layer_depth)
+        next_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
+                                                    batch_size=hyperparams.train.batch_size,
+                                                    seq_len=hyperparams.arch.hidden_layer_depth)
+
+        # each call of session.run(next_iter) returns (x, y) where each one is a tensor of shape [batch_size, seq_len]
+
         initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
                                                     hyperparams.train.w_init_scale)
 
         with tf.name_scope("Train"):
-            # train_input = RnnlmInput(hyperparams=hyperparams, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                training_model = create_model(input_tensor=None,
+                training_model = create_model(input_tensor=next_iter_train[0],
                                               mode=None,
                                               hyperparams=hyperparams,
-                                              is_training=True,
-                                              rnnlm_input=train_input)
+                                              is_training=True)
                 training_losses, training_metrics = create_loss(model=training_model,
-                                                                labels=train_input.targets,
+                                                                labels=next_iter_train[1],
                                                                 mode=None,
-                                                                hyperparams=hyperparams,
-                                                                rnnlm_input=train_input)
+                                                                hyperparams=hyperparams)
                 train_op, lr_update_op, current_lr, new_lr = create_optimizer(model=training_model,
                                                                               losses=training_losses,
                                                                               is_training=True,
@@ -160,38 +151,30 @@ def main():
             tf.summary.scalar("Learning Rate", current_lr)
 
         with tf.name_scope("Valid"):
-            valid_input = RnnlmInput(hyperparams=hyperparams, data=valid_data, name="ValidInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                valid_model = create_model(input_tensor=None,
+                valid_model = create_model(input_tensor=next_iter_valid[0],
                                            mode=None,
                                            hyperparams=hyperparams,
-                                           is_training=False,
-                                           rnnlm_input=valid_input)
+                                           is_training=False)
                 valid_losses, valid_metrics = create_loss(model=valid_model,
-                                                          labels=valid_input.targets,
+                                                          labels=next_iter_valid[1],
                                                           mode=None,
-                                                          hyperparams=hyperparams,
-                                                          rnnlm_input=valid_input)
+                                                          hyperparams=hyperparams)
                 create_optimizer(model=valid_model, losses=valid_losses, is_training=False, hyperparams=hyperparams)
             tf.summary.scalar("Validation Loss", valid_losses["cost"])
 
-        # added 29/04/18
         with tf.name_scope("Test"):
-            test_input = RnnlmInput(hyperparams=hyperparams, data=test_data, name="TestInput")
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                test_model = create_model(input_tensor=None,
+                test_model = create_model(input_tensor=next_iter_test[0],
                                           mode=None,
                                           hyperparams=hyperparams,
-                                          is_training=False,
-                                          rnnlm_input=test_input)
+                                          is_training=False)
                 test_losses, test_metrics = create_loss(model=test_model,
-                                                        labels=test_input.targets,
+                                                        labels=next_iter_test[1],
                                                         mode=None,
-                                                        hyperparams=hyperparams,
-                                                        rnnlm_input=test_input)
+                                                        hyperparams=hyperparams)
                 create_optimizer(test_model, test_losses, False, hyperparams)
         tf.summary.scalar("Test Loss", test_losses["cost"])
-        # end of text edit 29/04/18
 
         sv = tf.train.Supervisor(logdir=abs_save_path)
         with sv.managed_session() as session:
