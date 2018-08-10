@@ -47,7 +47,7 @@ def get_config(hyperparameters):
     return Config(hyperparameters)
 
 
-def run_epoch(session: tf.Session, model, losses, rnnlm_input, eval_op=None, verbose=False):
+def run_epoch(session, model, losses, rnnlm_input, eval_op=None, verbose=False):
     """
     Runs the model on the given data
 
