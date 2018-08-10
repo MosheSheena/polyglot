@@ -1,9 +1,7 @@
-"""Utilities for parsing RNNLM text files."""
+"""Utilities for parsing RNNLM files."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
-import os
 
 import tensorflow as tf
 
@@ -54,7 +52,7 @@ def gen_shifted_word(file_obj, seq_len):
                 raise StopIteration  # ignore remainder that is less than the sequence length
             # check that y equals x shifted by 1
             assert (x[1:] == y[:-1] and len(x) == len(y)) or "x ={}\ny={}\n".format(x[1:], y[:-1])
-            yield tuple([x, y])
+            yield (x, y)
             # x = y since the words are shifted by 1 in time
             x = y
             y = next(gen_words)
@@ -106,36 +104,7 @@ def build_vocab(file_obj):
     return word_to_id
 
 
-"""def _file_to_word_ids(filename, word_to_id):
-    data = _read_words(filename)
-    return [word_to_id[word] for word in data if word in word_to_id]"""
-
-
-def rnnlm_raw_data(data_path, vocab_path):
-    """Load RNNLM raw data from data directory "data_path".
-
-    Args:
-      data_path: string path to the directory where train/valid/test files are stored
-      vocab_path: string path to the directory where the vocabulary is stored
-
-    Returns:
-      tuple (train_data, valid_data, test_data, vocabulary)
-      where each of the data objects can be passed to RNNLMIterator.
-    """
-
-    """train_path = os.path.join(data_path, "train")
-    valid_path = os.path.join(data_path, "valid")
-    test_path = os.path.join(data_path, "test")
-
-    word_to_id = _build_vocab(vocab_path)
-    train_data = _file_to_word_ids(train_path, word_to_id)
-    valid_data = _file_to_word_ids(valid_path, word_to_id)
-    test_data = _file_to_word_ids(test_path, word_to_id)
-    vocabulary_len = len(word_to_id)
-    
-    return train_data, valid_data, test_data, vocabulary_len, word_to_id, word_to_id"""
-
-
+# TODO - remove this method when we are sure tf.data has replaced this correctly
 def rnnlm_producer(raw_data, batch_size, num_steps, name=None):
     """Iterate on the raw RNNLM data.
 
