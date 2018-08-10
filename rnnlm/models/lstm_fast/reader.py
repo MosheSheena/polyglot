@@ -90,6 +90,7 @@ def read_tf_records(tf_record_path, batch_size, seq_len):
         next_op for one shot iterator of the dataset
     """
 
+    # TODO - possible performance enhancement - check tf.data tutorial
     dataset = tf.data.TFRecordDataset(tf_record_path)
     dataset = dataset.map(lambda x: _parse_fn(x, seq_len))  # parse into tensors
     dataset = dataset.repeat()
