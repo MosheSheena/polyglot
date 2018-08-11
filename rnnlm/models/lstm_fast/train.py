@@ -244,6 +244,9 @@ def main():
         sv = tf.train.Supervisor(logdir=abs_save_path)
         with sv.managed_session() as session:
             for i in range(hyperparams.train.num_epochs):
+                # Shuts down properly in case of exceptions
+                if sv.should_stop():
+                    break
                 lr_decay = hyperparams.train.learning_rate.decay ** max(
                     (
                         i+1 - hyperparams.train.learning_rate.decay_max_factor,
