@@ -117,16 +117,6 @@ def main():
 
         # TODO - change iterators lines when we remove redundant 3 graphs and implement tf.Estimator
 
-        next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
-                                                     batch_size=hyperparams.train.batch_size,
-                                                     seq_len=hyperparams.arch.hidden_layer_depth)
-        """next_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
-                                                     batch_size=hyperparams.train.batch_size,
-                                                     seq_len=hyperparams.arch.hidden_layer_depth)
-        next_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
-                                                    batch_size=hyperparams.train.batch_size,
-                                                    seq_len=hyperparams.arch.hidden_layer_depth)"""
-
         # each call of session.run(next_iter) returns (x, y) where each one is a tensor of shape [batch_size, seq_len]
 
         initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
@@ -134,6 +124,9 @@ def main():
 
         with tf.name_scope("Train"):
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
+                next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
+                                                             batch_size=hyperparams.train.batch_size,
+                                                             seq_len=hyperparams.arch.hidden_layer_depth)
                 training_model = create_model(input_tensor=next_iter_train[0],
                                               mode=None,
                                               hyperparams=hyperparams,
@@ -149,8 +142,11 @@ def main():
             tf.summary.scalar("Training Loss", training_losses["cost"])
             tf.summary.scalar("Learning Rate", current_lr)
 
-        """with tf.name_scope("Valid"):
+        with tf.name_scope("Valid"):
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
+                next_iter_valid = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
+                                                             batch_size=hyperparams.train.batch_size,
+                                                             seq_len=hyperparams.arch.hidden_layer_depth)
                 valid_model = create_model(input_tensor=next_iter_valid[0],
                                            mode=None,
                                            hyperparams=hyperparams,
@@ -160,10 +156,13 @@ def main():
                                                           mode=None,
                                                           hyperparams=hyperparams)
                 create_optimizer(model=valid_model, losses=valid_losses, is_training=False, hyperparams=hyperparams)
-            tf.summary.scalar("Validation Loss", valid_losses["cost"])"""
+            tf.summary.scalar("Validation Loss", valid_losses["cost"])
 
         """with tf.name_scope("Test"):
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
+                next_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
+                                                            batch_size=hyperparams.train.batch_size,
+                                                            seq_len=hyperparams.arch.hidden_layer_depth)
                 test_model = create_model(input_tensor=next_iter_test[0],
                                           mode=None,
                                           hyperparams=hyperparams,
@@ -191,13 +190,13 @@ def main():
                                              verbose=True)
 
                 print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
-                """valid_perplexity = run_epoch(session,
+                valid_perplexity = run_epoch(session,
                                              valid_model,
                                              valid_losses,
                                              hyperparams=hyperparams,
                                              epoch_size=hyperparams.train.epoch_size_valid,
                                              input_pipeline=next_iter_valid)
-                print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))"""
+                print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
             """test_perplexity = run_epoch(session,
                                         test_model,
