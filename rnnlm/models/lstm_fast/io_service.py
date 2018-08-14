@@ -6,10 +6,21 @@ from rnnlm.models.lstm_fast import writer
 
 def _words_to_ids(words, vocab):
 
-    return [vocab[word] for word in words if word in vocab]
+    return [vocab[word] if word in vocab else vocab["<oos>"] for word in words]
 
 
 def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len):
+    """
+    convert raw data (sentences) into tf records format
+    Args:
+        raw_path: (str)
+        tf_record_path: (str)
+        vocab_path: (str) path of raw format vocabulary
+        seq_len: (int)
+
+    Returns:
+
+    """
     raw_file = tf.gfile.GFile(raw_path, "r")
     vocab_file = tf.gfile.GFile(vocab_path, "r")
     vocab = reader.build_vocab(vocab_file)

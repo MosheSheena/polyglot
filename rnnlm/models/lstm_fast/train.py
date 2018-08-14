@@ -158,7 +158,7 @@ def main():
                 create_optimizer(model=valid_model, losses=valid_losses, is_training=False, hyperparams=hyperparams)
             tf.summary.scalar("Validation Loss", valid_losses["cost"])
 
-        """with tf.name_scope("Test"):
+        with tf.name_scope("Test"):
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
                 next_iter_test = io_service.load_tf_records(tf_record_path=test_tf_record_path,
                                                             batch_size=hyperparams.train.batch_size,
@@ -172,7 +172,9 @@ def main():
                                                         mode=None,
                                                         hyperparams=hyperparams)
                 create_optimizer(test_model, test_losses, False, hyperparams)
-        tf.summary.scalar("Test Loss", test_losses["cost"])"""
+        tf.summary.scalar("Test Loss", test_losses["cost"])
+
+        sess = tf.Session()
 
         with tf.train.MonitoredTrainingSession(checkpoint_dir=abs_save_path) as session:
             for i in range(hyperparams.train.num_epochs):

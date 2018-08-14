@@ -48,7 +48,7 @@ def create_model(input_tensor, mode, hyperparams, is_training):
     """
 
     model = dict()
-    with tf.variable_scope("lstm_fast") as scope:
+    with tf.variable_scope("lstm_fast", reuse=tf.AUTO_REUSE) as scope:
         # if is_training:
         #    scope.reuse_variables()
 
