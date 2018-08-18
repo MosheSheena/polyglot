@@ -27,6 +27,9 @@ echo -e "\n"
 gcloud compute instances list
 echo -e "\n"
 
+echo -e "Waiting 10 seconds for system to boot up"
+sleep 10
+
 echo -e "copying $current_dir/rnnlm"
 gcloud compute scp --recurse $current_dir/rnnlm $INSTANCE_NAME:remote_project_dir/Bsc-Final-Project
 
