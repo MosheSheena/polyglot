@@ -15,6 +15,7 @@ from rnnlm.models.lstm_fast import io_service
 def run_epoch(session, model, losses, hyperparams, epoch_size, input_pipeline, eval_op=None, verbose=False):
     """
     Runs the model on the given data
+
     Args:
 
         session: (tf.Session)
@@ -27,7 +28,8 @@ def run_epoch(session, model, losses, hyperparams, epoch_size, input_pipeline, e
         verbose: (bool) print metrics after each batch
 
     Returns:
-        The avg loss (perplexity) of the epoch
+        float: the average loss (perplexity) of the epoch
+
     """
     start_time = time.time()
     costs = 0.0
@@ -66,20 +68,24 @@ def run_epoch(session, model, losses, hyperparams, epoch_size, input_pipeline, e
 def assign_lr(session, lr_update, lr_value, new_lr):
     """
     Assigns a new learning rate
-    Args:
-        session: (tf.Session)
-        lr_update: (Tensor) tf.assign op tensor
-        lr_value: (int) the new value for the learning rate
-        new_lr: (Placeholder) a placeholder for the learning rate
 
-    Returns:
-        None
+    Args:
+        session (tf.Session):
+        lr_update (Tensor): tf.assign op tensor
+        lr_value (int): the new value for the learning rate
+        new_lr (Placeholder): a placeholder for the learning rate
+
     """
-    session.run(lr_update, feed_dict={new_lr: lr_value})
+    session.run(fetches=lr_update, feed_dict={new_lr: lr_value})
 
 
 def main():
-    hyperparams = load_params(os.path.join(os.getcwd(), "rnnlm/models/lstm_fast/hyperparameters.json"))
+    hyperparams = load_params(
+        os.path.join(
+            os.getcwd(),
+            "rnnlm/models/lstm_fast/hyperparameters.json"
+        )
+    )
     print(strftime("start time: %Y-%m-%d %H:%M:%S", gmtime()))
 
     if not hyperparams.problem.data_path:
@@ -119,11 +125,13 @@ def main():
 
         # each call of session.run(next_iter) returns (x, y) where each one is a tensor of shape [batch_size, seq_len]
 
-        initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
-                                                    hyperparams.train.w_init_scale)
+        initializer = tf.random_uniform_initializer(minval=-hyperparams.train.w_init_scale,
+                                                    maxval=hyperparams.train.w_init_scale)
 
         with tf.name_scope("Train"):
-            with tf.variable_scope("Model", reuse=None, initializer=initializer):
+            with tf.variable_scope("Model",
+                                   reuse=None,
+                                   initializer=initializer):
                 next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
                                                              batch_size=hyperparams.train.batch_size,
                                                              seq_len=hyperparams.arch.hidden_layer_depth)
@@ -177,8 +185,17 @@ def main():
         with tf.train.MonitoredTrainingSession(checkpoint_dir=abs_save_path) as session:
             for i in range(hyperparams.train.num_epochs):
                 lr_decay = hyperparams.train.learning_rate.decay ** max(
-                    i + 1 - hyperparams.train.learning_rate.decay_max_factor, 0.0)
-                assign_lr(session, lr_update_op, hyperparams.train.learning_rate.start_value * lr_decay, new_lr)
+                    (
+                        i+1 - hyperparams.train.learning_rate.decay_max_factor,
+                        0.0
+                    )
+                )
+                assign_lr(
+                    session=session,
+                    lr_update=lr_update_op,
+                    lr_value=hyperparams.train.learning_rate.start_value * lr_decay,
+                    new_lr=new_lr
+                )
                 print("Epoch: %d Learning rate: %.3f" % (i + 1, session.run(current_lr)))
                 train_perplexity = run_epoch(session,
                                              training_model,
@@ -205,6 +222,7 @@ def main():
                                         epoch_size=hyperparams.train.epoch_size_test,
                                         input_pipeline=next_iter_test)
             print("Test Perplexity: %.3f" % test_perplexity)
+
             if hyperparams.train.save_path:
                 print("Saving model to %s." % abs_save_path)
     print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
