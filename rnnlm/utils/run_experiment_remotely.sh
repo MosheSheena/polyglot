@@ -27,6 +27,9 @@ echo -e "\n"
 gcloud compute instances list
 echo -e "\n"
 
+echo -e "Waiting 10 seconds for system to boot up"
+sleep 10
+
 echo -e "copying $current_dir/rnnlm"
 gcloud compute scp --recurse $current_dir/rnnlm $INSTANCE_NAME:remote_project_dir/Bsc-Final-Project
 
@@ -34,7 +37,6 @@ echo -e "copying $current_dir/main.py"
 gcloud compute scp --recurse $current_dir/main.py $INSTANCE_NAME:remote_project_dir/Bsc-Final-Project
 
 echo -e "starting experiment\n"
-# The following line causes RAM overflow, we need a workaround
 gcloud compute ssh $INSTANCE_NAME --command="chmod +x ~/remote_project_dir/Bsc-Final-Project/rnnlm/experiment_local_runners/start_experiment.sh && ~/remote_project_dir/Bsc-Final-Project/rnnlm/experiment_local_runners/start_experiment.sh"
 echo -e "Experiment done.\n"
 
