@@ -174,8 +174,6 @@ def main():
                 create_optimizer(test_model, test_losses, False, hyperparams)
         tf.summary.scalar("Test Loss", test_losses["cost"])
 
-        sess = tf.Session()
-
         with tf.train.MonitoredTrainingSession(checkpoint_dir=abs_save_path) as session:
             for i in range(hyperparams.train.num_epochs):
                 lr_decay = hyperparams.train.learning_rate.decay ** max(
@@ -200,13 +198,13 @@ def main():
                                              input_pipeline=next_iter_valid)
                 print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
-            """test_perplexity = run_epoch(session,
+            test_perplexity = run_epoch(session,
                                         test_model,
                                         test_losses,
                                         hyperparams=hyperparams,
                                         epoch_size=hyperparams.train.epoch_size_test,
                                         input_pipeline=next_iter_test)
-            print("Test Perplexity: %.3f" % test_perplexity)"""
+            print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
                 print("Saving model to %s." % abs_save_path)
     print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
