@@ -8,7 +8,7 @@ import tensorflow as tf
 READ_ENTIRE_FILE_MODE = -1
 
 
-def _read_n_shifted_words_gen(file_obj, n):
+def _read_n_shifted_words_gen(file_obj, n, overlap=False):
     """
     Generator function that reads n words each time from file.
     Each yield contains a list of words shifted by 1
@@ -33,9 +33,14 @@ def _read_n_shifted_words_gen(file_obj, n):
                 n_words.append(word)
                 if len(n_words) == n:
                     yield list(n_words)
-                    # remove the first element
-                    # from here and on one element will be inserted to the list and will be yield
-                    n_words.pop(0)
+
+                    if overlap:
+                        # remove the first element
+                        # from here and on one element will be inserted to the list and will be yield
+                        n_words.pop(0)
+                    else:
+                        # flush all elements and get n new ones
+                        n_words.clear()
 
         # take care of the remainder of num_words % n
         if len(n_words) % n != 0:
@@ -43,7 +48,7 @@ def _read_n_shifted_words_gen(file_obj, n):
 
 
 def gen_shifted_word(file_obj, seq_len):
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len)
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=True)
     x = next(gen_words)
     y = next(gen_words)
     while True:
@@ -51,7 +56,7 @@ def gen_shifted_word(file_obj, seq_len):
             if x[1:] != y[:-1] and len(x) != len(y):
                 raise StopIteration  # ignore remainder that is less than the sequence length
             # check that y equals x shifted by 1
-            assert (x[1:] == y[:-1] and len(x) == len(y)) or "x ={}\ny={}\n".format(x[1:], y[:-1])
+            assert (x[1:] == y[:-1] and len(x) == len(y)), "x ={}\ny={}\n".format(x[1:], y[:-1])
             yield (x, y)
             # x = y since the words are shifted by 1 in time
             x = y

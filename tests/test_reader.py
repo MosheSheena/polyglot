@@ -6,12 +6,13 @@ class TestReader(unittest.TestCase):
 
     def test_read_n_shifted_words(self):
         read_n = reader._read_n_shifted_words_gen
-        self.assertEqual(list(read_n([], 2)), [])
-        self.assertEqual(list(read_n(['1', '2', '3', '4'], 2)), [['1', '2'], ['2', '3'], ['3', '4'], ['4']])
-        self.assertEqual(list(read_n(['2'], 1)), [['2']])
-        self.assertEqual(list(read_n(['1'], 2)), [['1']])
-        self.assertEqual(list(read_n(['1', '2'], 0)), [[]])
-        self.assertEqual(list(read_n(['1', '2'], -5)), [['1', '2']])
+        self.assertEqual(list(read_n([], 2, overlap=True)), [])
+        self.assertEqual(list(read_n(['1', '2', '3', '4'], 2, overlap=True)),
+                         [['1', '2'], ['2', '3'], ['3', '4'], ['4']])
+        self.assertEqual(list(read_n(['2'], 1, overlap=True)), [['2']])
+        self.assertEqual(list(read_n(['1'], 2, overlap=True)), [['1']])
+        self.assertEqual(list(read_n(['1', '2'], 0, overlap=True)), [[]])
+        self.assertEqual(list(read_n(['1', '2'], 2, overlap=True)), [['1', '2'], ['2']])
 
     def test_gen_shifted_word(self):
         shifted_w = reader.gen_shifted_word
@@ -23,3 +24,15 @@ class TestReader(unittest.TestCase):
         self.assertEqual(list(shifted_w(['2'], 1)), [])
         self.assertEqual(list(shifted_w(['1'], 2)), [])
         self.assertEqual(list(shifted_w(['1', '2'], 0)), [])
+
+    def test_read_n_no_overlap(self):
+        read_n = reader._read_n_shifted_words_gen
+        self.assertEqual(list(read_n([], 2, overlap=False)), [])
+        self.assertEqual(list(read_n(['1', '2', '3', '4'], 2, overlap=False)),
+                         [['1', '2'], ['3', '4']])
+        self.assertEqual(list(read_n(['1', '2', '3'], 2, overlap=False)),
+                         [['1', '2'], ['3']])
+        self.assertEqual(list(read_n(['2'], 1, overlap=False)), [['2']])
+        self.assertEqual(list(read_n(['1'], 2, overlap=False)), [['1']])
+        self.assertEqual(list(read_n(['1', '2'], 0, overlap=False)), [[]])
+        self.assertEqual(list(read_n(['1', '2'], 2, overlap=False)), [['1', '2']])
