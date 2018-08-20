@@ -8,7 +8,6 @@ def data_type(hyperparams):
 
 
 def create_loss(model, labels, mode, hyperparams):
-    # TODO remove rnnlm_input param
     metrics = dict()
     losses = dict()
 

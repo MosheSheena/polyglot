@@ -92,9 +92,10 @@ def read_tf_records(tf_record_path, batch_size, seq_len):
 
     # TODO - possible performance enhancement - check tf.data tutorial
     dataset = tf.data.TFRecordDataset(tf_record_path)
-    dataset = dataset.map(lambda x: _parse_fn(x, seq_len))  # parse into tensors
+    dataset = dataset.map(lambda x: _parse_fn(x, seq_len), num_parallel_calls=4)  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
+    dataset = dataset.prefetch(buffer_size=1)
     return dataset.make_one_shot_iterator().get_next()
 
 
