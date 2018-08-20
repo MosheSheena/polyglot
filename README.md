@@ -4,6 +4,7 @@ Bsc SW Eng. degree final project - improving performance for an RNN based LSTM l
 ## Dependancies
 Install the following:
 ```shell
+source ~/tensorflow/bin/activate
 pip install tensorflow
 pip install jsmin
 pip install numpy
