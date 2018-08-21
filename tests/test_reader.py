@@ -20,7 +20,8 @@ class TestReader(unittest.TestCase):
         self.assertEqual(list(shifted_w(['1', '2', '3', '4'], 2)), [(['1', '2'], ['2', '3']), (['2', '3'], ['3', '4'])])
         self.assertEqual(list(shifted_w(['1', '2', '3', '4'], 3)), [(['1', '2', '3'], ['2', '3', '4'])])
         self.assertEqual(list(shifted_w(['1', '2', '3'], 2)), [(['1', '2'], ['2', '3'])])
-        self.assertEqual(list(shifted_w(['1', '2', '3', '4', '5'], 3)), [(['1', '2', '3'], ['2', '3', '4']), (['2', '3', '4'], ['3', '4', '5'])])
+        self.assertEqual(list(shifted_w(['1', '2', '3', '4', '5'], 3)),
+                         [(['1', '2', '3'], ['2', '3', '4']), (['2', '3', '4'], ['3', '4', '5'])])
         self.assertEqual(list(shifted_w(['2'], 1)), [])
         self.assertEqual(list(shifted_w(['1'], 2)), [])
         self.assertEqual(list(shifted_w(['1', '2'], 0)), [])
@@ -36,3 +37,17 @@ class TestReader(unittest.TestCase):
         self.assertEqual(list(read_n(['1'], 2, overlap=False)), [['1']])
         self.assertEqual(list(read_n(['1', '2'], 0, overlap=False)), [[]])
         self.assertEqual(list(read_n(['1', '2'], 2, overlap=False)), [['1', '2']])
+
+    def test_gen_no_overlap_words(self):
+        no_overlap_gen = reader.gen_no_overlap_words
+        self.assertEqual(list(no_overlap_gen([], 2)), [])
+        self.assertEqual(list(no_overlap_gen(['1', '2', '3', '4'], 2)), [(['1', '2'], ['2', '3'])])
+        self.assertEqual(list(no_overlap_gen(['1', '2', '3', '4'], 3)), [(['1', '2', '3'], ['2', '3', '4'])])
+        self.assertEqual(list(no_overlap_gen(['1', '2', '3'], 2)), [(['1', '2'], ['2', '3'])])
+        self.assertEqual(list(no_overlap_gen(['1', '2', '3', '4', '5'], 3)),
+                         [(['1', '2', '3'], ['2', '3', '4'])])
+        self.assertEqual(list(no_overlap_gen(['1', '2', '3', '4', '5'], 2)),
+                         [(['1', '2'], ['2', '3']), (['3', '4'], ['4', '5'])])
+        self.assertEqual(list(no_overlap_gen(['2'], 1)), [])
+        self.assertEqual(list(no_overlap_gen(['1'], 2)), [])
+        self.assertEqual(list(no_overlap_gen(['1', '2'], 0)), [])

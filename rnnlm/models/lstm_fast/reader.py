@@ -56,11 +56,39 @@ def gen_shifted_word(file_obj, seq_len):
             if x[1:] != y[:-1] and len(x) != len(y):
                 raise StopIteration  # ignore remainder that is less than the sequence length
             # check that y equals x shifted by 1
-            assert (x[1:] == y[:-1] and len(x) == len(y)), "x ={}\ny={}\n".format(x[1:], y[:-1])
+            assert (x[1:] == y[:-1] and len(x) == len(y)), "x ={}\ny={}\n".format(x, y)
             yield (x, y)
             # x = y since the words are shifted by 1 in time
             x = y
             y = next(gen_words)
+        except StopIteration:
+            break
+
+
+def gen_no_overlap_words(file_obj, seq_len):
+    # original reader had a lap of 1 element, therefore we will generate
+    # seq_len + 1 so that we will receive the shared element between
+    # y ith vector and x (i+1)ith vector
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len + 1, overlap=False)
+
+    accumulator = next(gen_words)
+    x = accumulator[:-1]
+    y = accumulator[1:]
+    while True:
+        try:
+
+            if x[1:] != y[:-1] or len(x) != len(y):
+                raise StopIteration  # ignore remainder that is less than the sequence length
+            # check that y equals x shifted by 1
+            assert (x[1:] == y[:-1] and len(x) == len(y)), "x ={}\ny={}\n".format(x, y)
+
+            yield (x, y)
+            shared_element = accumulator[-1]
+            accumulator = next(gen_words)
+            x = [shared_element]
+            x.extend(accumulator[:-2])
+            y = accumulator[1:]
+
         except StopIteration:
             break
 
