@@ -8,7 +8,7 @@ import tensorflow as tf
 READ_ENTIRE_FILE_MODE = -1
 
 
-def _read_n_shifted_words_gen(file_obj, n):
+def _read_n_shifted_words_gen(file_obj, n, overlap=False):
     """
     Generator function that reads n words each time from file.
     Each yield contains a list of words shifted by 1
@@ -33,29 +33,55 @@ def _read_n_shifted_words_gen(file_obj, n):
                 n_words.append(word)
                 if len(n_words) == n:
                     yield list(n_words)
-                    # remove the first element
-                    # from here and on one element will be inserted to the list and will be yield
-                    n_words.pop(0)
+
+                    if overlap:
+                        # remove the first element
+                        # from here and on one element will be inserted to the list and will be yield
+                        n_words.pop(0)
+                    else:
+                        # flush all elements and get n new ones
+                        n_words.clear()
 
         # take care of the remainder of num_words % n
         if len(n_words) % n != 0:
             yield n_words
 
 
-def gen_shifted_word(file_obj, seq_len):
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len)
+def gen_shifted_words_with_overlap(file_obj, seq_len):
+
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=True)
     x = next(gen_words)
     y = next(gen_words)
     while True:
         try:
-            if x[1:] != y[:-1] and len(x) != len(y):
+            if x[1:] != y[:-1] or len(x) != len(y):
                 raise StopIteration  # ignore remainder that is less than the sequence length
-            # check that y equals x shifted by 1
-            assert (x[1:] == y[:-1] and len(x) == len(y)) or "x ={}\ny={}\n".format(x[1:], y[:-1])
+
             yield (x, y)
             # x = y since the words are shifted by 1 in time
             x = y
             y = next(gen_words)
+
+        except StopIteration:
+            break
+
+
+def gen_no_overlap_words(file_obj, seq_len):
+
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=False)
+
+    accumulator = next(gen_words)
+    while True:
+        try:
+            x = accumulator
+            accumulator = next(gen_words)
+            y = x[1:] + [accumulator[0]]
+
+            if x[1:] != y[:-1] or len(x) != len(y):
+                raise StopIteration  # ignore remainder that is less than the sequence length
+
+            yield (x, y)
+
         except StopIteration:
             break
 
@@ -79,13 +105,14 @@ def _parse_fn(example_proto, seq_len):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len):
+def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
     """
     reads for set of tf record files into a data set
     Args:
-        tf_record_path: (str) where to load the tf record file from
-        batch_size: (int)
-        seq_len: (int)
+        tf_record_path (str): where to load the tf record file from
+        batch_size (int):
+        seq_len (int):
+        shuffle (bool):
     Returns:
         next_op for one shot iterator of the dataset
     """
@@ -95,6 +122,8 @@ def read_tf_records(tf_record_path, batch_size, seq_len):
     dataset = dataset.map(lambda x: _parse_fn(x, seq_len), num_parallel_calls=4)  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
+    if shuffle:
+        dataset = dataset.shuffle(buffer_size=10000)
     dataset = dataset.prefetch(buffer_size=1)
     return dataset.make_one_shot_iterator().get_next()
 
