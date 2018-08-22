@@ -9,7 +9,7 @@ def _words_to_ids(words, vocab):
     return [vocab[word] if word in vocab else vocab["<oos>"] for word in words]
 
 
-def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len):
+def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len, overlap=False):
     """
     convert raw data (sentences) into tf records format
     Args:
@@ -26,7 +26,11 @@ def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len):
     vocab = reader.build_vocab(vocab_file)
     packed_vocab = [vocab]
 
-    gen_words = reader.gen_shifted_word(file_obj=raw_file, seq_len=seq_len)
+    if overlap:
+        gen_words = reader.gen_shifted_words_with_overlap(file_obj=raw_file, seq_len=seq_len)
+    else:
+        gen_words = reader.gen_no_overlap_words(file_obj=raw_file, seq_len=seq_len)
+
     writer.write_tf_records(gen_words=gen_words,
                             destination_path=tf_record_path,
                             preprocessor_feature_fn=_words_to_ids,

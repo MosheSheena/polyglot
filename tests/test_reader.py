@@ -15,7 +15,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(list(read_n(['1', '2'], 2, overlap=True)), [['1', '2'], ['2']])
 
     def test_gen_shifted_word(self):
-        shifted_w = reader.gen_shifted_word
+        shifted_w = reader.gen_shifted_words_with_overlap
         self.assertEqual(list(shifted_w([], 2)), [])
         self.assertEqual(list(shifted_w(['1', '2', '3', '4'], 2)), [(['1', '2'], ['2', '3']), (['2', '3'], ['3', '4'])])
         self.assertEqual(list(shifted_w(['1', '2', '3', '4'], 3)), [(['1', '2', '3'], ['2', '3', '4'])])

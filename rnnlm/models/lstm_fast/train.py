@@ -12,7 +12,7 @@ from rnnlm.models.lstm_fast.optimizer import create_optimizer
 from rnnlm.models.lstm_fast import io_service
 
 
-def run_epoch(session, model, losses, hyperparams, epoch_size, input_pipeline, eval_op=None, verbose=False):
+def run_epoch(session, model, losses, hyperparams, epoch_size, eval_op=None, verbose=False):
     """
     Runs the model on the given data
     Args:
@@ -22,7 +22,6 @@ def run_epoch(session, model, losses, hyperparams, epoch_size, input_pipeline, e
         losses: (dict) name_of_loss -> loss_tensor
         hyperparams: (Dict2Obj)
         epoch_size: (int)
-        input_pipeline: (tf.Iterator) the iterator from the tf.data.Dataset
         eval_op: (tf.Tensor) the tensor operation to execute after building the graph and the loss - optional
         verbose: (bool) print metrics after each batch
 
@@ -42,7 +41,6 @@ def run_epoch(session, model, losses, hyperparams, epoch_size, input_pipeline, e
         fetches["eval_op"] = eval_op
 
     for step in range(epoch_size):
-        session.run(input_pipeline)
         feed_dict = {}
         for i, (c, h) in enumerate(model["initial_state"]):
             feed_dict[c] = state[i].c
@@ -117,13 +115,13 @@ def main():
 
         # TODO - change iterators lines when we remove redundant 3 graphs and implement tf.Estimator
 
-        # each call of session.run(next_iter) returns (x, y) where each one is a tensor of shape [batch_size, seq_len]
-
         initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
                                                     hyperparams.train.w_init_scale)
 
         with tf.name_scope("Train"):
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
+                # each call of session.run(next_iter) returns (x, y)
+                # where each one is a tensor of shape [batch_size, seq_len]
                 next_iter_train = io_service.load_tf_records(tf_record_path=train_tf_record_path,
                                                              batch_size=hyperparams.train.batch_size,
                                                              seq_len=hyperparams.arch.hidden_layer_depth)
@@ -185,7 +183,6 @@ def main():
                                              training_losses,
                                              hyperparams=hyperparams,
                                              epoch_size=hyperparams.train.epoch_size_train,
-                                             input_pipeline=next_iter_train,
                                              eval_op=train_op,
                                              verbose=True)
 
@@ -194,16 +191,14 @@ def main():
                                              valid_model,
                                              valid_losses,
                                              hyperparams=hyperparams,
-                                             epoch_size=hyperparams.train.epoch_size_valid,
-                                             input_pipeline=next_iter_valid)
+                                             epoch_size=hyperparams.train.epoch_size_valid)
                 print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
             test_perplexity = run_epoch(session,
                                         test_model,
                                         test_losses,
                                         hyperparams=hyperparams,
-                                        epoch_size=hyperparams.train.epoch_size_test,
-                                        input_pipeline=next_iter_test)
+                                        epoch_size=hyperparams.train.epoch_size_test)
             print("Test Perplexity: %.3f" % test_perplexity)
             if hyperparams.train.save_path:
                 print("Saving model to %s." % abs_save_path)

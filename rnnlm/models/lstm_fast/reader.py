@@ -47,47 +47,40 @@ def _read_n_shifted_words_gen(file_obj, n, overlap=False):
             yield n_words
 
 
-def gen_shifted_word(file_obj, seq_len):
+def gen_shifted_words_with_overlap(file_obj, seq_len):
+
     gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=True)
     x = next(gen_words)
     y = next(gen_words)
     while True:
         try:
-            if x[1:] != y[:-1] and len(x) != len(y):
+            if x[1:] != y[:-1] or len(x) != len(y):
                 raise StopIteration  # ignore remainder that is less than the sequence length
-            # check that y equals x shifted by 1
-            assert (x[1:] == y[:-1] and len(x) == len(y)), "x ={}\ny={}\n".format(x, y)
+
             yield (x, y)
             # x = y since the words are shifted by 1 in time
             x = y
             y = next(gen_words)
+
         except StopIteration:
             break
 
 
 def gen_no_overlap_words(file_obj, seq_len):
-    # original reader had a lap of 1 element, therefore we will generate
-    # seq_len + 1 so that we will receive the shared element between
-    # y ith vector and x (i+1)ith vector
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len + 1, overlap=False)
+
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=False)
 
     accumulator = next(gen_words)
-    x = accumulator[:-1]
-    y = accumulator[1:]
     while True:
         try:
+            x = accumulator
+            accumulator = next(gen_words)
+            y = x[1:] + [accumulator[0]]
 
             if x[1:] != y[:-1] or len(x) != len(y):
                 raise StopIteration  # ignore remainder that is less than the sequence length
-            # check that y equals x shifted by 1
-            assert (x[1:] == y[:-1] and len(x) == len(y)), "x ={}\ny={}\n".format(x, y)
 
             yield (x, y)
-            shared_element = accumulator[-1]
-            accumulator = next(gen_words)
-            x = [shared_element]
-            x.extend(accumulator[:-2])
-            y = accumulator[1:]
 
         except StopIteration:
             break
@@ -112,13 +105,14 @@ def _parse_fn(example_proto, seq_len):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len):
+def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
     """
     reads for set of tf record files into a data set
     Args:
-        tf_record_path: (str) where to load the tf record file from
-        batch_size: (int)
-        seq_len: (int)
+        tf_record_path (str): where to load the tf record file from
+        batch_size (int):
+        seq_len (int):
+        shuffle (bool):
     Returns:
         next_op for one shot iterator of the dataset
     """
@@ -128,6 +122,8 @@ def read_tf_records(tf_record_path, batch_size, seq_len):
     dataset = dataset.map(lambda x: _parse_fn(x, seq_len))  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
+    if shuffle:
+        dataset = dataset.shuffle(buffer_size=10000)
     return dataset.make_one_shot_iterator().get_next()
 
 
@@ -136,48 +132,3 @@ def build_vocab(file_obj):
     words = next(gen_words)
     word_to_id = dict(zip(words, range(len(words))))
     return word_to_id
-
-
-# TODO - remove this method when we are sure tf.data has replaced this correctly
-def rnnlm_producer(raw_data, batch_size, num_steps, name=None):
-    """Iterate on the raw RNNLM data.
-
-    This chunks up raw_data into batches of examples and returns Tensors that
-    are drawn from these batches.
-
-    Args:
-      raw_data: one of the raw data outputs from rnnlm_raw_data.
-      batch_size: int, the batch size.
-      num_steps: int, the number of unrolls.
-      name: the name of this operation (optional).
-
-    Returns:
-      A pair of Tensors, each shaped [batch_size, num_steps]. The second element
-      of the tuple is the same data time-shifted to the right by one.
-
-    Raises:
-      tf.errors.InvalidArgumentError: if batch_size or num_steps are too high.
-    """
-    with tf.name_scope(name, "RNNLMProducer", [raw_data, batch_size, num_steps]):
-        raw_data = tf.convert_to_tensor(raw_data, name="raw_data", dtype=tf.int32)
-
-        data_len = tf.size(raw_data)
-        batch_len = data_len // batch_size
-        data = tf.reshape(raw_data[0: batch_size * batch_len],
-                          [batch_size, batch_len])
-
-        epoch_size = (batch_len - 1) // num_steps
-        assertion = tf.assert_positive(
-            epoch_size,
-            message="epoch_size == 0, decrease batch_size or num_steps")
-        with tf.control_dependencies([assertion]):
-            epoch_size = tf.identity(epoch_size, name="epoch_size")
-
-        i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue()
-        x = tf.strided_slice(data, [0, i * num_steps],
-                             [batch_size, (i + 1) * num_steps])
-        x.set_shape([batch_size, num_steps])
-        y = tf.strided_slice(data, [0, i * num_steps + 1],
-                             [batch_size, (i + 1) * num_steps + 1])
-        y.set_shape([batch_size, num_steps])
-        return x, y
