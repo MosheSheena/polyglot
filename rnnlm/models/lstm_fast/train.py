@@ -92,6 +92,8 @@ def main():
     valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
     test_tf_record_path = os.path.join(abs_tf_record_path, "test.tfrecord")
 
+    io_service.pos_classification(raw_path=os.path.join(abs_data_path, "train"), seq_len=20, overlap=False)
+
     if not os.path.exists(abs_tf_record_path):
         os.makedirs(abs_tf_record_path)
 

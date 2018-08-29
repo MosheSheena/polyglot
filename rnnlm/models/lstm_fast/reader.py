@@ -1,9 +1,9 @@
-"""Utilities for parsing RNNLM files."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from nltk import word_tokenize, pos_tag, pos_tag_sents
 
 READ_ENTIRE_FILE_MODE = -1
 
@@ -84,6 +84,88 @@ def gen_no_overlap_words(file_obj, seq_len):
 
         except StopIteration:
             break
+
+
+def gen_pos_tagger(file_obj, seq_len, overlap=False):
+    """
+    Each call to this generator generates a tuple of x, y
+    where x is list of words with a list size of seq_len
+    and y is a list of part-of-speech tags of the words
+    in x accordingly.
+    Args:
+        file_obj: opened file of raw data
+        seq_len: the length of how much we will read from the
+            file in each generation
+        overlap: whether to generate with overlaps or not
+
+    Returns:
+
+    """
+
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=overlap)
+    num_of_iterations = 0
+    for words_list in gen_words:
+        words_without_tags = list()
+
+        # deal with special tags such as <oos>, <unk> and </s>
+        # chars like < and > messes with the tagging therefore they are removed
+        for w in words_list:
+            if w.startswith('<') and w.endswith('>'):
+                w = w[1:-1]
+            words_without_tags.append(w)
+
+        # the features are the words
+        x = words_without_tags
+        if len(x) < seq_len:
+            raise StopIteration
+        # the labels are the pos tags of those words
+        y = list()
+
+        words_str = " ".join(words_without_tags)
+        tokens = word_tokenize(words_str)
+        pos_tagged_words = pos_tag(tokens)
+
+        if len(tokens) > len(words_without_tags):  # then we have some words that got more than one tag
+            # print("tokens={}".format(tokens))
+            # print("word_list={}".format(words_list))
+            # print("pos={}".format(pos_tagged_words))
+            # print()
+
+            it_pos = iter(pos_tagged_words)
+            for w in words_without_tags:
+                try:
+                    # if "\'" in w and not w.startswith("\'"):
+                    if len(word_tokenize(w)) > 1 and len(w) > 2:
+
+                        next_pos_tagged = next(it_pos)
+
+                        before_apostrophe_tag = next_pos_tagged[1]
+                        next_pos_tagged = next(it_pos)
+                        after_apostrophe_tag = next_pos_tagged[1]
+
+                        # concat tags to create a single cat that will be used for classification
+                        concatenated_tags = before_apostrophe_tag + '_' + after_apostrophe_tag
+                        # print(concatenated_tags)
+                        y.append(concatenated_tags)
+
+                    else:  # ' not in w
+                        tag = next(it_pos)[1]
+                        y.append(tag)
+
+                except StopIteration:
+                    print(num_of_iterations)
+                    break
+
+        else:  # len(tokens) <= len(words_without_tags)
+            for w, tag in pos_tagged_words:
+                y.append(tag)
+
+        assert len(y) == 20, "y of size{} = {}".format(len(y), y)
+
+        print("y of size{} = {}".format(len(y), y))
+        num_of_iterations += 1
+        print(num_of_iterations)
+        yield x, y
 
 
 def _parse_fn(example_proto, seq_len):

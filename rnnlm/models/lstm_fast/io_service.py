@@ -9,6 +9,17 @@ def _words_to_ids(words, vocab):
     return [vocab[word] if word in vocab else vocab["<oos>"] for word in words]
 
 
+def pos_classification(raw_path, seq_len, overlap=False):
+    raw_file = tf.gfile.GFile(raw_path, "r")
+    gen_words = reader.gen_pos_tagger(raw_file, seq_len, overlap)
+
+    while True:
+        try:
+            next(gen_words)
+        except StopIteration:
+            break
+
+
 def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len, overlap=False):
     """
     convert raw data (sentences) into tf records format
