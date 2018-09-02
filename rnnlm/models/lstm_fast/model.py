@@ -1,5 +1,4 @@
 import tensorflow as tf
-import inspect
 
 
 def data_type(hyperparams):
@@ -8,10 +7,7 @@ def data_type(hyperparams):
 
 def lstm_cell(hyperparams):
     """
-    With the latest TensorFlow source code (as of Mar 27, 2017),
-    the BasicLSTMCell will need a reuse parameter which is
-    unfortunately not defined in TensorFlow 1.0. To maintain
-    backwards compatibility, we add an argument check here:
+    Wrapper for BasicLSTMCell creator
 
     Args:
         hyperparams: (Dict2obj)
@@ -19,19 +15,19 @@ def lstm_cell(hyperparams):
     Returns:
         BasicLSTMCell
     """
-    if 'reuse' in inspect.getargspec(
-            tf.nn.rnn_cell.BasicLSTMCell.__init__).args:
-        return tf.nn.rnn_cell.BasicLSTMCell(
-            hyperparams.arch.hidden_layer_size, forget_bias=0.0, state_is_tuple=True,
-            reuse=tf.get_variable_scope().reuse)
-    else:
-        return tf.nn.rnn_cell.BasicLSTMCell(
-            hyperparams.arch.hidden_layer_size, forget_bias=0.0, state_is_tuple=True)
+    return tf.nn.rnn_cell.BasicLSTMCell(
+        num_units=hyperparams.arch.hidden_layer_size,
+        forget_bias=0.0,
+        state_is_tuple=True,
+        reuse=tf.get_variable_scope().reuse
+    )
 
 
 def attn_cell(hyperparams):
     return tf.nn.rnn_cell.DropoutWrapper(
-        lstm_cell(hyperparams), output_keep_prob=hyperparams.arch.keep_prob)
+        cell=lstm_cell(hyperparams),
+        output_keep_prob=hyperparams.arch.keep_prob
+    )
 
 
 def create_model(input_tensor, mode, hyperparams, is_training):
