@@ -7,7 +7,7 @@ def data_type(hyperparams):
     return tf.float16 if hyperparams.train.use_fp16 else tf.float32
 
 
-def create_loss(model, labels, mode, hyperparams):
+def create_loss(model, labels, hyperparams):
     metrics = dict()
     losses = dict()
 

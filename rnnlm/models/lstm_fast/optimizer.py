@@ -1,9 +1,7 @@
 import tensorflow as tf
 
 
-def create_optimizer(model, losses, is_training, hyperparams):
-    if not is_training:
-        return
+def create_optimizer(losses, hyperparams):
 
     _lr = tf.Variable(0.0, trainable=False)
     tvars = tf.trainable_variables()

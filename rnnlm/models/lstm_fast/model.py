@@ -30,14 +30,13 @@ def attn_cell(hyperparams):
     )
 
 
-def create_model(input_tensor, mode, hyperparams, is_training):
+def create_model(input_tensor, mode, hyperparams):
     """
 
     Args:
         input_tensor: (Tensor)
         mode: (tf.estimator.ModeKeys) Can be Train, Eval or Predict
         hyperparams: (Dict2obj)
-        is_training: (bool) TODO - remove dependency
 
     Returns:
         dict were each key (str) is a name of the tensor and value (Tensor) is the tensor in the model
@@ -53,7 +52,7 @@ def create_model(input_tensor, mode, hyperparams, is_training):
         size = hyperparams.arch.hidden_layer_size
         vocab_size = hyperparams.problem.vocab_size
 
-        if is_training and hyperparams.arch.keep_prob < 1:
+        if mode == tf.estimator.ModeKeys.TRAIN and hyperparams.arch.keep_prob < 1:
             cell_func = attn_cell
         else:
             cell_func = lstm_cell
@@ -159,7 +158,7 @@ def create_model(input_tensor, mode, hyperparams, is_training):
         p_word = test_logits[0, 0]
         test_out = tf.identity(p_word, name="test_out")
 
-        if is_training and hyperparams.arch.keep_prob < 1:
+        if mode == tf.estimator.ModeKeys.TRAIN and hyperparams.arch.keep_prob < 1:
             inputs = tf.nn.dropout(inputs, hyperparams.arch.keep_prob)
 
         # Simplified version of models/tutorials/rnn/rnn.py's rnn().

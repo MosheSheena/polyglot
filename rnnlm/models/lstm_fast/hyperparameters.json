@@ -6,7 +6,7 @@
         "validation_examples": 1000,
         "vocab_size": 10000,
         "tf_records_path": "tfrecords",
-        "convert_raw_to_tf_records": true
+        "convert_raw_to_tf_records": false
     },
     "train": {
         "w_init_scale": 0.1,
