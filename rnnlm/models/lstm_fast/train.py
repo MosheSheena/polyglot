@@ -111,24 +111,24 @@ def main():
                                      vocab_path=abs_vocab_path,
                                      seq_len=hyperparams.arch.hidden_layer_depth)
         print("Conversion done.")
+    with tf.Graph().as_default():
+        train_dataset = io_service.load_tf_records(tf_record_path=train_tf_record_path,
+                                                   batch_size=hyperparams.train.batch_size,
+                                                   seq_len=hyperparams.arch.hidden_layer_depth)
 
-    train_dataset = io_service.load_tf_records(tf_record_path=train_tf_record_path,
-                                               batch_size=hyperparams.train.batch_size,
-                                               seq_len=hyperparams.arch.hidden_layer_depth)
+        validation_dataset = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
+                                                        batch_size=hyperparams.train.batch_size,
+                                                        seq_len=hyperparams.arch.hidden_layer_depth)
+        print("Start training")
 
-    validation_dataset = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
-                                                    batch_size=hyperparams.train.batch_size,
-                                                    seq_len=hyperparams.arch.hidden_layer_depth)
-    print("Start training")
+        train_and_evaluate_model(train_dataset=train_dataset,
+                                 validation_dataset=validation_dataset,
+                                 create_model=create_model,
+                                 create_loss=create_loss,
+                                 create_optimizer=create_optimizer,
+                                 hyperparams=hyperparams)
 
-    train_and_evaluate_model(train_dataset=train_dataset,
-                             validation_dataset=validation_dataset,
-                             create_model=create_model,
-                             create_loss=create_loss,
-                             create_optimizer=create_optimizer,
-                             hyperparams=hyperparams)
-
-    print("End training")
+        print("End training")
 
     # with tf.Graph().as_default():
     #

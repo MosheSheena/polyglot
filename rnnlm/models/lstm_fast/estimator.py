@@ -25,13 +25,9 @@ def create_tf_estimator_spec(create_model, create_loss, create_optimizer):
         if mode == tf.estimator.ModeKeys.TRAIN:
             # Create an optimizer
             # TODO - support learning rate change like legacy model did
-            initializer = tf.random_uniform_initializer(-params.train.w_init_scale,
-                                                        params.train.w_init_scale)
-            scaffold = tf.train.Scaffold(init_op=initializer)
             train_op, lr_update_op, current_lr, new_lr = create_optimizer(losses, params)
             return tf.estimator.EstimatorSpec(
-                mode=mode, loss=loss, train_op=train_op, training_hooks=hooks, scaffold=scaffold
-            )
+                mode=mode, loss=loss, train_op=train_op, training_hooks=hooks)
 
         raise RuntimeError(
             "Unexpected mode. mode can be {} or {} or {} but got {}".format(

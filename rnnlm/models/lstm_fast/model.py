@@ -1,4 +1,5 @@
 import tensorflow as tf
+from rnnlm.models.lstm_fast.io_service import load_tf_records
 
 
 def data_type(hyperparams):
@@ -43,7 +44,10 @@ def create_model(input_tensor, mode, hyperparams):
     """
 
     model = dict()
-    with tf.variable_scope("lstm_fast", reuse=tf.AUTO_REUSE) as scope:
+    initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
+                                                hyperparams.train.w_init_scale)
+
+    with tf.variable_scope("lstm_fast", reuse=tf.AUTO_REUSE, initializer=initializer) as scope:
         # if is_training:
         #    scope.reuse_variables()
 
@@ -90,12 +94,14 @@ def create_model(input_tensor, mode, hyperparams):
                 for idx in range(hyperparams.arch.num_hidden_layers)]
         )
 
+        input_tensor2, _ = load_tf_records("tfrecords/train", 64, 20)
+
         with tf.device("/cpu:0"):
             embedding = tf.get_variable(
                 "embedding", [vocab_size, size], dtype=data_type(hyperparams))
 
             inputs = tf.nn.embedding_lookup(embedding,
-                                            input_tensor)
+                                            input_tensor2)
             test_inputs = tf.nn.embedding_lookup(embedding,
                                                  test_word_in)
 
