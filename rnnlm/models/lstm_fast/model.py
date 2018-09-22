@@ -1,5 +1,4 @@
 import tensorflow as tf
-from rnnlm.models.lstm_fast.io_service import load_tf_records
 
 
 def data_type(hyperparams):
@@ -94,14 +93,12 @@ def create_model(input_tensor, mode, hyperparams):
                 for idx in range(hyperparams.arch.num_hidden_layers)]
         )
 
-        input_tensor2, _ = load_tf_records("tfrecords/train", 64, 20)
-
         with tf.device("/cpu:0"):
             embedding = tf.get_variable(
                 "embedding", [vocab_size, size], dtype=data_type(hyperparams))
 
             inputs = tf.nn.embedding_lookup(embedding,
-                                            input_tensor2)
+                                            input_tensor)
             test_inputs = tf.nn.embedding_lookup(embedding,
                                                  test_word_in)
 

@@ -19,7 +19,7 @@ def create_loss(model, labels, hyperparams):
         [tf.reshape(labels, [-1])],
         [tf.ones([batch_size * num_steps], dtype=data_type(hyperparams))],
         softmax_loss_function=new_softmax)
-    _cost = cost = tf.reduce_sum(loss) / batch_size
+    cost = tf.reduce_sum(loss) / batch_size
 
     losses["loss"] = loss
     losses["cost"] = cost

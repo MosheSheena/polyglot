@@ -114,7 +114,8 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
         seq_len (int):
         shuffle (bool):
     Returns:
-        next_op for one shot iterator of the dataset
+        next_op for one shot iterator of the dataset, where each session run op on
+        the returned tensor yields x, y with shape [batch_size, seq_len]
     """
 
     dataset = tf.data.TFRecordDataset(tf_record_path)

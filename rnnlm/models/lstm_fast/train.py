@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+tf.logging.set_verbosity(tf.logging.INFO)
+
 from time import gmtime, strftime
 import time
 import numpy as np
@@ -112,124 +114,17 @@ def main():
                                      seq_len=hyperparams.arch.hidden_layer_depth)
         print("Conversion done.")
     with tf.Graph().as_default():
-        train_dataset = io_service.load_tf_records(tf_record_path=train_tf_record_path,
-                                                   batch_size=hyperparams.train.batch_size,
-                                                   seq_len=hyperparams.arch.hidden_layer_depth)
-
-        validation_dataset = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
-                                                        batch_size=hyperparams.train.batch_size,
-                                                        seq_len=hyperparams.arch.hidden_layer_depth)
         print("Start training")
 
-        train_and_evaluate_model(train_dataset=train_dataset,
-                                 validation_dataset=validation_dataset,
-                                 create_model=create_model,
+        train_and_evaluate_model(create_model=create_model,
                                  create_loss=create_loss,
                                  create_optimizer=create_optimizer,
                                  hyperparams=hyperparams)
 
         print("End training")
-
-    # with tf.Graph().as_default():
-    #
-    #     # TODO - change iterators lines when we remove redundant 3 graphs and implement tf.Estimator
-    #
-    #     # initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
-    #     #                                             hyperparams.train.w_init_scale)
-    #
-    #     with tf.name_scope("Train"):
-    #         with tf.variable_scope("Model", reuse=None, initializer=initializer):
-    #             # each call of session.run(next_iter) returns (x, y)
-    #             # where each one is a tensor of shape [batch_size, seq_len]
-    #             train_dataset = io_service.load_tf_records(tf_record_path=train_tf_record_path,
-    #                                                        batch_size=hyperparams.train.batch_size,
-    #                                                        seq_len=hyperparams.arch.hidden_layer_depth)
-    #
-    #             next_iter_train = train_dataset.make_one_shot_iterator().get_next()
-    #
-    #             training_model = create_model(input_tensor=next_iter_train[0],
-    #                                           mode=None,
-    #                                           hyperparams=hyperparams)
-    #             training_losses, training_metrics = create_loss(model=training_model,
-    #                                                             labels=next_iter_train[1],
-    #                                                             mode=None,
-    #                                                             hyperparams=hyperparams)
-    #             train_op, lr_update_op, current_lr, new_lr = create_optimizer(losses=training_losses,
-    #                                                                           is_training=True,
-    #                                                                           hyperparams=hyperparams)
-    #         tf.summary.scalar("Training Loss", training_losses["cost"])
-    #         tf.summary.scalar("Learning Rate", current_lr)
-    #
-    #     with tf.name_scope("Valid"):
-    #         with tf.variable_scope("Model", reuse=True, initializer=initializer):
-    #             validation_dataset = io_service.load_tf_records(tf_record_path=valid_tf_record_path,
-    #                                                             batch_size=hyperparams.train.batch_size,
-    #                                                             seq_len=hyperparams.arch.hidden_layer_depth)
-    #
-    #             next_iter_valid = validation_dataset.make_one_shot_iterator().get_next()
-    #
-    #             valid_model = create_model(input_tensor=next_iter_valid[0],
-    #                                        mode=None,
-    #                                        hyperparams=hyperparams,
-    #                                        is_training=False)
-    #             valid_losses, valid_metrics = create_loss(model=valid_model,
-    #                                                       labels=next_iter_valid[1],
-    #                                                       mode=None,
-    #                                                       hyperparams=hyperparams)
-    #             create_optimizer(losses=valid_losses, hyperparams=hyperparams)
-    #         tf.summary.scalar("Validation Loss", valid_losses["cost"])
-    #
-    #     with tf.name_scope("Test"):
-    #         with tf.variable_scope("Model", reuse=True, initializer=initializer):
-    #             test_dataset = io_service.load_tf_records(tf_record_path=test_tf_record_path,
-    #                                                       batch_size=hyperparams.train.batch_size,
-    #                                                       seq_len=hyperparams.arch.hidden_layer_depth)
-    #
-    #             next_iter_test = test_dataset.make_one_shot_iterator().get_next()
-    #
-    #             test_model = create_model(input_tensor=next_iter_test[0],
-    #                                       mode=None,
-    #                                       hyperparams=hyperparams,
-    #                                       is_training=False)
-    #             test_losses, test_metrics = create_loss(model=test_model,
-    #                                                     labels=next_iter_test[1],
-    #                                                     mode=None,
-    #                                                     hyperparams=hyperparams)
-    #             create_optimizer(losses=test_losses, hyperparams=hyperparams)
-    #     tf.summary.scalar("Test Loss", test_losses["cost"])
-    #
-    #     with tf.train.MonitoredTrainingSession(checkpoint_dir=abs_save_path) as session:
-    #         for i in range(hyperparams.train.num_epochs):
-    #             lr_decay = hyperparams.train.learning_rate.decay ** max(
-    #                 i + 1 - hyperparams.train.learning_rate.decay_max_factor, 0.0)
-    #             assign_lr(session, lr_update_op, hyperparams.train.learning_rate.start_value * lr_decay, new_lr)
-    #             print("Epoch: %d Learning rate: %.3f" % (i + 1, session.run(current_lr)))
-    #             train_perplexity = run_epoch(session,
-    #                                          training_model,
-    #                                          training_losses,
-    #                                          hyperparams=hyperparams,
-    #                                          epoch_size=hyperparams.train.epoch_size_train,
-    #                                          eval_op=train_op,
-    #                                          verbose=True)
-    #
-    #             print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
-    #             valid_perplexity = run_epoch(session,
-    #                                          valid_model,
-    #                                          valid_losses,
-    #                                          hyperparams=hyperparams,
-    #                                          epoch_size=hyperparams.train.epoch_size_valid)
-    #             print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
-    #
-    #         test_perplexity = run_epoch(session,
-    #                                     test_model,
-    #                                     test_losses,
-    #                                     hyperparams=hyperparams,
-    #                                     epoch_size=hyperparams.train.epoch_size_test)
-    #         print("Test Perplexity: %.3f" % test_perplexity)
-    #         if hyperparams.train.save_path:
-    #             print("Saving model to %s." % abs_save_path)
-    # print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
+    print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
 
 
 if __name__ == "__main__":
+
     main()

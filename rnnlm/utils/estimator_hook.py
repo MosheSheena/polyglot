@@ -3,6 +3,20 @@ import numpy as np
 import time
 
 
+def assign_lr(session, lr_update, lr_value, new_lr):
+    """
+    Assigns a new learning rate
+    Args:
+        session: (tf.Session)
+        lr_update: (Tensor) tf.assign op tensor
+        lr_value: (int) the new value for the learning rate
+        new_lr: (Placeholder) a placeholder for the learning rate
+    Returns:
+        None
+    """
+    session.run(lr_update, feed_dict={new_lr: lr_value})
+
+
 class EstimatorHook(tf.train.SessionRunHook):
     """
     This class allows us to integrate with the tf.estimator class in run time.
@@ -12,7 +26,7 @@ class EstimatorHook(tf.train.SessionRunHook):
     this class contains the logic of the run_epoch method from the legacy model
     """
 
-    def __init__(self, model, losses, hyperparams, verbose=False):
+    def __init__(self, model, losses, hyperparams, mode, verbose=True):
         self.model = model
         self.losses = losses
         self.hyperparams = hyperparams
@@ -21,17 +35,32 @@ class EstimatorHook(tf.train.SessionRunHook):
         self.costs = 0.0
         self.iterations = 0
         self.step = 0
+        self.mode = mode
+        self.state = None
+        self.epoch_counter = 0
 
-        # set the state to the initial state 
-        self.state = self.model["initial_state"]
+    def after_create_session(self, session, coord):
+        if self.mode == tf.estimator.ModeKeys.TRAIN:
+            lr_decay = self.hyperparams.train.learning_rate.decay ** max(
+                self.epoch_counter + 1 - self.hyperparams.train.learning_rate.decay_max_factor, 0.0)
+            assign_lr(session,
+                      self.losses["lr_update_op"],
+                      self.hyperparams.train.learning_rate.start_value * lr_decay,
+                      self.losses["new_lr"])
+            print("Learning rate: {}".format(session.run(self.losses["lr"])))
+
+        # set the state to the initial state
+        self.state = session.run(self.model["initial_state"])
 
     def before_run(self, run_context):
         self.losses["step"] = tf.train.get_global_step()
         fetches = {
-            "initial_state": self.model["initial_state"],
             "cost": self.losses["cost"],
             "final_state": self.model["final_state"]
         }
+
+        # if self.mode == tf.estimator.ModeKeys.TRAIN:
+        #     fetches["train_op"] = self.losses["train_op"]
 
         feed_dict = {}
 
@@ -57,9 +86,13 @@ class EstimatorHook(tf.train.SessionRunHook):
         self.costs += cost
         self.iterations += self.hyperparams.arch.hidden_layer_depth
 
-        if self.verbose and self.step % 10000 == 10:
-            print("%.3f perplexity: %.3f speed: %.0f wps" %
-                  (self.step * 1.0 / self.epoch_size, np.exp(self.costs / self.iterations),
+        if self.verbose and self.step % 100 == 0:
+            print("perplexity: %.3f speed: %.0f wps" %
+                  (np.exp(self.costs / self.iterations),
                    self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)))
 
         self.step += 1
+
+    def end(self, session):
+        self.epoch_counter += 1
+        print("Done {} epochs".format(self.epoch_counter))
