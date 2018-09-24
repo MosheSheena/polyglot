@@ -1,7 +1,7 @@
 import tensorflow as tf
 import os
 
-from rnnlm.utils.estimator_hook import EstimatorHook
+from rnnlm.utils.estimator_hook import EstimatorHook, LearningRateDecayHook
 from rnnlm.models.lstm_fast.io_service import load_tf_records
 
 
@@ -25,8 +25,14 @@ def create_tf_estimator_spec(create_model, create_loss, create_optimizer):
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             # Create an optimizer
-            # TODO - support learning rate change like legacy model did
             train_op, lr_update_op, current_lr, new_lr = create_optimizer(losses, params)
+
+            # Add a hook that decays the learning rate like the legacy model did
+            hooks.append(LearningRateDecayHook(lr_update_op=lr_update_op,
+                                               current_lr=current_lr,
+                                               new_lr=new_lr,
+                                               mode=mode,
+                                               hyperparams=params))
             return tf.estimator.EstimatorSpec(
                 mode=mode, loss=loss, train_op=train_op, training_hooks=hooks)
 
