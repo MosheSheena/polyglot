@@ -105,7 +105,7 @@ def _parse_fn(example_proto, seq_len):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
+def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_first_n=0):
     """
     reads for set of tf record files into a data set
     Args:
@@ -113,6 +113,8 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
         batch_size (int):
         seq_len (int):
         shuffle (bool):
+        skip_first_n (int): Optional num of records to skip at the beginning of the dataset
+            default is 0
     Returns:
         next_op for one shot iterator of the dataset, where each session run op on
         the returned tensor yields x, y with shape [batch_size, seq_len]
@@ -124,8 +126,9 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
     dataset = dataset.batch(batch_size=batch_size)
     if shuffle:
         dataset = dataset.shuffle(buffer_size=10000)
+    dataset = dataset.skip(count=skip_first_n)
     dataset = dataset.prefetch(buffer_size=1)
-    return dataset.make_one_shot_iterator().get_next()
+    return dataset
 
 
 def build_vocab(file_obj):

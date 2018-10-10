@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 
 from rnnlm.utils.estimator_hook import EstimatorHook, LearningRateDecayHook
-from rnnlm.models.lstm_fast.io_service import load_tf_records
+from rnnlm.models.lstm_fast.io_service import load_dataset
 
 
 def create_tf_estimator_spec(create_model, create_loss, create_optimizer):
@@ -51,9 +51,11 @@ def create_tf_estimator_spec(create_model, create_loss, create_optimizer):
 def create_input_fn(tf_record_path, hyperparams):
 
     def input_fn():
-        return load_tf_records(tf_record_path=tf_record_path,
-                               batch_size=hyperparams.train.batch_size,
-                               seq_len=hyperparams.arch.hidden_layer_depth)
+        # use global_step to skip records that were already seen by the model
+        return load_dataset(tf_record_path=tf_record_path,
+                            batch_size=hyperparams.train.batch_size,
+                            seq_len=hyperparams.arch.hidden_layer_depth,
+                            skip_first_n=tf.train.get_global_step())
 
     return input_fn
 
@@ -108,4 +110,3 @@ def train_and_evaluate_model(create_model,
 
     # Train and evaluate
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
-
