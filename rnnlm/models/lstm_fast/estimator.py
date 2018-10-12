@@ -3,9 +3,13 @@ import os
 
 from rnnlm.utils.estimator_hook import EstimatorHook, LearningRateDecayHook
 from rnnlm.models.lstm_fast.io_service import load_dataset
+from collections import defaultdict
+
+# like tf.train.global_step, only per dataset
+dataset_step_counter = defaultdict(int)
 
 
-def create_tf_estimator_spec(create_model, create_loss, create_optimizer):
+def _create_tf_estimator_spec(create_model, create_loss, create_optimizer):
     def my_model_fn(features, labels, mode, params):
 
         # Create a model
@@ -48,16 +52,37 @@ def create_tf_estimator_spec(create_model, create_loss, create_optimizer):
     return my_model_fn
 
 
-def create_input_fn(tf_record_path, hyperparams):
-
+def _create_input_fn(tf_record_path, hyperparams):
     def input_fn():
-        # use global_step to skip records that were already seen by the model
+        """
+        This method is invoke each time we call estimator.train
+        or estimator.eval or estimator.predict, the estimator recreates
+        the tf.data.Dataset that we return here. For each dataset we train,
+        we want to remember how many records we trained it so we can iterate
+        different datasets each epoch or batch. Therefore, we create a dataset
+        step counter for each new dataset that we load, and skip records from
+        reloaded dataset according to it's step.
+        Returns:
+            tf.data.Dataset object representing the dataset
+        """
+        print("path = {}".format(tf_record_path))
+        print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
         return load_dataset(tf_record_path=tf_record_path,
                             batch_size=hyperparams.train.batch_size,
                             seq_len=hyperparams.arch.hidden_layer_depth,
-                            skip_first_n=tf.train.get_global_step())
+                            skip_first_n=dataset_step_counter[tf_record_path])
 
     return input_fn
+
+
+def train_estimator(estimator, dataset, tf_record_path, steps):
+    estimator.train(input_fn=dataset, steps=steps)
+    dataset_step_counter[tf_record_path] += steps
+
+
+def evaluate_estimator(estimator, dataset, tf_record_path, steps):
+    estimator.evaluate(input_fn=dataset, steps=steps)
+    dataset_step_counter[tf_record_path] += steps
 
 
 def train_and_evaluate_model(create_model,
@@ -79,8 +104,6 @@ def train_and_evaluate_model(create_model,
         None
     """
 
-    abs_data_path = os.path.join(os.getcwd(), hyperparams.problem.data_path)
-    abs_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
     abs_save_path = os.path.join(os.getcwd(), hyperparams.train.save_path)
     abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
 
@@ -88,25 +111,29 @@ def train_and_evaluate_model(create_model,
     valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
     test_tf_record_path = os.path.join(abs_tf_record_path, "test.tfrecord")
 
-    train_dataset = create_input_fn(tf_record_path=train_tf_record_path, hyperparams=hyperparams)
-
-    validation_dataset = create_input_fn(tf_record_path=valid_tf_record_path, hyperparams=hyperparams)
+    train_dataset = _create_input_fn(tf_record_path=train_tf_record_path, hyperparams=hyperparams)
+    validation_dataset = _create_input_fn(tf_record_path=valid_tf_record_path, hyperparams=hyperparams)
+    test_dataset = _create_input_fn(tf_record_path=test_tf_record_path, hyperparams=hyperparams)
 
     # Create estimator spec object
-    estimator_spec = create_tf_estimator_spec(create_model, create_loss, create_optimizer)
+    estimator_spec = _create_tf_estimator_spec(create_model, create_loss, create_optimizer)
 
     # Create the estimator itself
-    estimator = tf.estimator.Estimator(model_fn=estimator_spec, params=hyperparams)
+    estimator = tf.estimator.Estimator(model_fn=estimator_spec,
+                                       params=hyperparams)
 
-    # Create train and eval spec
+    for i in range(hyperparams.train.num_epochs):
+        # Train and evaluate
+        train_estimator(estimator=estimator,
+                        dataset=train_dataset,
+                        tf_record_path=train_tf_record_path,
+                        steps=hyperparams.train.epoch_size_train)
+        evaluate_estimator(estimator=estimator,
+                           dataset=validation_dataset,
+                           tf_record_path=valid_tf_record_path,
+                           steps=hyperparams.train.epoch_size_valid)
 
-    # TODO - design the support for multi tasks, make it configurable to receive different input each batch / epoch
-    # we may define the training steps here but it then will create the estimator spec which might
-    # not be necessary, the alternative is to define the dataset to raise OutOfRange depending on epoch size
-    # if we do not define max_steps, the model will train forever on the same dataset
-    train_spec = tf.estimator.TrainSpec(input_fn=train_dataset,
-                                        max_steps=hyperparams.train.epoch_size_train)
-    eval_spec = tf.estimator.EvalSpec(input_fn=validation_dataset)
-
-    # Train and evaluate
-    tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+    evaluate_estimator(estimator=estimator,
+                       dataset=test_dataset,
+                       tf_record_path=test_tf_record_path,
+                       steps=hyperparams.train.epoch_size_test)

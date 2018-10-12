@@ -93,8 +93,6 @@ def create_model(input_tensor, mode, hyperparams):
                 for idx in range(hyperparams.arch.num_hidden_layers)]
         )
 
-        input_tensor = tf.Print(input_=input_tensor, data=[input_tensor])
-
         with tf.device("/cpu:0"):
             embedding = tf.get_variable(
                 "embedding", [vocab_size, size], dtype=data_type(hyperparams))

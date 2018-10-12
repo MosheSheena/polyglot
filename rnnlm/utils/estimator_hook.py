@@ -36,9 +36,6 @@ class EstimatorHook(tf.train.SessionRunHook):
             "final_state": self.model["final_state"]
         }
 
-        # if self.mode == tf.estimator.ModeKeys.TRAIN:
-        #     fetches["train_op"] = self.losses["train_op"]
-
         feed_dict = {}
 
         # update the feed_dict for the current state
@@ -64,8 +61,8 @@ class EstimatorHook(tf.train.SessionRunHook):
         self.iterations += self.hyperparams.arch.hidden_layer_depth
 
         if self.verbose and self.step % 100 == 0:
-            print("perplexity: %.3f speed: %.0f wps" %
-                  (np.exp(self.costs / self.iterations),
+            print("mode: %s perplexity: %.3f speed: %.0f wps" %
+                  (self.mode, np.exp(self.costs / self.iterations),
                    self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)))
 
         self.step += 1
