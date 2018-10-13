@@ -39,5 +39,8 @@ def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len, overlap=Fal
                             preprocessor_label_params=packed_vocab)
 
 
-def load_tf_records(tf_record_path, batch_size, seq_len):
-    return reader.read_tf_records(tf_record_path=tf_record_path, batch_size=batch_size, seq_len=seq_len)
+def load_dataset(tf_record_path, batch_size, seq_len, skip_first_n=0):
+    return reader.read_tf_records(tf_record_path=tf_record_path,
+                                  batch_size=batch_size,
+                                  seq_len=seq_len,
+                                  skip_first_n=skip_first_n)

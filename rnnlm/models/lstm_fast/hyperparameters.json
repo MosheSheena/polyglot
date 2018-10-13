@@ -6,7 +6,7 @@
         "validation_examples": 1000,
         "vocab_size": 10000,
         "tf_records_path": "tfrecords",
-        "convert_raw_to_tf_records": true
+        "convert_raw_to_tf_records": false
     },
     "train": {
         "w_init_scale": 0.1,
@@ -23,9 +23,9 @@
         "batch_size": 64,
         "validation_batch_size": 200,
         "num_epochs": 20,
-        "epoch_size_train": 12913,
-        "epoch_size_valid": 1319,
-        "epoch_size_test": 1598,
+        "epoch_size_train": 646,
+        "epoch_size_valid": 65,
+        "epoch_size_test": 78,
         "summary_steps": 100,
         "save_checkpoint_steps": 200,
         "keep_checkpoint_max": 200,
