@@ -1,11 +1,9 @@
 import tensorflow as tf
 
 
-def create_optimizer(model, losses, is_training, hyperparams):
-    if not is_training:
-        return
+def create_optimizer(losses, hyperparams):
 
-    _lr = tf.Variable(0.0, trainable=False)
+    _lr = tf.Variable(hyperparams.train.learning_rate.start_value, trainable=False)
     tvars = tf.trainable_variables()
     grads, _ = tf.clip_by_global_norm(tf.gradients(losses["cost"], tvars),
                                       hyperparams.train.max_grad_norm)

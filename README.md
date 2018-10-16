@@ -4,8 +4,7 @@ Bsc SW Eng. degree final project - improving performance for an RNN based LSTM l
 ## Dependancies
 Install the following:
 ```shell
-source ~/tensorflow/bin/activate
-pip install tensorflow
+source ~/tensorflow/bin/activate  # activate venv
 pip install jsmin
 pip install numpy
 ```
@@ -19,6 +18,6 @@ python main.py
 
 ## Assumptions
 we assume of the following:
-1. Your vocab file fits in memory (train, test and validation is unlimited)
+1. Your vocab file fits in memory (train, test and validation datasets are unlimited)
 2. We need the num batches of each {train, test, validation} to be inserted into hyperparameters.json
 this is due to the fact that tf.data.Dataset loads in mini batches your data without taking into how much data there is. This might be removed when we implement tf.data better maybe when itegrating with tf.estimator api.

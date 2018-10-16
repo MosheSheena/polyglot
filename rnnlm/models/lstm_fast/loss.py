@@ -7,7 +7,7 @@ def data_type(hyperparams):
     return tf.float16 if hyperparams.train.use_fp16 else tf.float32
 
 
-def create_loss(model, labels, mode, hyperparams):
+def create_loss(model, labels, hyperparams):
     metrics = dict()
     losses = dict()
 
@@ -19,7 +19,7 @@ def create_loss(model, labels, mode, hyperparams):
         [tf.reshape(labels, [-1])],
         [tf.ones([batch_size * num_steps], dtype=data_type(hyperparams))],
         softmax_loss_function=new_softmax)
-    _cost = cost = tf.reduce_sum(loss) / batch_size
+    cost = tf.reduce_sum(loss) / batch_size
 
     losses["loss"] = loss
     losses["cost"] = cost
