@@ -1,9 +1,9 @@
+"""Utilities for parsing RNNLM files."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-import csv
 from nltk import word_tokenize, pos_tag
 from collections import defaultdict
 
@@ -121,7 +121,7 @@ def gen_pos_tagger(file_obj, seq_len, overlap=False):
 
         # the features are the words
         x = words_without_tags
-        if len(x) < seq_len:
+        if len(x) < seq_len:  # we have reached end of dataset file
             print("num of diff tags = {}".format(len(count_diff_tags)))
             print("tags = {}".format(count_diff_tags))
             csv_file.close()
@@ -131,37 +131,12 @@ def gen_pos_tagger(file_obj, seq_len, overlap=False):
 
         words_str = " ".join(words_without_tags)
         tokens = word_tokenize(words_str)
+        # It's easier just to set the tokens as the features
+        x = tokens
         pos_tagged_words = pos_tag(tokens)
-
-        if len(pos_tagged_words) > len(words_without_tags):  # then we have some words that got more than one tag
-
-            it_pos = iter(pos_tagged_words)
-            for w in words_without_tags:
-                if len(word_tokenize(w)) > 1 and len(w) > 2:
-
-                    next_pos_tagged = next(it_pos)
-
-                    before_apostrophe_tag = next_pos_tagged[1]
-                    next_pos_tagged = next(it_pos)
-                    after_apostrophe_tag = next_pos_tagged[1]
-
-                    # concat tags to create a single cat that will be used for classification
-                    tag = before_apostrophe_tag + '_' + after_apostrophe_tag
-
-                else:
-                    tag = next(it_pos)[1]
-
-                csv_file.write("{},{}\n".format(w, tag))
-                y.append(tag)
-                count_diff_tags[tag] += 1
-
-        else:  # len(tokens) <= len(words_without_tags)
-            for w, tag in pos_tagged_words:
-                csv_file.write("{},{}\n".format(w, tag))
-                y.append(tag)
-                count_diff_tags[tag] += 1
-
-        assert len(y) == 20, "y of size{} = {}".format(len(y), y)
+        for w, w_tag in pos_tagged_words:
+            y.append(w_tag)
+            count_diff_tags[w_tag] += 1
 
         num_of_iterations += 1
         yield x, y
@@ -186,16 +161,19 @@ def _parse_fn(example_proto, seq_len):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
+def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_first_n=0):
     """
-    reads tf record file into a data set
+    reads for set of tf record files into a data set
     Args:
         tf_record_path (str): where to load the tf record file from
         batch_size (int):
         seq_len (int):
         shuffle (bool):
+        skip_first_n (int): Optional num of records to skip at the beginning of the dataset
+            default is 0
     Returns:
-        next_op for one shot iterator of the dataset
+        next_op for one shot iterator of the dataset, where each session run op on
+        the returned tensor yields x, y with shape [batch_size, seq_len]
     """
 
     dataset = tf.data.TFRecordDataset(tf_record_path)
@@ -204,8 +182,9 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False):
     dataset = dataset.batch(batch_size=batch_size)
     if shuffle:
         dataset = dataset.shuffle(buffer_size=10000)
+    dataset = dataset.skip(count=skip_first_n)
     dataset = dataset.prefetch(buffer_size=1)
-    return dataset.make_one_shot_iterator().get_next()
+    return dataset
 
 
 def build_vocab(file_obj):
