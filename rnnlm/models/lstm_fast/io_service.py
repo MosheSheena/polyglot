@@ -39,26 +39,35 @@ def raw_to_tf_records(raw_path, tf_record_path, vocab_path, seq_len, overlap=Fal
     Returns:
         None
     """
-    raw_file = tf.gfile.GFile(raw_path, "r")
-    vocab_file = tf.gfile.GFile(vocab_path, "r")
-    vocab = reader.build_vocab(vocab_file)
+    with tf.gfile.GFile(vocab_path, 'r') as vocab_file:
+        vocab = reader.build_vocab(vocab_file)
     packed_vocab = [vocab]
 
-    if overlap:
-        gen_words = reader.gen_shifted_words_with_overlap(file_obj=raw_file, seq_len=seq_len)
-    else:
-        gen_words = reader.gen_no_overlap_words(file_obj=raw_file, seq_len=seq_len)
+    with tf.gfile.GFile(raw_path, 'r') as raw_file:
 
-    writer.write_tf_records(gen_words=gen_words,
-                            destination_path=tf_record_path,
-                            preprocessor_feature_fn=_words_to_ids,
-                            preprocessor_feature_params=packed_vocab,
-                            preprocessor_label_fn=_words_to_ids,
-                            preprocessor_label_params=packed_vocab)
+        if overlap:
+            gen_words = reader.gen_shifted_words_with_overlap(file_obj=raw_file, seq_len=seq_len)
+        else:
+            gen_words = reader.gen_no_overlap_words(file_obj=raw_file, seq_len=seq_len)
+
+        writer.write_tf_records(gen_words=gen_words,
+                                destination_path=tf_record_path,
+                                preprocessor_feature_fn=_words_to_ids,
+                                preprocessor_feature_params=packed_vocab,
+                                preprocessor_label_fn=_words_to_ids,
+                                preprocessor_label_params=packed_vocab)
 
 
 def load_dataset(tf_record_path, batch_size, seq_len, skip_first_n=0):
     return reader.read_tf_records(tf_record_path=tf_record_path,
                                   batch_size=batch_size,
                                   seq_len=seq_len,
-                                  skip_first_n=skip_first_n)
+                                  skip_first_n=skip_first_n,
+                                  dtype_features=tf.int64,
+                                  dtype_labels=tf.int64)
+
+
+def create_pos_dataset(raw_path, seq_len, output_file):
+    with tf.gfile.GFile(raw_path, 'r') as raw_file:
+        gen_words = reader.gen_no_overlap_words(file_obj=raw_file, seq_len=seq_len)
+        writer.create_pos_dataset(output_file=output_file, gen_words=gen_words)

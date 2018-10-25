@@ -4,8 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from nltk import word_tokenize, pos_tag
-from collections import defaultdict
 
 READ_ENTIRE_FILE_MODE = -1
 
@@ -105,69 +103,41 @@ def gen_pos_tagger(file_obj, seq_len, overlap=False):
     """
 
     gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=overlap)
-    num_of_iterations = 0
-    count_diff_tags = defaultdict(int)
-    csv_file = open("pos.csv", 'a+')
-    csv_file.write("x,y\n")
-    for words_list in gen_words:
-        words_without_tags = list()
 
-        # deal with special tags such as <oos>, <unk> and </s>
-        # chars like < and > messes with the tagging therefore they are removed
-        for w in words_list:
-            if w.startswith('<') and w.endswith('>'):
-                w = w[1:-1]
-            words_without_tags.append(w)
-
-        # the features are the words
-        x = words_without_tags
-        if len(x) < seq_len:  # we have reached end of dataset file
-            print("num of diff tags = {}".format(len(count_diff_tags)))
-            print("tags = {}".format(count_diff_tags))
-            csv_file.close()
-            raise StopIteration
-        # the labels are the pos tags of those words
-        y = list()
-
-        words_str = " ".join(words_without_tags)
-        tokens = word_tokenize(words_str)
-        # It's easier just to set the tokens as the features
-        x = tokens
-        pos_tagged_words = pos_tag(tokens)
-        for w, w_tag in pos_tagged_words:
-            y.append(w_tag)
-            count_diff_tags[w_tag] += 1
-
-        num_of_iterations += 1
-        yield x, y
+        # yield x, y
 
 
-def _parse_fn(example_proto, seq_len):
+def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
     """
     Parses a single example from tf record files into Tensor or SparseTensor
 
     Args:
         example_proto: (tf.train.Example) example from tf record file
+        seq_len (int):
+        dtype_features (tf.DType): should match to what was wrote to tf records
+        dtype_labels (tf.DType): should match to what was wrote to tf records
 
     Returns:
         if tf.FixedLenFeature -> return Tensor
         if tf.VarLenFeature -> return SparseTensor
     """
     read_features = {
-        "x": tf.FixedLenFeature(shape=[seq_len], dtype=tf.int64),
-        "y": tf.FixedLenFeature(shape=[seq_len], dtype=tf.int64),
+        "x": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_features),
+        "y": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_labels),
     }
     parsed_features = tf.parse_single_example(example_proto, read_features)
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_first_n=0):
+def read_tf_records(tf_record_path, batch_size, seq_len, dtype_features, dtype_labels, shuffle=False, skip_first_n=0):
     """
     reads for set of tf record files into a data set
     Args:
         tf_record_path (str): where to load the tf record file from
         batch_size (int):
         seq_len (int):
+        dtype_features (tf.DType): should match to what was wrote to tf records
+        dtype_labels(tf.DType): should match to what was wrote to tf records
         shuffle (bool):
         skip_first_n (int): Optional num of records to skip at the beginning of the dataset
             default is 0
@@ -177,7 +147,10 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_fir
     """
 
     dataset = tf.data.TFRecordDataset(tf_record_path)
-    dataset = dataset.map(lambda x: _parse_fn(x, seq_len), num_parallel_calls=4)  # parse into tensors
+    dataset = dataset.map(
+        lambda x: _parse_fn(x, seq_len, dtype_features, dtype_labels),
+        num_parallel_calls=4
+    )  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
     if shuffle:
