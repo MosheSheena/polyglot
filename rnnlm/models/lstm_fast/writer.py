@@ -1,4 +1,5 @@
 import tensorflow as tf
+import rnnlm.utils.pos as pos
 
 
 def _int64_feature_wrap(int_values):
@@ -12,6 +13,14 @@ def _int64_feature_wrap(int_values):
         (tf.train.Feature)
     """
     return tf.train.Feature(int64_list=tf.train.Int64List(value=int_values))
+
+
+def _float64_feature_wrap(float_values):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=float_values))
+
+
+def _bytes_feature_wrap(bytes_values):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=bytes_values))
 
 
 def write_tf_records(gen_words,
@@ -54,3 +63,7 @@ def write_tf_records(gen_words,
             example = tf.train.Example(features=words)
 
             writer.write(example.SerializeToString())
+
+
+def create_pos_dataset(output_file, gen_words):
+    pos.create_pos_dataset(output_file, gen_words)

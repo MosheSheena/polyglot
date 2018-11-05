@@ -86,32 +86,58 @@ def gen_no_overlap_words(file_obj, seq_len):
             break
 
 
-def _parse_fn(example_proto, seq_len):
+def gen_pos_tagger(file_obj, seq_len, overlap=False):
+    """
+    Each call to this generator generates a tuple of x, y
+    where x is list of words with a list size of seq_len
+    and y is a list of part-of-speech tags of the words
+    in x accordingly.
+    Args:
+        file_obj: opened file of raw data
+        seq_len: the length of how much we will read from the
+            file in each generation
+        overlap: whether to generate with overlaps or not
+
+    Returns:
+
+    """
+
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=overlap)
+
+        # yield x, y
+
+
+def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
     """
     Parses a single example from tf record files into Tensor or SparseTensor
 
     Args:
         example_proto: (tf.train.Example) example from tf record file
+        seq_len (int):
+        dtype_features (tf.DType): should match to what was wrote to tf records
+        dtype_labels (tf.DType): should match to what was wrote to tf records
 
     Returns:
         if tf.FixedLenFeature -> return Tensor
         if tf.VarLenFeature -> return SparseTensor
     """
     read_features = {
-        "x": tf.FixedLenFeature(shape=[seq_len], dtype=tf.int64),
-        "y": tf.FixedLenFeature(shape=[seq_len], dtype=tf.int64),
+        "x": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_features),
+        "y": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_labels),
     }
     parsed_features = tf.parse_single_example(example_proto, read_features)
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_first_n=0):
+def read_tf_records(tf_record_path, batch_size, seq_len, dtype_features, dtype_labels, shuffle=False, skip_first_n=0):
     """
     reads for set of tf record files into a data set
     Args:
         tf_record_path (str): where to load the tf record file from
         batch_size (int):
         seq_len (int):
+        dtype_features (tf.DType): should match to what was wrote to tf records
+        dtype_labels(tf.DType): should match to what was wrote to tf records
         shuffle (bool):
         skip_first_n (int): Optional num of records to skip at the beginning of the dataset
             default is 0
@@ -121,7 +147,10 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_fir
     """
 
     dataset = tf.data.TFRecordDataset(tf_record_path)
-    dataset = dataset.map(lambda x: _parse_fn(x, seq_len), num_parallel_calls=4)  # parse into tensors
+    dataset = dataset.map(
+        lambda x: _parse_fn(x, seq_len, dtype_features, dtype_labels),
+        num_parallel_calls=4
+    )  # parse into tensors
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
     if shuffle:
