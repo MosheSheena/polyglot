@@ -132,7 +132,14 @@ def read_tf_records(tf_record_path, batch_size, seq_len, shuffle=False, skip_fir
 
 
 def build_vocab(file_obj):
-    gen_words = _read_n_shifted_words_gen(file_obj, READ_ENTIRE_FILE_MODE)
+    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
     words = next(gen_words)
     word_to_id = dict(zip(words, range(len(words))))
     return word_to_id
+
+
+def build_pos_vocab(file_obj):
+    gen_tags = _read_n_shifted_words_gen(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
+    pos_tags = next(gen_tags)
+    tag_to_id = dict(zip(pos_tags, range(len(pos_tags))))
+    return tag_to_id

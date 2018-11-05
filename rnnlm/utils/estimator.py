@@ -1,5 +1,4 @@
 import tensorflow as tf
-import os
 
 from rnnlm.utils.estimator_hook import EstimatorHook, LearningRateDecayHook
 from rnnlm.models.lstm_fast.io_service import load_dataset
@@ -88,28 +87,29 @@ def evaluate_estimator(estimator, dataset, tf_record_path, steps):
 def train_and_evaluate_model(create_model,
                              create_loss,
                              create_optimizer,
-                             hyperparams):
+                             hyperparams,
+                             train_tf_record_path,
+                             valid_tf_record_path,
+                             test_tf_record_path):
     """
     Invoke tf.estimator with the passed args
 
     Args:
-        create_model: a function that creates the model, the function arguments must be (features, mode, params)
+        create_model (func): creates the model, the function arguments must be (features, mode, params)
             where feature is the input_fn (in our case the input pipeline from tf.data) mode is an instance of
             tf.estimator.ModeKeys and params is a dict containing hyperparams used in model
-        create_loss:
-        create_optimizer:
-        hyperparams:
+        create_loss (func): defines the loss, receives as args the model in a dict from create model,
+            the labels and hyperparams. Must return a dict containing key 'cost' the is the loss as a scalar
+        create_optimizer (func): defines the optimizer, receives as args the loss dict from create loss and hyperparams.
+            Returns the train_op
+        hyperparams (Dict2Obj): contains the hyperparams configuration
+        train_tf_record_path (str): full path of train data in tf record format
+        valid_tf_record_path (str): full path of valid data in tf record format
+        test_tf_record_path (str): full path of test data in tf record format
 
     Returns:
         None
     """
-
-    abs_save_path = os.path.join(os.getcwd(), hyperparams.train.save_path)
-    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
-
-    train_tf_record_path = os.path.join(abs_tf_record_path, "train.tfrecord")
-    valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
-    test_tf_record_path = os.path.join(abs_tf_record_path, "test.tfrecord")
 
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path, hyperparams=hyperparams)
     validation_dataset = _create_input_fn(tf_record_path=valid_tf_record_path, hyperparams=hyperparams)
