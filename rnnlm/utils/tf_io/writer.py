@@ -32,13 +32,13 @@ def write_tf_records(gen_words,
     """
     Writes the data in a tf record format
     Args:
-        gen_words: (generator) each call to next(gen_word) will yield a tuple of x, y
-        destination_path: (str) where to write the tf records files
-        preprocessor_feature_fn: (func) (optional) preprocessor function for feature before writing
-        preprocessor_feature_params: (args) (optional) MUST BE PACKED! for preprocessor function, this will be unpacked
+        gen_words (generator):  each call to next(gen_word) will yield a tuple of x, y
+        destination_path (str): where to write the tf records files
+        preprocessor_feature_fn (func):  preprocessor function for feature before writing
+        preprocessor_feature_params (args): for preprocessor function, this will be unpacked
         like this fn(x_feature, unpacked_args)
-        preprocessor_label_fn: (func) (optional) preprocessor function for label before writing
-        preprocessor_label_params: (args) MUST BE PACKED! or preprocessor function, this will be unpacked
+        preprocessor_label_fn (func):  preprocessor function for label before writing
+        preprocessor_label_params (args): for preprocessor function, this will be unpacked
         like this fn(y_label, unpacked_args)
     Returns:
         None
@@ -66,4 +66,4 @@ def write_tf_records(gen_words,
 
 
 def create_pos_dataset(output_file, gen_words):
-    pos.create_pos_dataset(output_file, gen_words)
+    pos.gen_pos_dataset(output_file, gen_words)

@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from rnnlm.utils.estimator_hook import EstimatorHook, LearningRateDecayHook
-from rnnlm.models.lstm_fast.io_service import load_dataset
+from rnnlm.utils.tf_io.io_service import load_dataset
 from collections import defaultdict
 
 # like tf.train.global_step, only per dataset
@@ -66,7 +66,7 @@ def _create_input_fn(tf_record_path, hyperparams):
         """
         print("path = {}".format(tf_record_path))
         print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
-        return load_dataset(tf_record_path=tf_record_path,
+        return load_dataset(abs_tf_record_path=tf_record_path,
                             batch_size=hyperparams.train.batch_size,
                             seq_len=hyperparams.arch.hidden_layer_depth,
                             skip_first_n=dataset_step_counter[tf_record_path])

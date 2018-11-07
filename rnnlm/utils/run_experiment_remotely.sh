@@ -29,6 +29,9 @@ gcloud compute scp --recurse $current_dir/rnnlm $INSTANCE_NAME:remote_project_di
 echo -e "copying $current_dir/main.py"
 gcloud compute scp --recurse $current_dir/main.py $INSTANCE_NAME:remote_project_dir/Bsc-Final-Project
 
+echo -e "waiting 10 seconds for machine to boot"
+sleep 10s
+
 echo -e "starting experiment\n"
 gcloud compute ssh $INSTANCE_NAME --command="chmod +x ~/remote_project_dir/Bsc-Final-Project/rnnlm/utils/experiment_local_runners/start_experiment.sh && ~/remote_project_dir/Bsc-Final-Project/rnnlm/utils/experiment_local_runners/start_experiment.sh"
 echo -e "Experiment done.\n"

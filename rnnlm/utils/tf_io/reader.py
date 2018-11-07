@@ -5,10 +5,12 @@ from __future__ import print_function
 
 import tensorflow as tf
 
+from rnnlm.utils.pos import gen_pos_dataset
+
 READ_ENTIRE_FILE_MODE = -1
 
 
-def _read_n_shifted_words_gen(file_obj, n, overlap=False):
+def _gen_read_n_shifted_elements(file_obj, n, overlap=False):
     """
     Generator function that reads n words each time from file.
     Each yield contains a list of words shifted by 1
@@ -43,20 +45,17 @@ def _read_n_shifted_words_gen(file_obj, n, overlap=False):
                         n_words.clear()
 
         # take care of the remainder of num_words % n
-        if len(n_words) % n != 0:
-            yield n_words
+        # if len(n_words) % n != 0:
+        #     yield n_words
 
 
 def gen_shifted_words_with_overlap(file_obj, seq_len):
 
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=True)
+    gen_words = _gen_read_n_shifted_elements(file_obj=file_obj, n=seq_len, overlap=True)
     x = next(gen_words)
     y = next(gen_words)
     while True:
         try:
-            if x[1:] != y[:-1] or len(x) != len(y):
-                raise StopIteration  # ignore remainder that is less than the sequence length
-
             yield (x, y)
             # x = y since the words are shifted by 1 in time
             x = y
@@ -68,7 +67,7 @@ def gen_shifted_words_with_overlap(file_obj, seq_len):
 
 def gen_no_overlap_words(file_obj, seq_len):
 
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=False)
+    gen_words = _gen_read_n_shifted_elements(file_obj=file_obj, n=seq_len, overlap=False)
 
     accumulator = next(gen_words)
     while True:
@@ -76,10 +75,6 @@ def gen_no_overlap_words(file_obj, seq_len):
             x = accumulator
             accumulator = next(gen_words)
             y = x[1:] + [accumulator[0]]
-
-            if x[1:] != y[:-1] or len(x) != len(y):
-                raise StopIteration  # ignore remainder that is less than the sequence length
-
             yield (x, y)
 
         except StopIteration:
@@ -93,7 +88,7 @@ def gen_pos_tagger(file_obj, seq_len, overlap=False):
     and y is a list of part-of-speech tags of the words
     in x accordingly.
     Args:
-        file_obj: opened file of raw data
+        file_obj: opened file of raw data, we  a
         seq_len: the length of how much we will read from the
             file in each generation
         overlap: whether to generate with overlaps or not
@@ -102,9 +97,17 @@ def gen_pos_tagger(file_obj, seq_len, overlap=False):
 
     """
 
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=seq_len, overlap=overlap)
+    gen_words = _gen_read_n_shifted_elements(file_obj=file_obj, n=seq_len, overlap=overlap)
+    words = list()
+    tags = list()
+    for word, tag in gen_pos_dataset(gen_words):
 
-        # yield x, y
+        words.append(word)
+        tags.append(tag)
+        if len(words) == seq_len:
+            yield words, tags
+            words.clear()
+            tags.clear()
 
 
 def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
@@ -129,24 +132,23 @@ def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(tf_record_path, batch_size, seq_len, dtype_features, dtype_labels, shuffle=False, skip_first_n=0):
+def read_tf_records(abs_tf_record_path, batch_size, seq_len, dtype_features, dtype_labels, shuffle=False, skip_first_n=0):
     """
     reads for set of tf record files into a data set
     Args:
-        tf_record_path (str): where to load the tf record file from
+        abs_tf_record_path (str): absolute path to load the tf record file from
         batch_size (int):
         seq_len (int):
         dtype_features (tf.DType): should match to what was wrote to tf records
         dtype_labels(tf.DType): should match to what was wrote to tf records
-        shuffle (bool):
+        shuffle (bool): whether to shuffle or not
         skip_first_n (int): Optional num of records to skip at the beginning of the dataset
             default is 0
     Returns:
-        next_op for one shot iterator of the dataset, where each session run op on
-        the returned tensor yields x, y with shape [batch_size, seq_len]
+        tf.data.TFRecordDataset, an object representing our dataset.
     """
 
-    dataset = tf.data.TFRecordDataset(tf_record_path)
+    dataset = tf.data.TFRecordDataset(abs_tf_record_path)
     dataset = dataset.map(
         lambda x: _parse_fn(x, seq_len, dtype_features, dtype_labels),
         num_parallel_calls=4
@@ -160,15 +162,16 @@ def read_tf_records(tf_record_path, batch_size, seq_len, dtype_features, dtype_l
     return dataset
 
 
-def build_vocab(file_obj):
-    gen_words = _read_n_shifted_words_gen(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
-    words = next(gen_words)
-    word_to_id = dict(zip(words, range(len(words))))
-    return word_to_id
+def read_and_build_vocab(file_obj):
+    """
+    Create a mapping for each element of the vocab to its ID.
+    Args:
+        file_obj: Opened vocab file
 
-
-def build_pos_vocab(file_obj):
-    gen_tags = _read_n_shifted_words_gen(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
-    pos_tags = next(gen_tags)
-    tag_to_id = dict(zip(pos_tags, range(len(pos_tags))))
-    return tag_to_id
+    Returns:
+        dict that maps elements to its ID
+    """
+    gen_elements = _gen_read_n_shifted_elements(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
+    elements = next(gen_elements)
+    element_to_id = dict(zip(elements, range(len(elements))))
+    return element_to_id

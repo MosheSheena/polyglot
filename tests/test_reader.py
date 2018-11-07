@@ -1,11 +1,11 @@
 import unittest
-from rnnlm.models.lstm_fast import reader
+from rnnlm.utils.tf_io import reader
 
 
 class TestReader(unittest.TestCase):
 
     def test_read_n_shifted_words(self):
-        read_n = reader._read_n_shifted_words_gen
+        read_n = reader._gen_read_n_shifted_elements
         self.assertEqual(list(read_n([], 2, overlap=True)), [])
         self.assertEqual(list(read_n(['1', '2', '3', '4'], 2, overlap=True)),
                          [['1', '2'], ['2', '3'], ['3', '4'], ['4']])
@@ -27,7 +27,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(list(shifted_w(['1', '2'], 0)), [])
 
     def test_read_n_no_overlap(self):
-        read_n = reader._read_n_shifted_words_gen
+        read_n = reader._gen_read_n_shifted_elements
         self.assertEqual(list(read_n([], 2, overlap=False)), [])
         self.assertEqual(list(read_n(['1', '2', '3', '4'], 2, overlap=False)),
                          [['1', '2'], ['3', '4']])
