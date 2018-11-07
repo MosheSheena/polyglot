@@ -3,7 +3,7 @@ import tensorflow as tf
 from rnnlm.utils.tf_io import reader, writer
 
 
-def raw_to_tf_records(gen_data,
+def raw_to_tf_records(gen_raw_data,
                       abs_tf_record_path,
                       preprocessor_feature_fn=None,
                       preprocessor_feature_params=None,
@@ -12,7 +12,7 @@ def raw_to_tf_records(gen_data,
     """
     convert raw data (sentences) into tf records format
     Args:
-        gen_data (generator): function that defines how to iterate the data
+        gen_raw_data (generator): function that defines how to iterate the data
         abs_tf_record_path (str): absolute path to tfrecord file of the data
         preprocessor_feature_fn (func): returns the preprocessed tensor
         preprocessor_feature_params (args*): additional args for preprocessor_feature_fn besides
@@ -25,7 +25,7 @@ def raw_to_tf_records(gen_data,
         None
     """
 
-    writer.write_tf_records(gen_words=gen_data,
+    writer.write_tf_records(gen_words=gen_raw_data,
                             destination_path=abs_tf_record_path,
                             preprocessor_feature_fn=preprocessor_feature_fn,
                             preprocessor_feature_params=preprocessor_feature_params,

@@ -1,0 +1,12 @@
+train:
+num of diff tags = 36
+tags = defaultdict(<class 'int'>, {'NNP': 677844, 'PRP': 21308, 'VBP': 27129, 'WP': 1282, 'MD': 3233, 'VB': 10440, 'DT': 9666, 'VBD': 6937, "''": 67, 'CC': 3557, 'EX': 225, 'RB': 5966, 'VBZ': 19942, 'NN': 20598, 'POS': 8056, 'JJ': 12839, 'IN': 20249, 'CD': 1522, 'NNS': 1909, 'JJR': 467, 'VBG': 889, 'VBN': 1322, '.': 852, 'UH': 753, 'WRB': 294, 'RBR': 97, 'RP': 310, 'WDT': 348, 'NNPS': 217, 'PDT': 287, 'JJS': 98, 'PRP$': 395, 'TO': 261, 'FW': 51, 'RBS': 31, 'LS': 5})
+valid:
+num of diff tags = 35
+tags = defaultdict(<class 'int'>, {'NN': 2176, 'NNP': 69037, 'IN': 2125, 'VBP': 2787, 'POS': 775, 'VBZ': 2016, 'VB': 1112, 'CC': 332, 'NNS': 223, 'VBN': 133, 'DT': 991, 'PRP': 2127, 'RB': 649, 'MD': 407, 'VBD': 669, 'WP': 108, 'JJ': 1306, 'VBG': 77, 'JJR': 46, 'CD': 180, '.': 102, 'WDT': 29, 'WRB': 28, 'NNPS': 20, 'UH': 67, 'TO': 27, 'PDT': 33, 'PRP$': 55, 'RBR': 9, 'EX': 22, 'JJS': 8, 'RP': 30, "''": 3, 'FW': 10, 'RBS': 2})
+test:
+num of diff tags = 36
+tags = defaultdict(<class 'int'>, {'VB': 1343, 'NNP': 85974, 'IN': 2303, 'JJ': 854, 'POS': 992, 'NN': 2038, 'VBZ': 2361, 'VBP': 3045, 'PRP': 2507, 'RB': 772, 'RBR': 6, 'VBD': 937, 'UH': 114, 'CC': 463, 'WP': 161, 'NNS': 214, 'DT': 1215, 'WDT': 43, 'MD': 423, 'VBN': 169, 'CD': 182, 'VBG': 95, '.': 93, 'PRP$': 52, "''": 8, 'JJR': 41, 'RP': 44, 'WRB': 38, 'TO': 22, 'PDT': 32, 'NNPS': 24, 'EX': 29, 'LS': 1, 'JJS': 9, 'FW': 7, 'RBS': 3})
+
+total 36:
+total_tags = {'NNP': 85974, 'PRP': 2507, 'VBP': 3045, 'WP': 161, 'MD': 423, 'VB': 1343, 'DT': 1215, 'VBD': 937, "''": 8, 'CC': 463, 'EX': 29, 'RB': 772, 'VBZ': 2361, 'NN': 2038, 'POS': 992, 'JJ': 854, 'IN': 2303, 'CD': 182, 'NNS': 214, 'JJR': 41, 'VBG': 95, 'VBN': 169, '.': 93, 'UH': 114, 'WRB': 38, 'RBR': 6, 'RP': 44, 'WDT': 43, 'NNPS': 24, 'PDT': 32, 'JJS': 9, 'PRP$': 52, 'TO': 22, 'FW': 7, 'RBS': 3, 'LS': 1}

@@ -44,7 +44,7 @@ def gen_pos_dataset(gen_words):
     num_of_iterations = 0
     count_diff_tags = defaultdict(int)
 
-    for words_list, _ in gen_words:
+    for words_list in gen_words:
 
         words_without_tags = get_words_without_tags(words_list)
         words_str = " ".join(words_without_tags)

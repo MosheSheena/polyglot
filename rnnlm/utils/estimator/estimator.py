@@ -90,7 +90,8 @@ def train_and_evaluate_model(create_model,
                              hyperparams,
                              train_tf_record_path,
                              valid_tf_record_path,
-                             test_tf_record_path):
+                             test_tf_record_path,
+                             checkpoint_path=None):
     """
     Invoke tf.estimator with the passed args
 
@@ -106,6 +107,7 @@ def train_and_evaluate_model(create_model,
         train_tf_record_path (str): full path of train data in tf record format
         valid_tf_record_path (str): full path of valid data in tf record format
         test_tf_record_path (str): full path of test data in tf record format
+        checkpoint_path (str): absolute path for model checkpoints
 
     Returns:
         None
@@ -120,6 +122,7 @@ def train_and_evaluate_model(create_model,
 
     # Create the estimator itself
     estimator = tf.estimator.Estimator(model_fn=estimator_spec,
+                                       model_dir=checkpoint_path,
                                        params=hyperparams)
 
     for i in range(hyperparams.train.num_epochs):
@@ -137,3 +140,7 @@ def train_and_evaluate_model(create_model,
                        dataset=test_dataset,
                        tf_record_path=test_tf_record_path,
                        steps=hyperparams.train.epoch_size_test)
+
+    # reset epoch counter for other train sessions, like training with
+    # Transfer Learning or MultiTask Learning
+    LearningRateDecayHook.epoch_counter = 0

@@ -2,11 +2,13 @@
     "problem": {
         "data_path": "rnnlm/data",
         "vocab_path": "rnnlm/data/wordlist.rnn.final",
+        "save_path": "results",
         "training_examples": 10000,
         "validation_examples": 1000,
         "vocab_size": 10000,
         "tf_records_path": "tfrecords",
-        "convert_raw_to_tf_records": true
+        "convert_raw_to_tf_records": false,
+        "pos_vocab_path": "rnnlm/data/pos_tags"
     },
     "train": {
         "w_init_scale": 0.1,
@@ -29,7 +31,6 @@
         "summary_steps": 100,
         "save_checkpoint_steps": 200,
         "keep_checkpoint_max": 200,
-        "save_path": "results",
         "use_fp16": false
     },
     "arch": {
