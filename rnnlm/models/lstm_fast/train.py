@@ -1,7 +1,7 @@
 from rnnlm.models.lstm_fast.model import create_model
 from rnnlm.models.lstm_fast.loss import create_loss
 from rnnlm.models.lstm_fast.optimizer import create_optimizer
-from rnnlm.utils.estimator.estimator import train_and_evaluate_model
+from rnnlm.utils.estimator.estimator import train_and_evaluate_model, LearningRateDecayHook
 import os
 
 
@@ -18,6 +18,7 @@ def main(hyperparams):
     pos_valid_tf_record_path = os.path.join(abs_tf_record_path, "valid_pos.tfrecord")
     pos_test_tf_record_path = os.path.join(abs_tf_record_path, "test_pos.tfrecord")
 
+    # TODO support easy multitask and transfer learning training
     print("Start training")
     print("training pos classifier")
     train_and_evaluate_model(create_model=create_model,
@@ -27,9 +28,9 @@ def main(hyperparams):
                              valid_tf_record_path=pos_valid_tf_record_path,
                              test_tf_record_path=pos_test_tf_record_path,
                              num_epochs=hyperparams.train.num_epochs,
-                             epoch_size_train=1406,
-                             epoch_size_valid=144,
-                             epoch_size_test=178,
+                             epoch_size_train=hyperparams.train.epoch_size_train_pos,
+                             epoch_size_valid=hyperparams.train.epoch_size_valid_pos,
+                             epoch_size_test=hyperparams.train.epoch_size_test_pos,
                              hyperparams=hyperparams,
                              checkpoint_path=abs_save_path)
 

@@ -12,7 +12,7 @@ def create_loss(model, labels, hyperparams):
     losses = dict()
 
     batch_size = hyperparams.train.batch_size
-    num_steps = hyperparams.arch.hidden_layer_depth
+    num_steps = hyperparams.arch.sequence_length
 
     loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
         [model["logits"]],

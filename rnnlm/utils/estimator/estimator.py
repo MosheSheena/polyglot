@@ -18,6 +18,7 @@ def _create_tf_estimator_spec(create_model, create_loss, create_optimizer):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=model)
 
         # Create a loss
+        # TODO perhaps we don't need losses here and it's enough to define one loss
         losses, metrics = create_loss(model, labels, params)
         loss = losses["cost"]
 
@@ -64,11 +65,12 @@ def _create_input_fn(tf_record_path, hyperparams):
         Returns:
             tf.data.Dataset object representing the dataset
         """
+        # TODO replace with logging
         print("path = {}".format(tf_record_path))
         print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
         return load_dataset(abs_tf_record_path=tf_record_path,
                             batch_size=hyperparams.train.batch_size,
-                            seq_len=hyperparams.arch.hidden_layer_depth,
+                            seq_len=hyperparams.arch.sequence_length,
                             skip_first_n=dataset_step_counter[tf_record_path])
 
     return input_fn
@@ -129,6 +131,7 @@ def train_and_evaluate_model(create_model,
     estimator_spec = _create_tf_estimator_spec(create_model, create_loss, create_optimizer)
 
     # Create the estimator itself
+    # TODO use more configuration from hyperparams.json - summary_steps, save_checkpoint_steps, keep_checkpoint_max
     estimator = tf.estimator.Estimator(model_fn=estimator_spec,
                                        model_dir=checkpoint_path,
                                        params=hyperparams)
@@ -151,4 +154,5 @@ def train_and_evaluate_model(create_model,
 
     # Reset epoch counter for other train sessions
     # for supporting Transfer Learning or MultiTask Learning
+    # TODO manage this counter somewhere else to support multitask
     LearningRateDecayHook.epoch_counter = 0

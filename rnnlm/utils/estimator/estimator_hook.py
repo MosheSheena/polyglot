@@ -14,6 +14,7 @@ class EstimatorHook(tf.train.SessionRunHook):
 
     def __init__(self, model, losses, hyperparams, mode, verbose=True):
         self.model = model
+        # TODO replace with one loss
         self.losses = losses
         self.hyperparams = hyperparams
         self.verbose = verbose
@@ -30,14 +31,12 @@ class EstimatorHook(tf.train.SessionRunHook):
         self.state = session.run(self.model["initial_state"])
 
     def before_run(self, run_context):
-        self.losses["step"] = tf.train.get_global_step()
         fetches = {
             "cost": self.losses["cost"],
             "final_state": self.model["final_state"]
         }
 
         feed_dict = {}
-
         # update the feed_dict for the current state
         for i, (c, h) in enumerate(self.model["initial_state"]):
             feed_dict[c] = self.state[i].c
@@ -58,7 +57,7 @@ class EstimatorHook(tf.train.SessionRunHook):
         self.state = results["final_state"]
 
         self.costs += cost
-        self.iterations += self.hyperparams.arch.hidden_layer_depth
+        self.iterations += self.hyperparams.arch.sequence_length
 
         if self.verbose and self.step % 100 == 0:
             print("mode: %s perplexity: %.3f speed: %.0f wps" %

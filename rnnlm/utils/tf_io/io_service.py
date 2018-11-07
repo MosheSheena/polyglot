@@ -45,6 +45,7 @@ def load_dataset(abs_tf_record_path, batch_size, seq_len, skip_first_n=0):
     Returns:
         tf.data.TFRecordDataset, an object representing our dataset.
     """
+    # TODO support reading dtypes of float and bytes
     return reader.read_tf_records(abs_tf_record_path=abs_tf_record_path,
                                   batch_size=batch_size,
                                   seq_len=seq_len,

@@ -49,10 +49,12 @@ def write_tf_records(gen_words,
 
             if preprocessor_feature_fn is not None:
                 x = preprocessor_feature_fn(x, *preprocessor_feature_params)
+            # TODO support float and byte features
             x_feature = _int64_feature_wrap(int_values=x)
 
             if preprocessor_label_fn is not None:
                 y = preprocessor_label_fn(y, *preprocessor_label_params)
+            # TODO support float and byte features
             y_label = _int64_feature_wrap(int_values=y)
             feature_dict = {
                 "x": x_feature,
@@ -63,7 +65,3 @@ def write_tf_records(gen_words,
             example = tf.train.Example(features=words)
 
             writer.write(example.SerializeToString())
-
-
-def create_pos_dataset(output_file, gen_words):
-    pos.gen_pos_dataset(output_file, gen_words)

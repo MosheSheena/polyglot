@@ -21,6 +21,7 @@ def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
         if tf.FixedLenFeature -> return Tensor
         if tf.VarLenFeature -> return SparseTensor
     """
+    # TODO support for read of more than two variables (?)
     read_features = {
         "x": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_features),
         "y": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_labels),
@@ -53,6 +54,7 @@ def read_tf_records(abs_tf_record_path, batch_size, seq_len, dtype_features, dty
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
     if shuffle:
+        # TODO support hyperparam config for buffer size
         dataset = dataset.shuffle(buffer_size=10000)
     dataset = dataset.skip(count=skip_first_n)
     dataset = dataset.prefetch(buffer_size=1)
@@ -68,6 +70,7 @@ def read_and_build_vocab(file_obj):
     Returns:
         dict that maps elements to its ID
     """
+    # TODO replace gen with normal read from file
     gen_elements = _gen_read_n_shifted_elements(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
     elements = next(gen_elements)
     element_to_id = dict(zip(elements, range(len(elements))))
