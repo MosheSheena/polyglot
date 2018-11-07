@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rnnlm.utils.estimator_hook import EstimatorHook, LearningRateDecayHook
+from rnnlm.utils.estimator.estimator_hook import EstimatorHook, LearningRateDecayHook
 from rnnlm.utils.tf_io.io_service import load_dataset
 from collections import defaultdict
 

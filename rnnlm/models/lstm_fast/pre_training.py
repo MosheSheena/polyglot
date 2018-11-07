@@ -1,6 +1,7 @@
-from rnnlm.utils.tf_io import io_service
+from rnnlm.utils.tf_io import io_service, generator
 from rnnlm.utils.preprocessor import preprocess
 import os
+import tensorflow as tf
 
 
 def preprocess_elements_with_vocab(abs_vocab_path_features,
@@ -10,8 +11,7 @@ def preprocess_elements_with_vocab(abs_vocab_path_features,
                                    abs_raw_data_test,
                                    abs_train_tf_record_path,
                                    abs_valid_tf_record_path,
-                                   abs_test_tf_record_path,
-                                   seq_len):
+                                   abs_test_tf_record_path):
     """
     Enumerates every single element in the data by its appearance in the vocab
     Args:
@@ -23,30 +23,26 @@ def preprocess_elements_with_vocab(abs_vocab_path_features,
         abs_train_tf_record_path (str): absolute path of output file for train
         abs_valid_tf_record_path (str): absolute path of output file for validation
         abs_test_tf_record_path (str): absolute path of output file for test
-        seq_len (int):
 
     Returns:
-
+        None
     """
     vocab_features = preprocess.build_vocab(abs_vocab_path_features)
     vocab_labels = preprocess.build_vocab(abs_vocab_path_labels)
-    io_service.raw_to_tf_records(raw_path=abs_raw_data_train,
+    io_service.raw_to_tf_records(gen_data=,
                                  abs_tf_record_path=abs_train_tf_record_path,
-                                 seq_len=seq_len,
                                  preprocessor_feature_fn=preprocess.map_elements_to_ids,
                                  preprocessor_feature_params=vocab_features,
                                  preprocessor_label_fn=preprocess.map_elements_to_ids,
                                  preprocessor_label_params=vocab_labels)
-    io_service.raw_to_tf_records(raw_path=abs_raw_data_valid,
+    io_service.raw_to_tf_records(gen_data=,
                                  abs_tf_record_path=abs_valid_tf_record_path,
-                                 seq_len=seq_len,
                                  preprocessor_feature_fn=preprocess.map_elements_to_ids,
                                  preprocessor_feature_params=vocab_features,
                                  preprocessor_label_fn=preprocess.map_elements_to_ids,
                                  preprocessor_label_params=vocab_labels)
-    io_service.raw_to_tf_records(raw_path=abs_raw_data_test,
+    io_service.raw_to_tf_records(gen_data=,
                                  abs_tf_record_path=abs_test_tf_record_path,
-                                 seq_len=seq_len,
                                  preprocessor_feature_fn=preprocess.map_elements_to_ids,
                                  preprocessor_feature_params=vocab_features,
                                  preprocessor_label_fn=preprocess.map_elements_to_ids,
@@ -67,6 +63,9 @@ def main(hyperparams):
     if not os.path.exists(abs_tf_record_path):
         os.makedirs(abs_tf_record_path)
 
+    with tf.gfile.GFile(raw_path, 'r') as raw_file:
+        gen_words = generator.gen_no_overlap_words(file_obj=raw_file, seq_len=hyperparams.arch.hidden_layer_depth)
+
     print("Converting raw data to tfrecord format")
 
     # preprocess for classic training
@@ -77,8 +76,7 @@ def main(hyperparams):
                                    abs_raw_data_test=os.path.join(abs_data_path, "test"),
                                    abs_train_tf_record_path=train_tf_record_path,
                                    abs_valid_tf_record_path=valid_tf_record_path,
-                                   abs_test_tf_record_path=test_tf_record_path,
-                                   seq_len=hyperparams.arch.hidden_layer_depth)
+                                   abs_test_tf_record_path=test_tf_record_path)
 
     # preprocess for pos training
     # preprocess_elements_with_vocab(abs_vocab_path_features=abs_vocab_path,
@@ -88,6 +86,5 @@ def main(hyperparams):
     #                                abs_raw_data_test=os.path.join(abs_data_path, "pos_test"),
     #                                abs_train_tf_record_path=train_tf_record_path,
     #                                abs_valid_tf_record_path=valid_tf_record_path,
-    #                                abs_test_tf_record_path=test_tf_record_path,
-    #                                seq_len=hyperparams.arch.hidden_layer_depth)
+    #                                abs_test_tf_record_path=test_tf_record_path)
     print("Conversion done.")
