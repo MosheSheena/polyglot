@@ -23,20 +23,28 @@ def main(hyperparams):
     train_and_evaluate_model(create_model=create_model,
                              create_loss=create_loss,
                              create_optimizer=create_optimizer,
-                             hyperparams=hyperparams,
                              train_tf_record_path=pos_train_tf_record_path,
                              valid_tf_record_path=pos_valid_tf_record_path,
                              test_tf_record_path=pos_test_tf_record_path,
+                             num_epochs=hyperparams.train.num_epochs,
+                             epoch_size_train=1406,
+                             epoch_size_valid=144,
+                             epoch_size_test=178,
+                             hyperparams=hyperparams,
                              checkpoint_path=abs_save_path)
 
     print("training language model")
     train_and_evaluate_model(create_model=create_model,
                              create_loss=create_loss,
                              create_optimizer=create_optimizer,
-                             hyperparams=hyperparams,
                              train_tf_record_path=train_tf_record_path,
                              valid_tf_record_path=valid_tf_record_path,
                              test_tf_record_path=test_tf_record_path,
+                             num_epochs=hyperparams.train.num_epochs,
+                             epoch_size_train=hyperparams.train.epoch_size_train,
+                             epoch_size_valid=hyperparams.train.epoch_size_valid,
+                             epoch_size_test=hyperparams.train.epoch_size_test,
+                             hyperparams=hyperparams,
                              checkpoint_path=abs_save_path)
 
     print("End training")

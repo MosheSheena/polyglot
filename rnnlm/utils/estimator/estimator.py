@@ -87,10 +87,14 @@ def evaluate_estimator(estimator, dataset, tf_record_path, steps):
 def train_and_evaluate_model(create_model,
                              create_loss,
                              create_optimizer,
-                             hyperparams,
                              train_tf_record_path,
                              valid_tf_record_path,
                              test_tf_record_path,
+                             num_epochs,
+                             epoch_size_train,
+                             epoch_size_valid,
+                             epoch_size_test,
+                             hyperparams,
                              checkpoint_path=None):
     """
     Invoke tf.estimator with the passed args
@@ -107,6 +111,10 @@ def train_and_evaluate_model(create_model,
         train_tf_record_path (str): full path of train data in tf record format
         valid_tf_record_path (str): full path of valid data in tf record format
         test_tf_record_path (str): full path of test data in tf record format
+        num_epochs (int): num of epochs to train
+        epoch_size_train (int): how much iterations to extract all data from dataset
+        epoch_size_valid (int): how much iterations to extract all data from dataset
+        epoch_size_test (int): how much iterations to extract all data from dataset
         checkpoint_path (str): absolute path for model checkpoints
 
     Returns:
@@ -125,22 +133,22 @@ def train_and_evaluate_model(create_model,
                                        model_dir=checkpoint_path,
                                        params=hyperparams)
 
-    for i in range(hyperparams.train.num_epochs):
+    for i in range(num_epochs):
         # Train and evaluate
         train_estimator(estimator=estimator,
                         dataset=train_dataset,
                         tf_record_path=train_tf_record_path,
-                        steps=hyperparams.train.epoch_size_train)
+                        steps=epoch_size_train)
         evaluate_estimator(estimator=estimator,
                            dataset=validation_dataset,
                            tf_record_path=valid_tf_record_path,
-                           steps=hyperparams.train.epoch_size_valid)
+                           steps=epoch_size_valid)
 
     evaluate_estimator(estimator=estimator,
                        dataset=test_dataset,
                        tf_record_path=test_tf_record_path,
-                       steps=hyperparams.train.epoch_size_test)
+                       steps=epoch_size_test)
 
-    # reset epoch counter for other train sessions, like training with
-    # Transfer Learning or MultiTask Learning
+    # Reset epoch counter for other train sessions
+    # for supporting Transfer Learning or MultiTask Learning
     LearningRateDecayHook.epoch_counter = 0
