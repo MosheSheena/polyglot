@@ -20,4 +20,5 @@ python main.py
 we assume of the following:
 1. Your vocab file fits in memory (train, test and validation datasets are unlimited)
 2. We need the num batches of each {train, test, validation} to be inserted into hyperparameters.json
-this is due to the fact that tf.data.Dataset loads in mini batches your data without taking into how much data there is. This might be removed when we implement tf.data better maybe when itegrating with tf.estimator api.
+this is due to the fact that tf.data.Dataset loads in mini batches your data without taking into how much data there is.
+

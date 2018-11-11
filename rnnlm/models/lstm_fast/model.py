@@ -51,7 +51,7 @@ def create_model(input_tensor, mode, hyperparams):
         #    scope.reuse_variables()
 
         batch_size = hyperparams.train.batch_size
-        num_steps = hyperparams.arch.hidden_layer_depth
+        num_steps = hyperparams.arch.sequence_length
         size = hyperparams.arch.hidden_layer_size
         vocab_size = hyperparams.problem.vocab_size
 
