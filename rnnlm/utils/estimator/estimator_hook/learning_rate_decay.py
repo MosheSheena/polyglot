@@ -1,7 +1,5 @@
 import tensorflow as tf
 
-from rnnlm.utils.estimator.estimator_hook import assign_lr
-
 
 class LearningRateDecayHook(tf.train.SessionRunHook):
 

@@ -36,6 +36,7 @@ def main(hyperparams):
                              hyperparams=hyperparams,
                              checkpoint_path=abs_save_path,
                              training_hooks=[LearningRateDecayHook])
+    LearningRateDecayHook.epoch_counter = 0
 
     print("training language model")
     train_and_evaluate_model(create_model=create_model,
