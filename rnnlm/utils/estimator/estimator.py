@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rnnlm.utils.estimator.estimator_hook import MeasurePerplexityHook, LearningRateDecayHook
+from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
 from rnnlm.utils.tf_io.io_service import load_dataset
 from collections import defaultdict
 
@@ -19,10 +19,10 @@ def _create_tf_estimator_spec(create_model,
         create_model (func): function defining the model
         create_loss (func): function defining the loss
         create_optimizer (func): function defining the optimizer
-        training_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+        training_hooks ([<Class>]): list of classes that inheritance from tf.train.SessionRunHook,
          defining training hooks.
          second is a list of the args that that are required to create an instance of that hook.
-        evaluation_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+        evaluation_hooks ([<Class>]): list of classes that inheritance from tf.train.SessionRunHook,
          defining evaluation hooks.
 
     Returns:
@@ -163,10 +163,10 @@ def train_and_evaluate_model(create_model,
         epoch_size_valid (int): how much iterations to extract all data from dataset
         epoch_size_test (int): how much iterations to extract all data from dataset
         checkpoint_path (str): absolute path for model checkpoints
-        training_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+        training_hooks ([<Class>]): list of classes that inheritance from tf.train.SessionRunHook,
          defining training hooks.
          second is a list of the args that that are required to create an instance of that hook.
-        evaluation_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+        evaluation_hooks ([<Class>]): list of classes that inheritance from tf.train.SessionRunHook,
          defining evaluation hooks.
 
     Returns:
@@ -212,8 +212,3 @@ def train_and_evaluate_model(create_model,
                        dataset=test_dataset,
                        tf_record_path=test_tf_record_path,
                        steps=epoch_size_test)
-
-    # Reset epoch counter for other train sessions
-    # for supporting Transfer Learning or MultiTask Learning
-    # TODO manage this counter somewhere else to support multitask
-    LearningRateDecayHook.epoch_counter = 0
