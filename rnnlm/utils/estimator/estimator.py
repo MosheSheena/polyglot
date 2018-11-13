@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rnnlm.utils.estimator.estimator_hook import EstimatorHook, LearningRateDecayHook
+from rnnlm.utils.estimator.estimator_hook import MeasurePerplexityHook, LearningRateDecayHook
 from rnnlm.utils.tf_io.io_service import load_dataset
 from collections import defaultdict
 
@@ -8,37 +8,80 @@ from collections import defaultdict
 dataset_step_counter = defaultdict(int)
 
 
-def _create_tf_estimator_spec(create_model, create_loss, create_optimizer):
+def _create_tf_estimator_spec(create_model,
+                              create_loss,
+                              create_optimizer,
+                              training_hooks=None,
+                              evaluation_hooks=None):
+    """
+    create a generic model_fn required for the estimator to train
+    Args:
+        create_model (func): function defining the model
+        create_loss (func): function defining the loss
+        create_optimizer (func): function defining the optimizer
+        training_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+         defining training hooks.
+         second is a list of the args that that are required to create an instance of that hook.
+        evaluation_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+         defining evaluation hooks.
+
+    Returns:
+        (func) the model_fn required by tf.Estimator
+    """
     def my_model_fn(features, labels, mode, params):
+        # Talk to the outside world, this dict will be pass to any hooks that
+        # are created outside and passed here.
+        # TODO - maybe convert with Dict2Obj
+        estimator_params = dict()
+        estimator_params["hyperparameters"] = params
+        estimator_params["mode"] = mode
 
         # Create a model
         model = create_model(features, mode, params)
+        estimator_params["model"] = model
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=model)
 
         # Create a loss
-        # TODO perhaps we don't need losses here and it's enough to define one loss
-        losses, metrics = create_loss(model, labels, params)
-        loss = losses["cost"]
+        loss, metrics = create_loss(model, labels, params)
+        estimator_params["loss"] = loss
+        estimator_params["metrics"] = metrics
 
-        hooks = [EstimatorHook(model=model, losses=losses, hyperparams=params, mode=mode)]
+        _training_hooks = list()
+        _evaluation_hooks = list()
+
+        # Measure perplexity in train and eval phases
+        _training_hooks.append(MeasurePerplexityHook(estimator_params=estimator_params))
+        _evaluation_hooks.append(MeasurePerplexityHook(estimator_params=estimator_params))
 
         if mode == tf.estimator.ModeKeys.EVAL:
-            return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=metrics, evaluation_hooks=hooks)
+
+            if evaluation_hooks is not None:
+                for hook_class in evaluation_hooks:
+                    hook_instance = hook_class(estimator_params)
+                    _evaluation_hooks.append(hook_instance)
+
+            return tf.estimator.EstimatorSpec(mode=mode,
+                                              loss=loss,
+                                              eval_metric_ops=metrics,
+                                              evaluation_hooks=_evaluation_hooks)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             # Create an optimizer
-            train_op, lr_update_op, current_lr, new_lr = create_optimizer(losses, params)
+            train_op, optimizer_params = create_optimizer(loss, params)
+            estimator_params["train_op"] = train_op
+            estimator_params["optimizer_params"] = optimizer_params
 
-            # Add a hook that decays the learning rate like the legacy model did
-            hooks.append(LearningRateDecayHook(lr_update_op=lr_update_op,
-                                               current_lr=current_lr,
-                                               new_lr=new_lr,
-                                               mode=mode,
-                                               hyperparams=params))
-            return tf.estimator.EstimatorSpec(
-                mode=mode, loss=loss, train_op=train_op, training_hooks=hooks)
+            if training_hooks is not None:
+                for hook_class in training_hooks:
+                    hook_instance = hook_class(estimator_params)
+                    _training_hooks.append(hook_instance)
+
+            return tf.estimator.EstimatorSpec(mode=mode,
+                                              loss=loss,
+                                              train_op=train_op,
+                                              training_hooks=_training_hooks)
 
         raise RuntimeError(
             "Unexpected mode. mode can be {} or {} or {} but got {}".format(
@@ -97,7 +140,9 @@ def train_and_evaluate_model(create_model,
                              epoch_size_valid,
                              epoch_size_test,
                              hyperparams,
-                             checkpoint_path=None):
+                             checkpoint_path=None,
+                             training_hooks=None,
+                             evaluation_hooks=None):
     """
     Invoke tf.estimator with the passed args
 
@@ -118,6 +163,11 @@ def train_and_evaluate_model(create_model,
         epoch_size_valid (int): how much iterations to extract all data from dataset
         epoch_size_test (int): how much iterations to extract all data from dataset
         checkpoint_path (str): absolute path for model checkpoints
+        training_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+         defining training hooks.
+         second is a list of the args that that are required to create an instance of that hook.
+        evaluation_hooks [<Class>]: list of classes that inheritance from tf.train.SessionRunHook,
+         defining evaluation hooks.
 
     Returns:
         None
@@ -128,12 +178,23 @@ def train_and_evaluate_model(create_model,
     test_dataset = _create_input_fn(tf_record_path=test_tf_record_path, hyperparams=hyperparams)
 
     # Create estimator spec object
-    estimator_spec = _create_tf_estimator_spec(create_model, create_loss, create_optimizer)
+    estimator_spec = _create_tf_estimator_spec(create_model=create_model,
+                                               create_loss=create_loss,
+                                               create_optimizer=create_optimizer,
+                                               training_hooks=training_hooks,
+                                               evaluation_hooks=evaluation_hooks)
 
+    # Create estimator run config
+    summary_steps = hyperparams.train.get_or_default(key="summary_steps", default=100)
+    save_checkpoint_steps = hyperparams.train.get_or_default(key="save_checkpoint_steps", default=200)
+    keep_checkpoints_max = hyperparams.train.get_or_default(key="keep_checkpoint_max", default=5)
+    config = tf.estimator.RunConfig(model_dir=checkpoint_path,
+                                    save_summary_steps=summary_steps,
+                                    save_checkpoints_steps=save_checkpoint_steps,
+                                    keep_checkpoint_max=keep_checkpoints_max)
     # Create the estimator itself
-    # TODO use more configuration from hyperparams.json - summary_steps, save_checkpoint_steps, keep_checkpoint_max
     estimator = tf.estimator.Estimator(model_fn=estimator_spec,
-                                       model_dir=checkpoint_path,
+                                       config=config,
                                        params=hyperparams)
 
     for i in range(num_epochs):

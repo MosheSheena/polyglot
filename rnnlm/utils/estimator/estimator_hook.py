@@ -3,26 +3,14 @@ import numpy as np
 import time
 
 
-class EstimatorHook(tf.train.SessionRunHook):
+class InitLegacyModelHook(tf.train.SessionRunHook):
     """
-    This class allows us to integrate with the tf.estimator class in run time.
-    the method before_run gets called inside tf.estimator before performing sess.run
-    the method after_run gets called inside tf.estimator after performing sess.run
-
-    this class contains the logic of the run_epoch method from the legacy model
+    Support initialization made in run epoch of legacy
+    TODO - maybe the legacy model does not need this initializations, test it.
     """
 
-    def __init__(self, model, losses, hyperparams, mode, verbose=True):
-        self.model = model
-        # TODO replace with one loss
-        self.losses = losses
-        self.hyperparams = hyperparams
-        self.verbose = verbose
-        self.start_time = time.time()
-        self.costs = 0.0
-        self.iterations = 0
-        self.step = 0
-        self.mode = mode
+    def __init__(self, estimator_params):
+        self.model = estimator_params["model"]
         self.state = None
 
     def after_create_session(self, session, coord):
@@ -32,7 +20,6 @@ class EstimatorHook(tf.train.SessionRunHook):
 
     def before_run(self, run_context):
         fetches = {
-            "cost": self.losses["cost"],
             "final_state": self.model["final_state"]
         }
 
@@ -48,18 +35,44 @@ class EstimatorHook(tf.train.SessionRunHook):
     def after_run(self,
                   run_context,  # pylint: disable=unused-argument
                   run_values):
+        results = run_values.results
+
+        # update the state for the next run
+        self.state = results["final_state"]
+
+
+class MeasurePerplexityHook(tf.train.SessionRunHook):
+    """
+    Measure perplexity of the current language model
+    """
+
+    def __init__(self, estimator_params):
+        self.loss = estimator_params["loss"]
+        self.hyperparams = estimator_params["hyperparameters"]
+        self.start_time = time.time()
+        self.costs = 0.0
+        self.iterations = 0
+        self.step = 0
+        self.mode = estimator_params["mode"]
+
+    def before_run(self, run_context):
+        fetches = {"cost": self.loss}
+
+        run_args = tf.train.SessionRunArgs(fetches=fetches)
+        return run_args
+
+    def after_run(self,
+                  run_context,  # pylint: disable=unused-argument
+                  run_values):
 
         results = run_values.results
 
         cost = results["cost"]
 
-        # update the state for the next run
-        self.state = results["final_state"]
-
         self.costs += cost
         self.iterations += self.hyperparams.arch.sequence_length
 
-        if self.verbose and self.step % 100 == 0:
+        if self.step % 100 == 0:
             print("mode: %s perplexity: %.3f speed: %.0f wps" %
                   (self.mode, np.exp(self.costs / self.iterations),
                    self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)))
@@ -78,22 +91,20 @@ class LearningRateDecayHook(tf.train.SessionRunHook):
     # we need to declare a static var because we want to save the counter's state between instantiations of this class
     epoch_counter = 0
 
-    def __init__(self, lr_update_op, current_lr, new_lr, mode, hyperparams):
-        self.lr_update_op = lr_update_op
-        self.current_lr = current_lr
-        self.new_lr = new_lr
-        self.mode = mode
-        self.hyperparams = hyperparams
+    def __init__(self, estimator_params):
+        self.lr_update_op = estimator_params["optimizer_params"]["lr_update_op"]
+        self.current_lr = estimator_params["optimizer_params"]["learning_rate"]
+        self.new_lr = estimator_params["optimizer_params"]["new_lr_placeholder"]
+        self.hyperparams = estimator_params["hyperparameters"]
 
     def after_create_session(self, session, coord):
-        if self.mode == tf.estimator.ModeKeys.TRAIN:
-            lr_decay = self.hyperparams.train.learning_rate.decay ** max(
-                LearningRateDecayHook.epoch_counter + 1 - self.hyperparams.train.learning_rate.decay_max_factor, 0.0)
-            assign_lr(session,
-                      self.lr_update_op,
-                      self.hyperparams.train.learning_rate.start_value * lr_decay,
-                      self.new_lr)
-            print("Learning rate: {}".format(session.run(self.current_lr)))
+        lr_decay = self.hyperparams.train.learning_rate.decay ** max(
+            LearningRateDecayHook.epoch_counter + 1 - self.hyperparams.train.learning_rate.decay_max_factor, 0.0)
+        assign_lr(session,
+                  self.lr_update_op,
+                  self.hyperparams.train.learning_rate.start_value * lr_decay,
+                  self.new_lr)
+        print("Learning rate: {}".format(session.run(self.current_lr)))
 
     def end(self, session):
         LearningRateDecayHook.epoch_counter += 1

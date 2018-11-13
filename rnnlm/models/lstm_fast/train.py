@@ -32,7 +32,8 @@ def main(hyperparams):
                              epoch_size_valid=hyperparams.train.epoch_size_valid_pos,
                              epoch_size_test=hyperparams.train.epoch_size_test_pos,
                              hyperparams=hyperparams,
-                             checkpoint_path=abs_save_path)
+                             checkpoint_path=abs_save_path,
+                             training_hooks=[LearningRateDecayHook])
 
     print("training language model")
     train_and_evaluate_model(create_model=create_model,
@@ -46,6 +47,7 @@ def main(hyperparams):
                              epoch_size_valid=hyperparams.train.epoch_size_valid,
                              epoch_size_test=hyperparams.train.epoch_size_test,
                              hyperparams=hyperparams,
-                             checkpoint_path=abs_save_path)
+                             checkpoint_path=abs_save_path,
+                             training_hooks=[LearningRateDecayHook])
 
     print("End training")
