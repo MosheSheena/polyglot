@@ -1,7 +1,9 @@
 from rnnlm.models.lstm_fast.model import create_model
 from rnnlm.models.lstm_fast.loss import create_loss
 from rnnlm.models.lstm_fast.optimizer import create_optimizer
-from rnnlm.utils.estimator.estimator import train_and_evaluate_model, LearningRateDecayHook
+from rnnlm.utils.estimator.estimator import train_and_evaluate_model
+from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
+
 import os
 
 
@@ -32,7 +34,9 @@ def main(hyperparams):
                              epoch_size_valid=hyperparams.train.epoch_size_valid_pos,
                              epoch_size_test=hyperparams.train.epoch_size_test_pos,
                              hyperparams=hyperparams,
-                             checkpoint_path=abs_save_path)
+                             checkpoint_path=abs_save_path,
+                             training_hooks=[LearningRateDecayHook])
+    LearningRateDecayHook.epoch_counter = 0
 
     print("training language model")
     train_and_evaluate_model(create_model=create_model,
@@ -46,6 +50,12 @@ def main(hyperparams):
                              epoch_size_valid=hyperparams.train.epoch_size_valid,
                              epoch_size_test=hyperparams.train.epoch_size_test,
                              hyperparams=hyperparams,
-                             checkpoint_path=abs_save_path)
+                             checkpoint_path=abs_save_path,
+                             training_hooks=[LearningRateDecayHook])
+
+    # Reset epoch counter for other train sessions
+    # for supporting Transfer Learning or MultiTask Learning
+    # TODO manage this counter somewhere else to support multitask
+    LearningRateDecayHook.epoch_counter = 0
 
     print("End training")

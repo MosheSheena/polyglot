@@ -31,7 +31,7 @@
         "epoch_size_test_pos": 178,
         "summary_steps": 100,
         "save_checkpoint_steps": 200,
-        "keep_checkpoint_max": 200,
+        "keep_checkpoint_max": 5,
         "use_fp16": false
     },
     "arch": {

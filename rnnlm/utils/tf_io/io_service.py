@@ -33,22 +33,34 @@ def raw_to_tf_records(gen_raw_data,
                             preprocessor_label_params=preprocessor_label_params)
 
 
-def load_dataset(abs_tf_record_path, batch_size, seq_len, skip_first_n=0):
+def load_dataset(abs_tf_record_path,
+                 batch_size,
+                 seq_len,
+                 dtype_features=tf.int64,
+                 dtype_labels=tf.int64,
+                 shuffle=False,
+                 shuffle_buffer_size=10000,
+                 skip_first_n=0):
     """
     Load a tf record dataset using tf.data API
     Args:
         abs_tf_record_path (str): absolute path of the tf record file
         batch_size (int):
         seq_len (int):
+        dtype_features (tf.DType): should match to what was wrote to tf records
+        dtype_labels(tf.DType): should match to what was wrote to tf records
+        shuffle (bool): whether to shuffle the data
+        shuffle_buffer_size (int): how much items to shuffle each time
         skip_first_n (int): how many records to skip from beginning of file
 
     Returns:
         tf.data.TFRecordDataset, an object representing our dataset.
     """
-    # TODO support reading dtypes of float and bytes
     return reader.read_tf_records(abs_tf_record_path=abs_tf_record_path,
                                   batch_size=batch_size,
                                   seq_len=seq_len,
-                                  dtype_features=tf.int64,
-                                  dtype_labels=tf.int64,
+                                  dtype_features=dtype_features,
+                                  dtype_labels=dtype_labels,
+                                  shuffle=shuffle,
+                                  shuffle_buffer_size=shuffle_buffer_size,
                                   skip_first_n=skip_first_n)

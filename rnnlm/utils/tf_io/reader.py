@@ -30,7 +30,14 @@ def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
     return parsed_features["x"], parsed_features["y"]
 
 
-def read_tf_records(abs_tf_record_path, batch_size, seq_len, dtype_features, dtype_labels, shuffle=False, skip_first_n=0):
+def read_tf_records(abs_tf_record_path,
+                    batch_size,
+                    seq_len,
+                    dtype_features,
+                    dtype_labels,
+                    shuffle=False,
+                    shuffle_buffer_size=10000,
+                    skip_first_n=0):
     """
     reads for set of tf record files into a data set
     Args:
@@ -40,6 +47,7 @@ def read_tf_records(abs_tf_record_path, batch_size, seq_len, dtype_features, dty
         dtype_features (tf.DType): should match to what was wrote to tf records
         dtype_labels(tf.DType): should match to what was wrote to tf records
         shuffle (bool): whether to shuffle or not
+        shuffle_buffer_size (int): how much items to shuffle
         skip_first_n (int): Optional num of records to skip at the beginning of the dataset
             default is 0
     Returns:
@@ -54,8 +62,7 @@ def read_tf_records(abs_tf_record_path, batch_size, seq_len, dtype_features, dty
     dataset = dataset.repeat()
     dataset = dataset.batch(batch_size=batch_size)
     if shuffle:
-        # TODO support hyperparam config for buffer size
-        dataset = dataset.shuffle(buffer_size=10000)
+        dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
     dataset = dataset.skip(count=skip_first_n)
     dataset = dataset.prefetch(buffer_size=1)
     return dataset
@@ -70,8 +77,6 @@ def read_and_build_vocab(file_obj):
     Returns:
         dict that maps elements to its ID
     """
-    # TODO replace gen with normal read from file
-    gen_elements = _gen_read_n_shifted_elements(file_obj=file_obj, n=READ_ENTIRE_FILE_MODE)
-    elements = next(gen_elements)
+    elements = file_obj.read().split()
     element_to_id = dict(zip(elements, range(len(elements))))
     return element_to_id
