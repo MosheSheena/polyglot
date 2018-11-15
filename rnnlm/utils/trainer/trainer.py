@@ -2,6 +2,7 @@ from rnnlm.utils.estimator.estimator import train_and_evaluate_model
 
 
 def train_classic(task):
+    print("training {}".format(task.name))
     train_and_evaluate_model(create_model=task.create_model,
                              create_loss=task.create_loss,
                              create_optimizer=task.create_optimizer,
@@ -52,6 +53,7 @@ def train_multitask_learning(tasks, switch_each_epoch, switch_each_batch, num_mu
 def train_transfer_learning(tasks):
     _verify_weight_sharing(tasks=tasks)
     for task in tasks:
+        print("training {}".format(task.name))
         train_and_evaluate_model(create_model=task.create_model,
                                  create_loss=task.create_loss,
                                  create_optimizer=task.create_optimizer,
@@ -59,7 +61,7 @@ def train_transfer_learning(tasks):
                                  valid_tf_record_path=task.valid_tf_record_path,
                                  test_tf_record_path=task.test_tf_record_path,
                                  num_epochs=task.hyperparams.train.num_epochs,
-                                 epoch_size_train=task.hyperparams.trainepoch_size_train,
+                                 epoch_size_train=task.hyperparams.train.epoch_size_train,
                                  epoch_size_valid=task.hyperparams.train.epoch_size_valid,
                                  epoch_size_test=task.hyperparams.train.epoch_size_test,
                                  hyperparams=task.hyperparams,

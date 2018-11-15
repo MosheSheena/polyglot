@@ -45,13 +45,13 @@ def main(hyperparams):
 
     # Example of training each model separately, they will share weight if the hidden layers
     # are the same and if their checkpoint path is the same
-    trainer.train_classic(task=pos_classifier)
+    # trainer.train_classic(task=pos_classifier)
     trainer.train_classic(task=lstm_fast_model)
 
     # Same as above, only more intuitive
     # trainer.train_transfer_learning(tasks=[pos_classifier, lstm_fast_model])
     #
-    # # Train simultaneously, you can decide to switch the training each epoch or each batch or both
+    # Train simultaneously, you can decide to switch the training each epoch or each batch or both
     # trainer.train_multitask_learning(tasks=[pos_classifier, lstm_fast_model],
     #                                  switch_each_epoch=True,
     #                                  switch_each_batch=False,

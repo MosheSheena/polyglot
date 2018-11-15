@@ -198,7 +198,7 @@ def train_and_evaluate_model(create_model,
                                        params=hyperparams)
 
     for i in range(num_epochs):
-        print("Starting training epoch #{}".format(i))
+        print("Starting training epoch #{}".format(i + 1))
         # Train and evaluate
         _train_estimator(estimator=estimator,
                          dataset=train_dataset,
@@ -208,7 +208,7 @@ def train_and_evaluate_model(create_model,
                             dataset=validation_dataset,
                             tf_record_path=valid_tf_record_path,
                             steps=epoch_size_valid)
-        print("Finished training epoch #{}".format(i))
+        print("Finished training epoch #{}".format(i + 1))
 
     _evaluate_estimator(estimator=estimator,
                         dataset=test_dataset,

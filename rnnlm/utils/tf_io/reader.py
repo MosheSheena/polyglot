@@ -4,7 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from rnnlm.utils.tf_io.generator import _gen_read_n_shifted_elements, READ_ENTIRE_FILE_MODE
+from rnnlm.utils.tf_io.generator import _gen_n_words, READ_ENTIRE_FILE_MODE
 
 
 def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
