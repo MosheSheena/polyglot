@@ -34,7 +34,6 @@ def preprocess_elements_with_vocab(gen_fn,
     vocab_features = preprocess.build_vocab(abs_vocab_path_features)
     vocab_labels = preprocess.build_vocab(abs_vocab_path_labels)
     with tf.gfile.GFile(abs_raw_data_train, 'r') as f:
-        # TODO replace gen_fn args with args*
         io_service.raw_to_tf_records(gen_raw_data=gen_fn(f, seq_len),
                                      abs_tf_record_path=abs_train_tf_record_path,
                                      preprocessor_feature_fn=preprocess.map_elements_to_ids,

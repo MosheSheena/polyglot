@@ -119,12 +119,12 @@ def _create_input_fn(tf_record_path, hyperparams):
     return input_fn
 
 
-def train_estimator(estimator, dataset, tf_record_path, steps):
+def _train_estimator(estimator, dataset, tf_record_path, steps):
     estimator.train(input_fn=dataset, steps=steps)
     dataset_step_counter[tf_record_path] += steps
 
 
-def evaluate_estimator(estimator, dataset, tf_record_path, steps):
+def _evaluate_estimator(estimator, dataset, tf_record_path, steps):
     estimator.evaluate(input_fn=dataset, steps=steps)
     dataset_step_counter[tf_record_path] += steps
 
@@ -198,17 +198,19 @@ def train_and_evaluate_model(create_model,
                                        params=hyperparams)
 
     for i in range(num_epochs):
+        print("Starting training epoch #{}".format(i))
         # Train and evaluate
-        train_estimator(estimator=estimator,
-                        dataset=train_dataset,
-                        tf_record_path=train_tf_record_path,
-                        steps=epoch_size_train)
-        evaluate_estimator(estimator=estimator,
-                           dataset=validation_dataset,
-                           tf_record_path=valid_tf_record_path,
-                           steps=epoch_size_valid)
+        _train_estimator(estimator=estimator,
+                         dataset=train_dataset,
+                         tf_record_path=train_tf_record_path,
+                         steps=epoch_size_train)
+        _evaluate_estimator(estimator=estimator,
+                            dataset=validation_dataset,
+                            tf_record_path=valid_tf_record_path,
+                            steps=epoch_size_valid)
+        print("Finished training epoch #{}".format(i))
 
-    evaluate_estimator(estimator=estimator,
-                       dataset=test_dataset,
-                       tf_record_path=test_tf_record_path,
-                       steps=epoch_size_test)
+    _evaluate_estimator(estimator=estimator,
+                        dataset=test_dataset,
+                        tf_record_path=test_tf_record_path,
+                        steps=epoch_size_test)
