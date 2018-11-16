@@ -108,4 +108,7 @@ venv.bak/
 
 # results folder which contains checkpoints and event files for TensorBoard
 results/
+all_ops.txt
+checkpoint
+results.*
 
