@@ -144,3 +144,4 @@ def build_multi_rnn_cell(hyperparams):
             ],
             state_is_tuple=True
         )
+# changes for commit

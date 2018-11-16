@@ -390,3 +390,4 @@ if __name__ == "__main__":
         logger.info("log prob for sentence: {}={}".format(" ".join(sentence), log_prob_for_entire_sentence))
         logger.info("exp of log prob for sentence: {}={}".format(" ".join(sentence), exp_log_prob_for_entire_sentence))
         logger.info("------------------------------------------------------")
+# changes for commit

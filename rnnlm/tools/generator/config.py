@@ -22,3 +22,4 @@ GEN_DICT = {
     "initial_state": "Test/Model/lstm_fast/test_initial_state",
     "state_in": "Test/Model/lstm_fast/test_state_in"
 }
+# changes for commit
