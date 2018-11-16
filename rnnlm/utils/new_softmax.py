@@ -14,7 +14,7 @@ def new_softmax(labels, logits):
     row_sums = tf.reduce_sum(f_logits, 1)
 
     t2 = tf.expand_dims(target, 1)
-    range = tf.expand_dims(tf.range(tf.shape(target)[0]), 1)
+    range = tf.cast(tf.expand_dims(tf.range(tf.shape(target)[0]), 1), dtype=tf.int64)
     ind = tf.concat([range, t2], 1)
     res = tf.gather_nd(logits, ind)
 

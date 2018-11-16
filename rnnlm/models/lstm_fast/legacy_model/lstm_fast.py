@@ -25,7 +25,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import sys
 import inspect
 import time
 
@@ -34,7 +33,7 @@ import tensorflow as tf
 
 from rnnlm.utils.new_softmax import new_softmax
 
-from rnnlm.models.lstm_fast import reader
+from rnnlm.utils.tf_io import reader
 
 
 class Config(object):
