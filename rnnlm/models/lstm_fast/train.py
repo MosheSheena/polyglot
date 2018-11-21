@@ -16,6 +16,10 @@ def main(hyperparams):
     valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
     test_tf_record_path = os.path.join(abs_tf_record_path, "test.tfrecord")
 
+    # train_tf_record_path = os.path.join(abs_tf_record_path, "train_legacy_reader.tfrecord")
+    # valid_tf_record_path = os.path.join(abs_tf_record_path, "valid_legacy_reader.tfrecord")
+    # test_tf_record_path = os.path.join(abs_tf_record_path, "test_legacy_reader.tfrecord")
+
     pos_train_tf_record_path = os.path.join(abs_tf_record_path, "train_pos.tfrecord")
     pos_valid_tf_record_path = os.path.join(abs_tf_record_path, "valid_pos.tfrecord")
     pos_test_tf_record_path = os.path.join(abs_tf_record_path, "test_pos.tfrecord")
