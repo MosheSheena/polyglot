@@ -31,6 +31,7 @@ START = '</s>'
 
 DEFUALT_SENTENCE_LEN = 5
 DEFUALT_NUM_WORDS_FOR_FILE = 10
+DEFAULT_TEMPRATURE = 1
 
 WORD_BUFFER_SIZE = 50
 
@@ -139,11 +140,12 @@ def load_trained_model(log_dir_path):
         return None
 
 
-def get_language_model_probabilities(graph, sess, word, context=None):
+def get_language_model_probabilities(graph, sess, word, temperature=1, context=None):
     """
     Given a word, return all probabilities to predict following words from the word vocabulary
 
     Args:
+        temperature (float):
         graph (tf.Graph): a graph of the trained language model
         sess (tf.Session): a session to use running the ops in this function
         word (tf.int32): a word id representing a word from the vocabulary
@@ -184,6 +186,8 @@ def get_language_model_probabilities(graph, sess, word, context=None):
         b=tensor_mapping_dict["softmax_w"]
     ) + tensor_mapping_dict["softmax_b"]
 
+    logits_after_temperature = logits / temperature
+
     # probabilities_tensor = sess.run(tf.nn.log_softmax(logits=logits), feed_dict)
     probabilities_tensor = sess.run(tf.nn.softmax(logits=logits), feed_dict)
     context = run_res_dict["state_out"]
@@ -191,11 +195,16 @@ def get_language_model_probabilities(graph, sess, word, context=None):
     return probabilities_tensor, context
 
 
-def generate_word(graph, sess, word, word_2_id, id_2_word, context=None):
+def generate_word(
+        graph, sess, word,
+        word_2_id, id_2_word,
+        temperature=1, context=None
+):
     """
     Given a single word, generate a word using a language model
 
     Args:
+        temperature (int):
         graph (tf.Graph):
         sess (tf.Session):
         word (int):
@@ -213,6 +222,7 @@ def generate_word(graph, sess, word, word_2_id, id_2_word, context=None):
         graph=graph,
         sess=sess,
         word=word_id,
+        temperature=temperature,
         context=context
     )
 
@@ -351,6 +361,14 @@ def collect_action_arguments(action, word_2_id, id_2_word):
             _args["initial_input"] = sentence
         else:  # Choosing an initial word in random
             _args["initial_input"] = [choose_a_random_word(id_2_word)]
+        _temperature = input(
+            "Enter temprature: [{def_temp}]".format(
+                def_temp=DEFAULT_TEMPRATURE
+            )
+        )
+        temperature = float(_temperature) if _temperature else DEFAULT_TEMPRATURE
+        _args["temperature"] = temperature
+
         return _args
 
     args = initial_word_settings()
@@ -396,6 +414,7 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
 
     action = action_args["action"]
     words = action_args["initial_input"]
+    temperature = action_args["temperature"]
 
     if action == GEN_SENTENCE:
         sentence_len = int(action_args["sentence_len"])
@@ -407,7 +426,9 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
                 gen_word, LM_CONTEXT = generate_word(
                     graph=graph, sess=sess,
                     word=words[i],
-                    word_2_id=word_2_id, id_2_word=id_2_word,
+                    word_2_id=word_2_id,
+                    id_2_word=id_2_word,
+                    temperature=temperature,
                     context=LM_CONTEXT
                 )
                 end_of_feed_word = gen_word
@@ -423,7 +444,9 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
             gen_word, LM_CONTEXT = generate_word(
                 graph=graph, sess=sess,
                 word=word_queue[i],
-                word_2_id=word_2_id, id_2_word=id_2_word,
+                word_2_id=word_2_id,
+                id_2_word=id_2_word,
+                temperature=temperature,
                 context=LM_CONTEXT
             )
             word_queue.append(gen_word)

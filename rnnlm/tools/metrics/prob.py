@@ -28,6 +28,9 @@ TENSORS_OF_MODEL_DICT = {
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
 
+# global context to be adjusted as the program is running
+LM_CONTEXT = None
+
 
 def get_args():
     """This function parses and return arguments passed in
@@ -332,7 +335,7 @@ def get_log_prob(graph, sess, word_in, word_out, context=None):
     return probability, context
 
 
-if __name__ == "__main__":
+def main():
     # ========== LOGGING SETUP ==========
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -390,4 +393,7 @@ if __name__ == "__main__":
         logger.info("log prob for sentence: {}={}".format(" ".join(sentence), log_prob_for_entire_sentence))
         logger.info("exp of log prob for sentence: {}={}".format(" ".join(sentence), exp_log_prob_for_entire_sentence))
         logger.info("------------------------------------------------------")
-# changes for commit
+
+
+if __name__ == "__main__":
+    main()
