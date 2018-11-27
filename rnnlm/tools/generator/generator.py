@@ -27,6 +27,14 @@ EXIT = 4
 
 ERROR = -1
 
+UNK = '<unk>'
+START = '</s>'
+
+DEFUALT_SENTENCE_LEN = 5
+DEFUALT_NUM_WORDS_FOR_FILE = 10
+
+WORD_BUFFER_SIZE = 50
+
 GENERATION_MSG = "Entered = {0} --> Generated = {1}"
 
 # Tensors required to load from model
@@ -43,6 +51,7 @@ TENSORS_OF_MODEL_DICT = {
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
 
+LM_CONTEXT = None
 
 def get_args():
     """
@@ -196,7 +205,7 @@ def generate_word(graph, sess, word, word_2_id, id_2_word, context=None):
         tuple:
 
     """
-    word_id = word_2_id[word]
+    word_id = word_2_id.get(word, UNK)
 
     prob_tensor, context = get_language_model_probabilities(
         graph=graph,
@@ -335,44 +344,37 @@ def collect_action_arguments(action, word_2_id, id_2_word):
 
         """
         args = {}
-        init_word_from_user = input("Provide initial word [Y/N]?")
-        if init_word_from_user == 'y' or init_word_from_user == 'Y':
-            word = input("Enter a word:")
-            word_id = word_2_id.get(word, None)
-            if word_id is None:
-                print("word does not belong in the vocabulary")
-                raise KeyError
-            else:
-                args["word"] = word
-                return args
+        _input = input("Enter a word/sentence:")
+        sentence = _input.split()
+        if sentence:
+            ids = [word_2_id.get(word, UNK) for word in sentence]
+            args["ids"] = ids
         else:  # Choosing an initial word in random
-            args["word"] = choose_a_random_word(id_2_word)
-        weighted = input("Use probability distribution? [Y/N]?")
-        if weighted == 'Y' or weighted == 'y':
-            args["weighted"] = True
-        else:
-            args["weighted"] = False
+            args["ids"] = [choose_a_random_word(id_2_word)]
         return args
 
     args = None
     args = initial_word_settings()
 
     if action == GEN_SENTENCE:
-        sentence_len = input("How many words would you like in the sentence?")
+        sentence_len = input(
+            "Enter number of words: [{def_len}]".format(
+                def_len=DEFUALT_SENTENCE_LEN
+            )
+        )
+        sentence_len = sentence_len if sentence_len else DEFUALT_SENTENCE_LEN
+
         args["sentence_len"] = sentence_len
 
     elif action == GEN_SENTENCES:
-        num_sentences = input("How many sentences?")
-        args["num_sentences"] = num_sentences
-        length_param = input("Changing length for sentences [Y/N]?")
-        if length_param == 'Y' or length_param == 'y':
-            lengths_input = input("Enter lengths: (e.g: 3 4 5 for 3 word 4 words and 5 words in sentences)")
-            lengths_format = lengths_input.strip().split()
-            lengths = tuple([int(x) for x in lengths_format])
-            args["sentence_len"] = lengths
-        else:
-            sentence_len = input("How many words would you like in the sentence?")
-            args["sentence_len"] = sentence_len
+        num_words = input(
+            "Enter number of words: [{def_num}]".format(
+                def_num=DEFUALT_NUM_WORDS_FOR_FILE
+            )
+        )
+        num_words = num_words if num_words else DEFUALT_NUM_WORDS_FOR_FILE
+
+        args["num_words"] = num_words
 
     return args
 
@@ -391,56 +393,48 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
     Returns:
 
     """
+    global LM_CONTEXT
+
     action = action_args["action"]
-    word = action_args["word"]
-    # weighted = action_args["weighted"]
+    ids = action_args["ids"]
 
     if action == GEN_WORD:
-        gen_word, _ = generate_word(graph, sess, word, word_2_id, id_2_word)
-        print(GENERATION_MSG.format(word, gen_word))
+        gen_word, _ = generate_word(graph, sess, ids, word_2_id, id_2_word)
+        print(GENERATION_MSG.format(ids, gen_word))
 
     elif action == GEN_SENTENCE:
         sentence_len = int(action_args["sentence_len"])
-        sentence = [word]
-        context = None
+        sentence = ids
 
         for i in range(sentence_len):
-            gen_word, context = generate_word(
+            gen_word, LM_CONTEXT = generate_word(
                 graph=graph, sess=sess,
                 word=sentence[i],
                 word_2_id=word_2_id, id_2_word=id_2_word,
-                context=context
+                context=LM_CONTEXT
             )
             sentence.append(gen_word)
-        print(GENERATION_MSG.format(word, " ".join(sentence)))
+        print(GENERATION_MSG.format(ids, " ".join(sentence)))
 
     elif action == GEN_SENTENCES:
-        num_sentences = int(action_args["num_sentences"])
-        sentence_lengths = [int(length) for length in action_args["sentence_len"]]
+        num_words = int(action_args["num_words"])
         time_sig = "_".join(str(datetime.now())[:19].split())  # 19 is the length for YYYY-MM-dd_HH:mm:ss
         file_name = time_sig + "_gen_words.txt"
 
+        buffer = []
+
         with open(file_name, 'w') as file:
-            for i in range(num_sentences):
-                if isinstance(sentence_lengths, list) and len(sentence_lengths) > 1:
-                    num_words = sentence_lengths[random.randint(0, len(sentence_lengths)-1)]
-                else:
-                    num_words = sentence_lengths
+            for i in range(num_words):
+                gen_word, LM_CONTEXT = generate_word(
+                    graph=graph, sess=sess,
+                    word=ids[i],
+                    word_2_id=word_2_id, id_2_word=id_2_word,
+                    context=LM_CONTEXT
+                )
+                buffer.append(gen_word)
 
-                sentence = [word]
-                context = None
-
-                for j in range(num_words - 1):  # -1 is for including the init/random word
-                    gen_word, context = generate_word(
-                        graph=graph, sess=sess,
-                        word=sentence[j],
-                        word_2_id=word_2_id, id_2_word=id_2_word,
-                        context=context
-                    )
-                    sentence.append(gen_word)
-
-                file.write(" ".join(sentence) + "\n")
-                word = sentence[-1]  # next sentence is generated using the previous sentence last word
+            for word in buffer:
+                file.write(word + " ") if word != START else file.write("\n")
 
 
 def main():
