@@ -9,6 +9,7 @@ import argparse
 import collections
 import logging
 import os
+import sys
 from functools import reduce
 from math import exp
 
@@ -28,14 +29,22 @@ TENSORS_OF_MODEL_DICT = {
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
 
+# options in the menu
+INTERACTIVE_MODE = 1
+TEST_FILE_MODE = 2
+EXIT = 3
+
+UNK = '<unk>'
+
 # global context to be adjusted as the program is running
 LM_CONTEXT = None
 
 
 def get_args():
-    """This function parses and return arguments passed in
+    """This function parses and return arguments passed in the cli
 
     Returns:
+        tuple: a tuple of
 
     """
     parser = argparse.ArgumentParser(
@@ -216,7 +225,7 @@ def _words_to_ids(words, id_dict):
         list: a list of same length as words param where all elements are id's (int) corresponding to their words
 
     """
-    return [id_dict[word] for word in words]
+    return [id_dict.get(word, id_dict.get(UNK)) for word in words]
 
 
 def build_id_dicts_for_prob(words_file):
@@ -234,9 +243,10 @@ def build_id_dicts_for_prob(words_file):
 
     """
     word_list_raw = _file_to_list(words_file)
-    word_list = list(map(lambda word: word.strip(), word_list_raw))
+    word_list = list(map(lambda x: x.strip(), word_list_raw))
     count = collections.Counter(word_list).most_common()
     dictionary = {}
+    reverse_dictionary = {}
     for word, _ in count:
         dictionary[word] = len(dictionary)
         reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
@@ -281,9 +291,9 @@ def prepare_test_batch(sentence, id_dict):
 
     id_list = _words_to_ids(words=sentence, id_dict=id_dict)
 
-    for id in id_list:
-        batch_list.append((word_in_id, id))
-        word_in_id = id
+    for _id in id_list:
+        batch_list.append((word_in_id, _id))
+        word_in_id = _id
 
     return batch_list
 
@@ -331,11 +341,15 @@ def get_log_prob(graph, sess, word_in, word_out, context=None):
     feed_dict[tensor_mapping["cell_in"]] = run_res_dict["cell_out"]
 
     probability = sess.run(tensor_mapping["test_out"], feed_dict)
+    context = run_res_dict["state_out"]
 
     return probability, context
 
 
 def main():
+    # globals
+    global LM_CONTEXT
+
     # ========== LOGGING SETUP ==========
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -357,42 +371,115 @@ def main():
     _dict = parse_words_id_file_to_dict(file=word_path)
     reversed_dict = create_reverse_dict(id_to_word_dict=_dict)
 
-    data_matrix = build_prob_dataset(data_path)
+    action = create_action_menu()
+    if action == INTERACTIVE_MODE:
 
-    context = None  # for initial state init in getLogProb
+        continue_flag = True
 
-    logger.info("------------------------------------------------------")
+        while continue_flag:
+            sentence_string = input("Enter a word/sentence: ")
+            sentence = sentence_string.split()
+            num_words = len(sentence)
 
-    for sentence in data_matrix:
-        logger.info("Computing probability for sentence: {}".format(" ".join(sentence)))
-        batch = prepare_test_batch(sentence=sentence, id_dict=_dict)
+            batch = prepare_test_batch(sentence=sentence, id_dict=_dict)
+            log_probs_of_sentence = []
 
-        log_probs_of_sentence = []
+            for word_in_id, word_out_id in batch:
+                prob, LM_CONTEXT = get_log_prob(
+                    graph=graph,
+                    sess=sess,
+                    word_in=word_in_id,
+                    word_out=word_out_id,
+                    context=LM_CONTEXT
+                )
+                log_probs_of_sentence.append(prob)
 
-        for word_in_id, word_out_id in batch:
-            prob, context = get_log_prob(
-                graph=graph,
-                sess=sess,
-                word_in=word_in_id,
-                word_out=word_out_id,
-                context=context
-            )
+            sentence_log_prob = reduce(lambda x, y: x+y, log_probs_of_sentence)
+            average_sentence_log_prob = sentence_log_prob / num_words
 
-            logger.info(
-                "prob({word_out} | {word_in})={prob}".format(
-                    word_out=reversed_dict[word_out_id],
-                    word_in=reversed_dict[word_in_id],
-                    prob=prob
+            print("""
+                =========================
+                Sentence -> {sentence}
+                Log probabilty -> {log_prob}
+                Average log probabilty -> {avg_log_prob}
+                =========================
+                """.format(
+                    sentence=" ".join(sentence),
+                    log_prob=sentence_log_prob,
+                    avg_log_prob=average_sentence_log_prob
                 )
             )
 
-            log_probs_of_sentence.append(prob)
+            continue_input = input("continue Y/N? [Y]")
+            if continue_input == 'N' or continue_input == 'n':
+                continue_flag = False
 
-        log_prob_for_entire_sentence = reduce(lambda x, y: x+y, log_probs_of_sentence)
-        exp_log_prob_for_entire_sentence = exp(log_prob_for_entire_sentence)
-        logger.info("log prob for sentence: {}={}".format(" ".join(sentence), log_prob_for_entire_sentence))
-        logger.info("exp of log prob for sentence: {}={}".format(" ".join(sentence), exp_log_prob_for_entire_sentence))
+    elif action == TEST_FILE_MODE:
+
+        data_matrix = build_prob_dataset(data_path)
+
         logger.info("------------------------------------------------------")
+
+        for sentence in data_matrix:
+            logger.info("Computing probability for sentence: {}".format(" ".join(sentence)))
+            batch = prepare_test_batch(sentence=sentence, id_dict=_dict)
+
+            log_probs_of_sentence = []
+
+            for word_in_id, word_out_id in batch:
+                prob, LM_CONTEXT = get_log_prob(
+                    graph=graph,
+                    sess=sess,
+                    word_in=word_in_id,
+                    word_out=word_out_id,
+                    context=LM_CONTEXT
+                )
+
+                logger.info(
+                    "prob({word_out} | {word_in})={prob}".format(
+                        word_out=reversed_dict[word_out_id],
+                        word_in=reversed_dict[word_in_id],
+                        prob=prob
+                    )
+                )
+
+                log_probs_of_sentence.append(prob)
+
+            log_prob_for_entire_sentence = reduce(lambda x, y: x + y, log_probs_of_sentence)
+            exp_log_prob_for_entire_sentence = exp(log_prob_for_entire_sentence)
+            logger.info("log prob for sentence: {}={}".format(" ".join(sentence), log_prob_for_entire_sentence))
+            logger.info(
+                "exp of log prob for sentence: {}={}".format(" ".join(sentence), exp_log_prob_for_entire_sentence))
+            logger.info("------------------------------------------------------")
+
+            sys.exit(0)
+
+    elif action == EXIT:
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
+
+def create_action_menu():
+    """
+    Print a menu with actions using the language model
+
+    Returns:
+        int: an option the user selected
+
+    """
+    print(
+        """
+    ******** Language-Model-Probabilities-Estimator ********
+
+    1. Work interactive
+    2. Work using a test file
+    3. Exit
+        """
+    )
+    option = input("Choose an option:")
+
+    return int(option)
 
 
 if __name__ == "__main__":
