@@ -20,10 +20,9 @@ from rnnlm.tools.generator import (
 # Constants
 NUM_OPTIONS = 4
 
-GEN_WORD = 1
-GEN_SENTENCE = 2
-GEN_SENTENCES = 3
-EXIT = 4
+GEN_SENTENCE = 1
+GEN_SENTENCES = 2
+EXIT = 3
 
 ERROR = -1
 
@@ -51,7 +50,9 @@ TENSORS_OF_MODEL_DICT = {
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
 
+# global context to be adjusted as the program is running
 LM_CONTEXT = None
+
 
 def get_args():
     """
@@ -185,6 +186,7 @@ def get_language_model_probabilities(graph, sess, word, context=None):
 
     # probabilities_tensor = sess.run(tf.nn.log_softmax(logits=logits), feed_dict)
     probabilities_tensor = sess.run(tf.nn.softmax(logits=logits), feed_dict)
+    context = run_res_dict["state_out"]
 
     return probabilities_tensor, context
 
@@ -205,7 +207,7 @@ def generate_word(graph, sess, word, word_2_id, id_2_word, context=None):
         tuple:
 
     """
-    word_id = word_2_id.get(word, UNK)
+    word_id = word_2_id.get(word, word_2_id.get(UNK))
 
     prob_tensor, context = get_language_model_probabilities(
         graph=graph,
@@ -295,13 +297,12 @@ def create_action_menu():
         """
     ******** Language-Model-Generator ********
     
-    1. Generate a word
-    2. Generate a sentence
-    3. Generate a file of sentences
-    4. Exit
+    1. Generate interactively
+    2. Generate a file
+    3. Exit
         """
     )
-    option = input("Choose an option by typing a number:")
+    option = input("Choose an option:")
 
     return int(option)
 
@@ -343,17 +344,15 @@ def collect_action_arguments(action, word_2_id, id_2_word):
             dict: a dictionary of the arguments required for executing an action
 
         """
-        args = {}
-        _input = input("Enter a word/sentence:")
+        _args = {}
+        _input = input("Enter a word/sentence: [random word]")
         sentence = _input.split()
         if sentence:
-            ids = [word_2_id.get(word, UNK) for word in sentence]
-            args["ids"] = ids
+            _args["initial_input"] = sentence
         else:  # Choosing an initial word in random
-            args["ids"] = [choose_a_random_word(id_2_word)]
-        return args
+            _args["initial_input"] = [choose_a_random_word(id_2_word)]
+        return _args
 
-    args = None
     args = initial_word_settings()
 
     if action == GEN_SENTENCE:
@@ -362,7 +361,7 @@ def collect_action_arguments(action, word_2_id, id_2_word):
                 def_len=DEFUALT_SENTENCE_LEN
             )
         )
-        sentence_len = sentence_len if sentence_len else DEFUALT_SENTENCE_LEN
+        sentence_len = int(sentence_len) if sentence_len else DEFUALT_SENTENCE_LEN
 
         args["sentence_len"] = sentence_len
 
@@ -396,41 +395,74 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
     global LM_CONTEXT
 
     action = action_args["action"]
-    ids = action_args["ids"]
+    words = action_args["initial_input"]
 
-    if action == GEN_WORD:
-        gen_word, _ = generate_word(graph, sess, ids, word_2_id, id_2_word)
-        print(GENERATION_MSG.format(ids, gen_word))
-
-    elif action == GEN_SENTENCE:
+    if action == GEN_SENTENCE:
         sentence_len = int(action_args["sentence_len"])
-        sentence = ids
+
+        end_of_feed_word = None
+
+        if len(words) > 1:  # first feed the model with the input without printing
+            for i in range(len(words)):
+                gen_word, LM_CONTEXT = generate_word(
+                    graph=graph, sess=sess,
+                    word=words[i],
+                    word_2_id=word_2_id, id_2_word=id_2_word,
+                    context=LM_CONTEXT
+                )
+                end_of_feed_word = gen_word
+        else:
+            end_of_feed_word = words[0]
+
+        word_queue = [end_of_feed_word]
+
+        print_sentence = []
+        print_sentence.extend(words)
 
         for i in range(sentence_len):
             gen_word, LM_CONTEXT = generate_word(
                 graph=graph, sess=sess,
-                word=sentence[i],
+                word=word_queue[i],
                 word_2_id=word_2_id, id_2_word=id_2_word,
                 context=LM_CONTEXT
             )
-            sentence.append(gen_word)
-        print(GENERATION_MSG.format(ids, " ".join(sentence)))
+            word_queue.append(gen_word)
+            print_sentence.append(gen_word)
+
+        print(" ".join(print_sentence))
 
     elif action == GEN_SENTENCES:
         num_words = int(action_args["num_words"])
         time_sig = "_".join(str(datetime.now())[:19].split())  # 19 is the length for YYYY-MM-dd_HH:mm:ss
         file_name = time_sig + "_gen_words.txt"
 
+        end_of_feed_word = None
+
+        if len(words) > 1:  # first feed the model with the input without printing
+            for i in range(len(words)):
+                gen_word, LM_CONTEXT = generate_word(
+                    graph=graph, sess=sess,
+                    word=words[i],
+                    word_2_id=word_2_id, id_2_word=id_2_word,
+                    context=LM_CONTEXT
+                )
+                end_of_feed_word = gen_word
+        else:
+            end_of_feed_word = words[0]
+
+        word_queue = [end_of_feed_word]
         buffer = []
+        buffer.extend(words)
 
         with open(file_name, 'w') as file:
             for i in range(num_words):
                 gen_word, LM_CONTEXT = generate_word(
                     graph=graph, sess=sess,
-                    word=ids[i],
+                    word=word_queue[i],
                     word_2_id=word_2_id, id_2_word=id_2_word,
                     context=LM_CONTEXT
                 )
+                word_queue.append(gen_word)
                 buffer.append(gen_word)
 
             for word in buffer:
@@ -448,9 +480,9 @@ def main():
     word_2_id = parse_words_id_file_to_dict(file=word_path)
     id_2_word = create_reverse_dict(_dict=word_2_id)
 
-    # Generating a choice menu and prompt the user for actions
     action = None
     while action != EXIT:
+        # Generating a choice menu and prompt the user for actions
         action = create_action_menu()
         # Execute an action the user chose
         if action < 1 or action > NUM_OPTIONS:
@@ -464,5 +496,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # changes for commit
     main()
