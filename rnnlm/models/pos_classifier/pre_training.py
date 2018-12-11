@@ -89,15 +89,15 @@ def main(hyperparams):
                                    abs_test_tf_record_path=test_tf_record_path)
 
     # preprocess for pos training
-    print("converting pos tf records")
-    preprocess_elements_with_vocab(gen_fn=extractor.gen_pos_tagger,
-                                   seq_len=hyperparams.arch.sequence_length,
-                                   abs_vocab_path_features=abs_vocab_path,
-                                   abs_vocab_path_labels=abs_pos_vocab_path,
-                                   abs_raw_data_train=os.path.join(abs_data_path, "train"),
-                                   abs_raw_data_valid=os.path.join(abs_data_path, "valid"),
-                                   abs_raw_data_test=os.path.join(abs_data_path, "test"),
-                                   abs_train_tf_record_path=pos_train_tf_record_path,
-                                   abs_valid_tf_record_path=pos_valid_tf_record_path,
-                                   abs_test_tf_record_path=pos_test_tf_record_path)
+    # print("converting pos tf records")
+    # preprocess_elements_with_vocab(gen_fn=generator.gen_pos_tagger,
+    #                                seq_len=hyperparams.arch.sequence_length,
+    #                                abs_vocab_path_features=abs_vocab_path,
+    #                                abs_vocab_path_labels=abs_pos_vocab_path,
+    #                                abs_raw_data_train=os.path.join(abs_data_path, "train"),
+    #                                abs_raw_data_valid=os.path.join(abs_data_path, "valid"),
+    #                                abs_raw_data_test=os.path.join(abs_data_path, "test"),
+    #                                abs_train_tf_record_path=pos_train_tf_record_path,
+    #                                abs_valid_tf_record_path=pos_valid_tf_record_path,
+    #                                abs_test_tf_record_path=pos_test_tf_record_path)
     print("Conversion done.")

@@ -6,7 +6,7 @@
         "vocab_size": 10000,
         "vocab_size_pos": 37,
         "tf_records_path": "tfrecords",
-        "convert_raw_to_tf_records": false,
+        "convert_raw_to_tf_records": true,
         "pos_vocab_path": "rnnlm/data/pos_tags"
     },
     "train": {
