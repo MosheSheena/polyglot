@@ -54,6 +54,7 @@ def create_model(input_tensor, mode, hyperparams):
         num_steps = hyperparams.arch.sequence_length
         size = hyperparams.arch.hidden_layer_size
         vocab_size = hyperparams.problem.vocab_size
+        vocab_size_pos = hyperparams.problem.vocab_size_pos
 
         if mode == tf.estimator.ModeKeys.TRAIN and hyperparams.arch.keep_prob < 1:
             cell_func = attn_cell
@@ -90,7 +91,7 @@ def create_model(input_tensor, mode, hyperparams):
         l = tf.unstack(state_placeholder, axis=0)
         test_input_state = tuple(
             [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
-                for idx in range(hyperparams.arch.num_hidden_layers)]
+             for idx in range(hyperparams.arch.num_hidden_layers)]
         )
 
         with tf.device("/cpu:0"):
@@ -148,6 +149,14 @@ def create_model(input_tensor, mode, hyperparams):
                                     dtype=data_type(hyperparams))
         softmax_b = softmax_b - 9.0
 
+        softmax_w_pos = tf.get_variable("softmax_w_pos",
+                                        [size, vocab_size_pos],
+                                        dtype=data_type(hyperparams))
+        softmax_b_pos = tf.get_variable("softmax_b_pos",
+                                        [vocab_size_pos],
+                                        dtype=data_type(hyperparams))
+        softmax_b_pos = softmax_b_pos - 9.0
+
         test_logits = tf.matmul(
             cellout_placeholder,
             tf.transpose(
@@ -185,7 +194,9 @@ def create_model(input_tensor, mode, hyperparams):
 
         output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, size])
         logits = tf.matmul(output, softmax_w) + softmax_b
+        logits_pos = tf.matmul(output, softmax_w_pos) + softmax_b_pos
         _final_state = state
         model["final_state"] = _final_state
         model["logits"] = logits
+        model["logits_pos"] = logits_pos
     return model

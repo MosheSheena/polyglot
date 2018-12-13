@@ -1,4 +1,4 @@
-from rnnlm.utils.tf_io import io_service, generator
+from rnnlm.utils.tf_io import io_service, extractor
 from rnnlm.utils.preprocessor import preprocess
 import os
 import tensorflow as tf
@@ -34,7 +34,6 @@ def preprocess_elements_with_vocab(gen_fn,
     vocab_features = preprocess.build_vocab(abs_vocab_path_features)
     vocab_labels = preprocess.build_vocab(abs_vocab_path_labels)
     with tf.gfile.GFile(abs_raw_data_train, 'r') as f:
-        # TODO replace gen_fn args with args*
         io_service.raw_to_tf_records(gen_raw_data=gen_fn(f, seq_len),
                                      abs_tf_record_path=abs_train_tf_record_path,
                                      preprocessor_feature_fn=preprocess.map_elements_to_ids,
@@ -78,7 +77,7 @@ def main(hyperparams):
 
     # preprocess for classic training
     print("converting original data to tf record")
-    preprocess_elements_with_vocab(gen_fn=generator.gen_no_overlap_words,
+    preprocess_elements_with_vocab(gen_fn=extractor.extract_x_without_overlap_y_shifted_by_1,
                                    seq_len=hyperparams.arch.sequence_length,
                                    abs_vocab_path_features=abs_vocab_path,
                                    abs_vocab_path_labels=abs_vocab_path,
@@ -91,7 +90,7 @@ def main(hyperparams):
 
     # preprocess for pos training
     print("converting pos tf records")
-    preprocess_elements_with_vocab(gen_fn=generator.gen_pos_tagger,
+    preprocess_elements_with_vocab(gen_fn=extractor.gen_pos_tagger,
                                    seq_len=hyperparams.arch.sequence_length,
                                    abs_vocab_path_features=abs_vocab_path,
                                    abs_vocab_path_labels=abs_pos_vocab_path,

@@ -29,7 +29,6 @@ class LearningRateDecayHook(tf.train.SessionRunHook):
 
     def end(self, session):
         LearningRateDecayHook.epoch_counter += 1
-        print("Done {} epochs".format(LearningRateDecayHook.epoch_counter))
 
 
 def assign_lr(session, lr_update, lr_value, new_lr):
