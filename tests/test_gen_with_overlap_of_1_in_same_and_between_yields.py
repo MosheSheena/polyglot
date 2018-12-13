@@ -1,25 +1,25 @@
 import unittest
 
-from rnnlm.utils.tf_io.extractor import gen_no_overlap_words
+from rnnlm.utils.tf_io.extractor import extract_x_without_overlap_y_shifted_by_1
 
 
 class TestGenNoOverlap(unittest.TestCase):
 
     def test_empty_file_with_seq_len(self):
         with open('test_files/empty') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=2)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=2)
             res = list(g)
         self.assertEqual(len(res), 0)
 
     def test_empty_file_without_seq_len(self):
         with open('test_files/empty') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=0)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=0)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_one_line_with_leftover(self):
         with open('test_files/one_line') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=4)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=4)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -31,7 +31,7 @@ class TestGenNoOverlap(unittest.TestCase):
 
     def test_one_line_without_leftover(self):
         with open('test_files/one_line') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=7)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=7)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -48,7 +48,7 @@ class TestGenNoOverlap(unittest.TestCase):
 
     def test_one_line_with_seq_len_of_1(self):
         with open('test_files/one_line') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=1)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=1)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -64,19 +64,19 @@ class TestGenNoOverlap(unittest.TestCase):
 
     def test_one_line_seq_len_equal_num_words_in_file(self):
         with open('test_files/one_line') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=15)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=15)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_one_line_seq_len_bigger_than_words_in_file(self):
         with open('test_files/one_line') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=16)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=16)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_short_lines_with_leftover(self):
         with open('test_files/short_lines') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=7)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=7)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -101,7 +101,7 @@ class TestGenNoOverlap(unittest.TestCase):
 
     def test_short_lines_without_leftover(self):
         with open('test_files/short_lines') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=3)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=3)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -121,7 +121,7 @@ class TestGenNoOverlap(unittest.TestCase):
 
     def test_short_lines_with_seq_len_that_y_overlaps_lines(self):
         with open('test_files/short_lines') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=15)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=15)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -138,7 +138,7 @@ class TestGenNoOverlap(unittest.TestCase):
 
     def test_short_lines_with_seq_len_that_x_overlaps_lines(self):
         with open('test_files/short_lines') as f:
-            g = gen_no_overlap_words(file_obj=f, seq_len=16)
+            g = extract_x_without_overlap_y_shifted_by_1(file_obj=f, seq_len=16)
             res = list(g)
         self.assertEqual(res,
                          [

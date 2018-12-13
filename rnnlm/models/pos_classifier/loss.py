@@ -8,18 +8,15 @@ def data_type(hyperparams):
 
 
 def create_loss(model, labels, hyperparams):
-
     metrics = dict()
 
     batch_size = hyperparams.train.batch_size
     num_steps = hyperparams.arch.sequence_length
-    flat_labels = tf.reshape(labels, [batch_size * num_steps])
-    ones = tf.ones([9999 * 1280], dtype=tf.int64)
-    combine_ones = tf.reshape(tf.concat([flat_labels, ones], 0), [1280, 10000])
-    loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits_v2(
-            labels=labels,
-            logits=model['logits']
+
+    loss_vector = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
+        [model["logits_pos"]],
+        [tf.reshape(labels, [-1])],
+        [tf.ones([batch_size * num_steps], dtype=data_type(hyperparams))]
         )
-    )
+    loss = tf.reduce_sum(loss_vector) / batch_size
     return loss, metrics

@@ -1,18 +1,18 @@
 import unittest
-from rnnlm.utils.tf_io.extractor import gen_next_word
+from rnnlm.utils.tf_io.extractor import _gen_next_word
 
 
 class TestGenNextWord(unittest.TestCase):
 
     def test_empty_file(self):
         with open('test_files/empty') as f:
-            g = gen_next_word(file_obj=f)
+            g = _gen_next_word(file_obj=f)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_one_line_file(self):
         with open('test_files/one_line') as f:
-            g = gen_next_word(file_obj=f)
+            g = _gen_next_word(file_obj=f)
             res = list(g)
         self.assertEqual(res,
                          ['WONDER', 'HOW', 'MUCH', 'OF', 'THE', 'MEETINGS', 'IS', 'TALKING', 'ABOUT', 'THE', 'STUFF',
@@ -21,7 +21,7 @@ class TestGenNextWord(unittest.TestCase):
 
     def test_short_lines_file(self):
         with open('test_files/short_lines') as f:
-            g = gen_next_word(file_obj=f)
+            g = _gen_next_word(file_obj=f)
             res = list(g)
         self.assertEqual(res,
                          ['WONDER', 'HOW', 'MUCH', 'OF', 'THE', 'MEETINGS', 'IS', 'TALKING', 'ABOUT', 'THE', 'STUFF',

@@ -77,7 +77,7 @@ def main(hyperparams):
 
     # preprocess for classic training
     print("converting original data to tf record")
-    preprocess_elements_with_vocab(gen_fn=extractor.gen_no_overlap_words,
+    preprocess_elements_with_vocab(gen_fn=extractor.extract_x_without_overlap_y_shifted_by_1,
                                    seq_len=hyperparams.arch.sequence_length,
                                    abs_vocab_path_features=abs_vocab_path,
                                    abs_vocab_path_labels=abs_vocab_path,

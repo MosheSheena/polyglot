@@ -1,8 +1,9 @@
-import tensorflow as tf
-
 from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
 from rnnlm.utils.tf_io.io_service import load_dataset
 from collections import defaultdict
+
+from rnnlm.utils.epoch_size import *
+
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
@@ -28,6 +29,7 @@ def _create_tf_estimator_spec(create_model,
     Returns:
         (func) the model_fn required by tf.Estimator
     """
+
     def my_model_fn(features, labels, mode, params):
         # Talk to the outside world, this dict will be pass to any hooks that
         # are created outside and passed here.
@@ -111,10 +113,13 @@ def _create_input_fn(tf_record_path, hyperparams):
         # TODO replace with logging
         print("path = {}".format(tf_record_path))
         print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
-        return load_dataset(abs_tf_record_path=tf_record_path,
-                            batch_size=hyperparams.train.batch_size,
-                            seq_len=hyperparams.arch.sequence_length,
-                            skip_first_n=dataset_step_counter[tf_record_path])
+        dataset = load_dataset(abs_tf_record_path=tf_record_path,
+                               batch_size=hyperparams.train.batch_size,
+                               seq_len=hyperparams.arch.sequence_length,
+                               skip_first_n=dataset_step_counter[tf_record_path])
+        # s = get_epoch_size_from_tf_dataset(dataset)
+        # print(s)
+        return dataset
 
     return input_fn
 
