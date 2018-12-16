@@ -54,7 +54,7 @@ def main():
 
     # Example of training each model separately, they will share weight if the hidden layers
     # are the same and if their checkpoint path is the same
-    # trainer.train_classic(task=pos_classifier)
+    trainer.train_classic(task=pos_classifier)
     trainer.train_classic(task=lstm_fast_model)
 
     # Same as above, only more intuitive

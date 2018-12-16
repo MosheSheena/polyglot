@@ -9,14 +9,14 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
     Measure perplexity of the current language model
     """
 
-    def __init__(self, estimator_params):
-        self.loss = estimator_params["loss"]
-        self.hyperparams = estimator_params["hyperparameters"]
+    def __init__(self, loss, mode, hyperparameters, **kwargs):
+        self.loss = loss
+        self.hyperparams = hyperparameters
         self.start_time = time.time()
         self.costs = 0.0
         self.iterations = 0
         self.step = 0
-        self.mode = estimator_params["mode"]
+        self.mode = mode
 
     def before_run(self, run_context):
         fetches = {"cost": self.loss}
