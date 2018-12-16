@@ -53,10 +53,6 @@ def _create_tf_estimator_spec(create_model,
         _training_hooks = list()
         _evaluation_hooks = list()
 
-        # Measure perplexity in train and eval phases
-        _training_hooks.append(MeasurePerplexityHook(estimator_params=estimator_params))
-        _evaluation_hooks.append(MeasurePerplexityHook(estimator_params=estimator_params))
-
         if mode == tf.estimator.ModeKeys.EVAL:
 
             if evaluation_hooks is not None:

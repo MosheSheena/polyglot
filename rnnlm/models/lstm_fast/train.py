@@ -3,6 +3,8 @@ from rnnlm.models.lstm_fast.loss import create_loss
 from rnnlm.models.lstm_fast.optimizer import create_optimizer
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from rnnlm.utils.estimator.estimator_hook.init_legacy_model import InitLegacyModelHook
+from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
+from rnnlm.utils.estimator.estimator_hook.loss import ShowNormalLossHook
 from rnnlm.utils.trainer import trainer
 from rnnlm.classes.task import Task
 from rnnlm.models.pos_classifier.loss import create_loss as create_pos_loss
@@ -34,7 +36,9 @@ def main():
                           valid_tf_record_path=pos_valid_tf_record_path,
                           test_tf_record_path=pos_test_tf_record_path,
                           hyperparams=hyperparams_pos,
-                          checkpoint_path=abs_save_path)
+                          checkpoint_path=abs_save_path,
+                          training_hooks=[ShowNormalLossHook, LearningRateDecayHook],
+                          evaluation_hooks=[ShowNormalLossHook])
 
     lstm_fast_model = Task(name="lstm_fast_model",
                            create_model=create_model,
@@ -45,8 +49,8 @@ def main():
                            test_tf_record_path=test_tf_record_path,
                            hyperparams=hyperparams,
                            checkpoint_path=abs_save_path,
-                           training_hooks=[LearningRateDecayHook, InitLegacyModelHook],
-                           evaluation_hooks=[InitLegacyModelHook])
+                           training_hooks=[MeasurePerplexityHook, LearningRateDecayHook, InitLegacyModelHook],
+                           evaluation_hooks=[MeasurePerplexityHook, InitLegacyModelHook])
 
     # Example of training each model separately, they will share weight if the hidden layers
     # are the same and if their checkpoint path is the same
