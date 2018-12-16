@@ -7,8 +7,8 @@ class InitLegacyModelHook(tf.train.SessionRunHook):
     TODO - maybe the legacy model does not need this initializations, test it.
     """
 
-    def __init__(self, estimator_params):
-        self.model = estimator_params["model"]
+    def __init__(self, model, **kwargs):
+        self.model = model
         self.state = None
 
     def after_create_session(self, session, coord):

@@ -3,8 +3,8 @@ import tensorflow as tf
 
 class ShowNormalLossHook(tf.train.SessionRunHook):
 
-    def __init__(self, estimator_params) -> None:
-        self.loss = estimator_params["loss"]
+    def __init__(self, loss, **kwargs):
+        self.loss = loss
         self.steps = 0
 
     def before_run(self, run_context):

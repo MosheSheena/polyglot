@@ -57,7 +57,7 @@ def _create_tf_estimator_spec(create_model,
 
             if evaluation_hooks is not None:
                 for hook_class in evaluation_hooks:
-                    hook_instance = hook_class(estimator_params)
+                    hook_instance = hook_class(**estimator_params)
                     _evaluation_hooks.append(hook_instance)
 
             return tf.estimator.EstimatorSpec(mode=mode,
@@ -73,7 +73,7 @@ def _create_tf_estimator_spec(create_model,
 
             if training_hooks is not None:
                 for hook_class in training_hooks:
-                    hook_instance = hook_class(estimator_params)
+                    hook_instance = hook_class(**estimator_params)
                     _training_hooks.append(hook_instance)
 
             return tf.estimator.EstimatorSpec(mode=mode,

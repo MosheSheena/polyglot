@@ -12,11 +12,11 @@ class LearningRateDecayHook(tf.train.SessionRunHook):
     # we need to declare a static var because we want to save the counter's state between instantiations of this class
     epoch_counter = 0
 
-    def __init__(self, estimator_params):
-        self.lr_update_op = estimator_params["optimizer_params"]["lr_update_op"]
-        self.current_lr = estimator_params["optimizer_params"]["learning_rate"]
-        self.new_lr = estimator_params["optimizer_params"]["new_lr_placeholder"]
-        self.hyperparams = estimator_params["hyperparameters"]
+    def __init__(self, hyperparameters, optimizer_params, **kwargs):
+        self.lr_update_op = optimizer_params["lr_update_op"]
+        self.current_lr = optimizer_params["learning_rate"]
+        self.new_lr = optimizer_params["new_lr_placeholder"]
+        self.hyperparams = hyperparameters
 
     def after_create_session(self, session, coord):
         lr_decay = self.hyperparams.train.learning_rate.decay ** max(
