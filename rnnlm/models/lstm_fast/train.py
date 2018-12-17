@@ -1,3 +1,4 @@
+from rnnlm.classes.trainer import Trainer
 from rnnlm.models.lstm_fast.model import create_model
 from rnnlm.models.lstm_fast.loss import create_loss
 from rnnlm.models.lstm_fast.optimizer import create_optimizer
@@ -5,7 +6,6 @@ from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRat
 from rnnlm.utils.estimator.estimator_hook.init_legacy_model import InitLegacyModelHook
 from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
 from rnnlm.utils.estimator.estimator_hook.loss import ShowNormalLossHook
-from rnnlm.utils.trainer import trainer
 from rnnlm.classes.task import Task
 from rnnlm.models.pos_classifier.loss import create_loss as create_pos_loss
 from rnnlm.utils.hyperparams import load_params
@@ -15,9 +15,10 @@ import os
 def main():
     hyperparams = load_params(os.path.join(os.getcwd(), "rnnlm/models/lstm_fast/hyperparameters.json"))
     hyperparams_pos = load_params(os.path.join(os.getcwd(), "rnnlm/models/pos_classifier/hyperparameters.json"))
+    shared_hyperparams = load_params(os.path.join(os.getcwd(), "rnnlm/models/shared_hyperparams.json"))
 
-    abs_save_path = os.path.join(os.getcwd(), hyperparams.problem.save_path)
-    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
+    abs_save_path = os.path.join(os.getcwd(), shared_hyperparams.problem.save_path)
+    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
 
     train_tf_record_path = os.path.join(abs_tf_record_path, "train.tfrecord")
     valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
@@ -28,34 +29,36 @@ def main():
     pos_test_tf_record_path = os.path.join(abs_tf_record_path, "test_pos.tfrecord")
 
     print("Start training")
+
+    trainer = Trainer(create_model=create_model,
+                      checkpoint_path=abs_save_path,
+                      shared_hyperparams=shared_hyperparams)
+
     pos_classifier = Task(name="pos_classifier",
-                          create_model=create_model,
                           create_loss=create_pos_loss,
                           create_optimizer=create_optimizer,
                           train_tf_record_path=pos_train_tf_record_path,
                           valid_tf_record_path=pos_valid_tf_record_path,
                           test_tf_record_path=pos_test_tf_record_path,
                           hyperparams=hyperparams_pos,
-                          checkpoint_path=abs_save_path,
                           training_hooks=[ShowNormalLossHook, LearningRateDecayHook],
                           evaluation_hooks=[ShowNormalLossHook])
 
     lstm_fast_model = Task(name="lstm_fast_model",
-                           create_model=create_model,
                            create_loss=create_loss,
                            create_optimizer=create_optimizer,
                            train_tf_record_path=train_tf_record_path,
                            valid_tf_record_path=valid_tf_record_path,
                            test_tf_record_path=test_tf_record_path,
                            hyperparams=hyperparams,
-                           checkpoint_path=abs_save_path,
                            training_hooks=[MeasurePerplexityHook, LearningRateDecayHook, InitLegacyModelHook],
                            evaluation_hooks=[MeasurePerplexityHook, InitLegacyModelHook])
 
+    trainer.add_task(pos_classifier)
+    # trainer.add_task(lstm_fast_model)
     # Example of training each model separately, they will share weight if the hidden layers
     # are the same and if their checkpoint path is the same
-    trainer.train_classic(task=pos_classifier)
-    trainer.train_classic(task=lstm_fast_model)
+    trainer.train_normal()
 
     # Same as above, only more intuitive
     # trainer.train_transfer_learning(tasks=[pos_classifier, lstm_fast_model])

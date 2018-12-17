@@ -1,5 +1,7 @@
 from rnnlm.utils.tf_io import io_service, extractor
 from rnnlm.utils.preprocessor import preprocess
+from rnnlm.utils.hyperparams import load_params
+
 import os
 import tensorflow as tf
 
@@ -57,10 +59,12 @@ def preprocess_elements_with_vocab(gen_fn,
 
 
 def main(hyperparams):
+    shared_hyperparams = load_params(os.path.join(os.getcwd(), "rnnlm/models/shared_hyperparams.json"))
+
     abs_data_path = os.path.join(os.getcwd(), hyperparams.problem.data_path)
     abs_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
     abs_pos_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.pos_vocab_path)
-    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.problem.tf_records_path)
+    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
 
     train_tf_record_path = os.path.join(abs_tf_record_path, "train.tfrecord")
     valid_tf_record_path = os.path.join(abs_tf_record_path, "valid.tfrecord")
@@ -78,7 +82,7 @@ def main(hyperparams):
     # preprocess for classic training
     print("converting original data to tf record")
     preprocess_elements_with_vocab(gen_fn=extractor.extract_x_without_overlap_y_shifted_by_1,
-                                   seq_len=hyperparams.arch.sequence_length,
+                                   seq_len=shared_hyperparams.arch.sequence_length,
                                    abs_vocab_path_features=abs_vocab_path,
                                    abs_vocab_path_labels=abs_vocab_path,
                                    abs_raw_data_train=os.path.join(abs_data_path, "train"),
@@ -91,7 +95,7 @@ def main(hyperparams):
     # preprocess for pos training
     print("converting pos tf records")
     preprocess_elements_with_vocab(gen_fn=extractor.gen_pos_tagger,
-                                   seq_len=hyperparams.arch.sequence_length,
+                                   seq_len=shared_hyperparams.arch.sequence_length,
                                    abs_vocab_path_features=abs_vocab_path,
                                    abs_vocab_path_labels=abs_pos_vocab_path,
                                    abs_raw_data_train=os.path.join(abs_data_path, "train"),

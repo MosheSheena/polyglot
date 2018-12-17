@@ -2,12 +2,9 @@
     "problem": {
         "data_path": "rnnlm/data",
         "vocab_path": "rnnlm/data/wordlist.rnn.final",
-        "save_path": "results",
         "vocab_size": 10000,
         "vocab_size_pos": 37,
-        "tf_records_path": "tfrecords",
-        "convert_raw_to_tf_records": false,
-        "pos_vocab_path": "rnnlm/data/pos_tags"
+        "convert_raw_to_tf_records": false
     },
     "train": {
         "w_init_scale": 0.1,
@@ -25,20 +22,6 @@
         "num_epochs": 20,
         "epoch_size_train": 646,
         "epoch_size_valid": 65,
-        "epoch_size_test": 78,
-        "epoch_size_train_pos": 1406,
-        "epoch_size_valid_pos": 144,
-        "epoch_size_test_pos": 178,
-        "summary_steps": 100,
-        "save_checkpoint_steps": 200,
-        "keep_checkpoint_max": 5,
-        "use_fp16": false
-    },
-    "arch": {
-        "network_name": "RNNLM",
-        "sequence_length": 20,
-        "num_hidden_layers": 2,
-        "hidden_layer_size": 200,
-        "keep_prob": 0.5
+        "epoch_size_test": 78
     }
 }

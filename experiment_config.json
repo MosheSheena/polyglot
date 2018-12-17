@@ -1,0 +1,11 @@
+{
+  "models": [
+    "lstm_fast",
+    "pos_classifier"
+  ],
+  "learning_techniques": [
+    "normal",
+    "transfer_learning",
+    "multitask_learning"
+  ]
+}

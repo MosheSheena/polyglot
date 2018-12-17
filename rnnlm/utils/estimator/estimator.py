@@ -1,8 +1,9 @@
-from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
 from rnnlm.utils.tf_io.io_service import load_dataset
+from rnnlm.utils.hyperparams import load_params
 from collections import defaultdict
 
-from rnnlm.utils.epoch_size import *
+import os
+import tensorflow as tf
 
 
 # like tf.train.global_step, only per dataset
@@ -12,6 +13,7 @@ dataset_step_counter = defaultdict(int)
 def _create_tf_estimator_spec(create_model,
                               create_loss,
                               create_optimizer,
+                              shared_hyperparams,
                               training_hooks=None,
                               evaluation_hooks=None):
     """
@@ -33,13 +35,13 @@ def _create_tf_estimator_spec(create_model,
     def my_model_fn(features, labels, mode, params):
         # Talk to the outside world, this dict will be pass to any hooks that
         # are created outside and passed here.
-        # TODO - maybe convert with Dict2Obj
         estimator_params = dict()
         estimator_params["hyperparameters"] = params
+        estimator_params["shared_hyperparameters"] = shared_hyperparams
         estimator_params["mode"] = mode
 
         # Create a model
-        model = create_model(features, mode, params)
+        model = create_model(features, mode, params, shared_hyperparams)
         estimator_params["model"] = model
 
         if mode == tf.estimator.ModeKeys.PREDICT:
@@ -93,7 +95,7 @@ def _create_tf_estimator_spec(create_model,
     return my_model_fn
 
 
-def _create_input_fn(tf_record_path, hyperparams):
+def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
     def input_fn():
         """
         This method is invoke each time we call estimator.train
@@ -111,7 +113,7 @@ def _create_input_fn(tf_record_path, hyperparams):
         print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
         dataset = load_dataset(abs_tf_record_path=tf_record_path,
                                batch_size=hyperparams.train.batch_size,
-                               seq_len=hyperparams.arch.sequence_length,
+                               seq_len=shared_hyperparams.arch.sequence_length,
                                skip_first_n=dataset_step_counter[tf_record_path])
         # s = get_epoch_size_from_tf_dataset(dataset)
         # print(s)
@@ -141,6 +143,7 @@ def train_and_evaluate_model(create_model,
                              epoch_size_valid,
                              epoch_size_test,
                              hyperparams,
+                             shared_hyperparams,
                              checkpoint_path=None,
                              training_hooks=None,
                              evaluation_hooks=None):
@@ -156,6 +159,7 @@ def train_and_evaluate_model(create_model,
         create_optimizer (func): defines the optimizer, receives as args the loss dict from create loss and hyperparams.
             Returns the train_op
         hyperparams (Dict2Obj): contains the hyperparams configuration
+        shared_hyperparams (Dict2Obj): contains hyperparams that are shared between tasks
         train_tf_record_path (str): full path of train data in tf record format
         valid_tf_record_path (str): full path of valid data in tf record format
         test_tf_record_path (str): full path of test data in tf record format
@@ -174,21 +178,28 @@ def train_and_evaluate_model(create_model,
         None
     """
 
-    train_dataset = _create_input_fn(tf_record_path=train_tf_record_path, hyperparams=hyperparams)
-    validation_dataset = _create_input_fn(tf_record_path=valid_tf_record_path, hyperparams=hyperparams)
-    test_dataset = _create_input_fn(tf_record_path=test_tf_record_path, hyperparams=hyperparams)
+    train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
+                                     hyperparams=hyperparams,
+                                     shared_hyperparams=shared_hyperparams)
+    validation_dataset = _create_input_fn(tf_record_path=valid_tf_record_path,
+                                          hyperparams=hyperparams,
+                                          shared_hyperparams=shared_hyperparams)
+    test_dataset = _create_input_fn(tf_record_path=test_tf_record_path,
+                                    hyperparams=hyperparams,
+                                    shared_hyperparams=shared_hyperparams)
 
     # Create estimator spec object
     estimator_spec = _create_tf_estimator_spec(create_model=create_model,
                                                create_loss=create_loss,
                                                create_optimizer=create_optimizer,
+                                               shared_hyperparams=shared_hyperparams,
                                                training_hooks=training_hooks,
                                                evaluation_hooks=evaluation_hooks)
 
     # Create estimator run config
-    summary_steps = hyperparams.train.get_or_default(key="summary_steps", default=100)
-    save_checkpoint_steps = hyperparams.train.get_or_default(key="save_checkpoint_steps", default=200)
-    keep_checkpoints_max = hyperparams.train.get_or_default(key="keep_checkpoint_max", default=5)
+    summary_steps = shared_hyperparams.train.get_or_default(key="summary_steps", default=100)
+    save_checkpoint_steps = shared_hyperparams.train.get_or_default(key="save_checkpoint_steps", default=200)
+    keep_checkpoints_max = shared_hyperparams.train.get_or_default(key="keep_checkpoint_max", default=5)
     config = tf.estimator.RunConfig(model_dir=checkpoint_path,
                                     save_summary_steps=summary_steps,
                                     save_checkpoints_steps=save_checkpoint_steps,

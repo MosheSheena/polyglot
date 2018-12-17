@@ -9,9 +9,10 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
     Measure perplexity of the current language model
     """
 
-    def __init__(self, loss, mode, hyperparameters, **kwargs):
+    def __init__(self, loss, mode, hyperparameters, shared_hyperparameters, **kwargs):
         self.loss = loss
         self.hyperparams = hyperparameters
+        self.shared_hyperparams = shared_hyperparameters
         self.start_time = time.time()
         self.costs = 0.0
         self.iterations = 0
@@ -33,7 +34,7 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
         cost = results["cost"]
 
         self.costs += cost
-        self.iterations += self.hyperparams.arch.sequence_length
+        self.iterations += self.shared_hyperparams.arch.sequence_length
 
         if self.step % 100 == 0:
             print("mode: %s perplexity: %.3f speed: %.0f wps" %
