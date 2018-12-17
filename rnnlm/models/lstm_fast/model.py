@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 def data_type(hyperparams):
-    return tf.float16 if hyperparams.train.use_fp16 else tf.float32
+    return tf.float16 if hyperparams.train.get_or_default(key="use_fp16", default=False) else tf.float32
 
 
 def lstm_cell(hyperparams):
@@ -30,13 +30,16 @@ def attn_cell(hyperparams):
     )
 
 
-def create_model(input_tensor, mode, hyperparams):
+def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
     """
 
     Args:
-        input_tensor: (Tensor)
-        mode: (tf.estimator.ModeKeys) Can be Train, Eval or Predict
-        hyperparams: (Dict2obj)
+        input_tensor (Tensor): the input tensor, the estimator input the features
+        from the input_fn
+        mode (tf.estimator.ModeKeys): Can be Train, Eval or Predict
+        hyperparams (Dict2obj): hyperparams of a current task
+        shared_hyperparams (Dict2Obj): hyperparams that tasks share
+
 
     Returns:
         dict were each key (str) is a name of the tensor and value (Tensor) is the tensor in the model
@@ -51,17 +54,17 @@ def create_model(input_tensor, mode, hyperparams):
         #    scope.reuse_variables()
 
         batch_size = hyperparams.train.batch_size
-        num_steps = hyperparams.arch.sequence_length
-        size = hyperparams.arch.hidden_layer_size
+        num_steps = shared_hyperparams.arch.sequence_length
+        size = shared_hyperparams.arch.hidden_layer_size
         vocab_size = hyperparams.problem.vocab_size
         vocab_size_pos = hyperparams.problem.vocab_size_pos
 
-        if mode == tf.estimator.ModeKeys.TRAIN and hyperparams.arch.keep_prob < 1:
+        if mode == tf.estimator.ModeKeys.TRAIN and shared_hyperparams.arch.keep_prob < 1:
             cell_func = attn_cell
         else:
             cell_func = lstm_cell
         cell = tf.nn.rnn_cell.MultiRNNCell(
-            [cell_func(hyperparams) for _ in range(hyperparams.arch.num_hidden_layers)],
+            [cell_func(shared_hyperparams) for _ in range(shared_hyperparams.arch.num_hidden_layers)],
             state_is_tuple=True
         )
 
@@ -71,7 +74,7 @@ def create_model(input_tensor, mode, hyperparams):
 
         initial = tf.reshape(
             tf.stack(axis=0, values=_initial_state_single),
-            [hyperparams.arch.num_hidden_layers, 2, 1, size],
+            [shared_hyperparams.arch.num_hidden_layers, 2, 1, size],
             name="test_initial_state"
         )
 
@@ -84,14 +87,14 @@ def create_model(input_tensor, mode, hyperparams):
 
         state_placeholder = tf.placeholder(
             tf.float32,
-            [hyperparams.arch.num_hidden_layers, 2, 1, size],
+            [shared_hyperparams.arch.num_hidden_layers, 2, 1, size],
             name="test_state_in"
         )
 
         l = tf.unstack(state_placeholder, axis=0)
         test_input_state = tuple(
             [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
-             for idx in range(hyperparams.arch.num_hidden_layers)]
+             for idx in range(shared_hyperparams.arch.num_hidden_layers)]
         )
 
         with tf.device("/cpu:0"):
@@ -115,7 +118,7 @@ def create_model(input_tensor, mode, hyperparams):
                 axis=0,
                 values=test_output_state
             ),
-            [hyperparams.arch.num_hidden_layers, 2, 1, size], name="test_state_out"
+            [shared_hyperparams.arch.num_hidden_layers, 2, 1, size], name="test_state_out"
         )
 
         test_cell_out = tf.reshape(
@@ -170,8 +173,8 @@ def create_model(input_tensor, mode, hyperparams):
         p_word = test_logits[0, 0]
         test_out = tf.identity(p_word, name="test_out")
 
-        if mode == tf.estimator.ModeKeys.TRAIN and hyperparams.arch.keep_prob < 1:
-            inputs = tf.nn.dropout(inputs, hyperparams.arch.keep_prob)
+        if mode == tf.estimator.ModeKeys.TRAIN and shared_hyperparams.arch.keep_prob < 1:
+            inputs = tf.nn.dropout(inputs, shared_hyperparams.arch.keep_prob)
 
         # Simplified version of models/tutorials/rnn/rnn.py's rnn().
         # This builds an unrolled LSTM for tutorial purposes only.

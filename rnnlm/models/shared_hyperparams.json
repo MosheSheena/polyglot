@@ -1,0 +1,20 @@
+{
+  "problem": {
+    "save_path": "results",
+    "tf_records_path": "tfrecords"
+  },
+  "train": {
+    "summary_steps": 100,
+    "save_checkpoint_steps": 200,
+    "keep_checkpoint_max": 5,
+    "num_multitask_epochs": 20,
+    "switch_each_epoch": true,
+    "switch_each_batch": false
+  },
+  "arch": {
+    "sequence_length": 20,
+    "num_hidden_layers": 2,
+    "hidden_layer_size": 200,
+    "keep_prob": 0.5
+  }
+}

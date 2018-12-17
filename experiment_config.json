@@ -1,0 +1,7 @@
+{
+  "models": [
+    "lstm_fast",
+    "pos_classifier"
+  ],
+  "learning_technique": "transfer"
+}
