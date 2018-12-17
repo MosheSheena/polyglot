@@ -40,7 +40,7 @@ class Trainer:
                                  evaluation_hooks=task.evaluation_hooks)
 
     def train_multitask(self, switch_each_epoch, switch_each_batch, num_multitask_epochs):
-        if len(self.tasks) > 1:
+        if not len(self.tasks) > 1:
             raise ValueError(
                 "multitask learning must have more than 1 task current is {}".format(self.tasks)
             )
@@ -76,7 +76,7 @@ class Trainer:
             print("Finished multitask epoch #{}".format(multi_task_epoch))
 
     def train_transfer_learning(self):
-        if len(self.tasks) > 1:
+        if not len(self.tasks) > 1:
             raise ValueError(
                 "transfer learning must have more than 1 task current is {}".format(self.tasks)
             )

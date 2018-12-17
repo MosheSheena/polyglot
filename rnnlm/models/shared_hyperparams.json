@@ -6,7 +6,10 @@
   "train": {
     "summary_steps": 100,
     "save_checkpoint_steps": 200,
-    "keep_checkpoint_max": 5
+    "keep_checkpoint_max": 5,
+    "num_multitask_epochs": 20,
+    "switch_each_epoch": true,
+    "switch_each_batch": false
   },
   "arch": {
     "sequence_length": 20,
