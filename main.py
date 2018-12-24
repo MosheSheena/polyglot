@@ -55,7 +55,7 @@ if __name__ == "__main__":
         trainer.train_multitask(switch_each_epoch, switch_each_batch, num_multitask_epochs)
     else:
         raise NotImplemented(
-            "unsupported learning technique {}\nOnly normal, transfer and multitask are supported.".format(technique)
+            "unsupported learning technique {}\nonly normal, transfer and multitask are supported.".format(technique)
         )
 
     print("End training")
