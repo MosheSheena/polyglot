@@ -1,7 +1,7 @@
 {
   "problem": {
     "save_path": "results",
-    "tf_records_path": "tfrecords"
+    "tf_records_path": "rnnlm/data/tfrecords"
   },
   "train": {
     "summary_steps": 100,
