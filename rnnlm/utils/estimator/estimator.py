@@ -132,6 +132,20 @@ def _evaluate_estimator(estimator, dataset, tf_record_path, steps):
     dataset_step_counter[tf_record_path] += steps
 
 
+def create_prediction_estimator(create_model, checkpoint_path, shared_hyperparams, hyperparams):
+
+    estimator_spec = _create_tf_estimator_spec(create_model=create_model,
+                                               create_loss=None,
+                                               create_optimizer=None,
+                                               shared_hyperparams=shared_hyperparams)
+
+    estimator = tf.estimator.Estimator(estimator_spec,
+                                       model_dir=checkpoint_path,
+                                       params=hyperparams)
+
+    return estimator
+
+
 def train_and_evaluate_model(create_model,
                              create_loss,
                              create_optimizer,

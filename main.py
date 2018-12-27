@@ -32,7 +32,7 @@ if __name__ == "__main__":
         task = importlib.import_module("rnnlm.models.{}.task".format(model))
 
         if tasks_hyperparams[model].problem.convert_raw_to_tf_records:
-
+            print("Converting raw data to tfrecord format")
             pre_training.main(shared_hyperparams=shared_hyperparams,
                               hyperparams=tasks_hyperparams[model])
 

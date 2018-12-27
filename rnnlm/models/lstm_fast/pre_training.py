@@ -21,10 +21,9 @@ def main(shared_hyperparams, hyperparams):
     if not os.path.exists(abs_tf_record_path):
         os.makedirs(abs_tf_record_path)
 
-    print("Converting raw data to tfrecord format")
-
     # preprocess for classic training
     print("converting original data to tf record")
+
     preprocess_elements_with_vocab(gen_fn=extractor.extract_x_without_overlap_y_shifted_by_1,
                                    seq_len=shared_hyperparams.arch.sequence_length,
                                    abs_vocab_path_features=abs_vocab_path,
