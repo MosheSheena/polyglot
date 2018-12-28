@@ -42,3 +42,6 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
                    self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)))
 
         self.step += 1
+
+    def end(self, session):
+        print("mode: %s perplexity: %.3f" % np.exp(self.costs / self.iterations))
