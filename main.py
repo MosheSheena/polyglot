@@ -5,24 +5,23 @@ import os
 import importlib
 from datetime import datetime
 
-# import tensorflow as tf
-# tf.logging.set_verbosity(tf.logging.INFO)
 
 if __name__ == "__main__":
     print("start time: {}".format(datetime.now()))
     experiment_config = load_params(os.path.join(os.getcwd(), "experiment_config.json"))
-    shared_hyperparams = load_params(os.path.join(os.getcwd(), "rnnlm/models/shared_hyperparams.json"))
-
-    abs_save_path = os.path.join(os.getcwd(), shared_hyperparams.problem.save_path)
-    trainer = Trainer(create_model=create_model,
-                      checkpoint_path=abs_save_path,
-                      shared_hyperparams=shared_hyperparams)
 
     for experiment in experiment_config.experiments:
-        print("running experiment {}".format(experiment.experiment_name))
+        print("{} running experiment {}".format(datetime.now(), experiment.name))
+        shared_hyperparams = experiment.hyperparameters.shared_layer
+
+        abs_save_path = os.path.join(os.getcwd(), shared_hyperparams.problem.save_path)
+        trainer = Trainer(create_model=create_model,
+                          checkpoint_path=abs_save_path,
+                          shared_hyperparams=shared_hyperparams)
+
         tasks_hyperparams = dict()
         for model in experiment.models:
-            tasks_hyperparams[model] = experiment.hyperparameters.model
+            tasks_hyperparams[model] = experiment.hyperparameters.get_or_default(key=model, default=None)
 
             # TODO - perform as many check as possible on hyperparams JSON
             if not tasks_hyperparams[model].problem.data_path:
@@ -40,7 +39,7 @@ if __name__ == "__main__":
                                              hyperparams=tasks_hyperparams[model])
             trainer.add_task(task_to_train)
 
-        technique = experiment_config.learning_technique
+        technique = experiment.learning_technique
         print("Start training")
 
         if technique == "normal":
@@ -59,5 +58,6 @@ if __name__ == "__main__":
             )
 
         print("End training")
+        print("{} done running experiment {}".format(datetime.now(), experiment.name))
 
     print("end time: {}".format(datetime.now()))

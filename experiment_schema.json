@@ -1,0 +1,853 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "experiments"
+  ],
+  "properties": {
+    "experiments": {
+      "$id": "#/properties/experiments",
+      "type": "array",
+      "title": "The Experiments Schema",
+      "items": {
+        "$id": "#/properties/experiments/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": [
+          "name",
+          "models",
+          "learning_technique",
+          "hyperparameters"
+        ],
+        "properties": {
+          "name": {
+            "$id": "#/properties/experiments/items/properties/name",
+            "type": "string",
+            "title": "The Name Schema",
+            "default": "",
+            "examples": [
+              "exp_1"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "models": {
+            "$id": "#/properties/experiments/items/properties/models",
+            "type": "array",
+            "title": "The Models Schema",
+            "description": "The models to experiment on",
+            "default": null,
+            "items": {
+              "$id": "#/properties/experiments/items/properties/models/items",
+              "type": "string",
+              "title": "The Items Schema",
+              "default": "lstm_fast",
+              "examples": [
+                "lstm_fast",
+                "pos_classifier",
+                "gen_classifier"
+              ],
+              "pattern": "^(.*)$"
+            }
+          },
+          "learning_technique": {
+            "$id": "#/properties/experiments/items/properties/learning_technique",
+            "type": "string",
+            "title": "The Learning_technique Schema",
+            "description": "type of learning technique to apply",
+            "default": "normal",
+            "examples": [
+              "transfer",
+              "normal",
+              "multitask"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "hyperparameters": {
+            "$id": "#/properties/experiments/items/properties/hyperparameters",
+            "type": "object",
+            "title": "The Hyperparameters Schema",
+            "required": [
+              "shared_layer",
+              "lstm_fast",
+              "pos_classifier"
+            ],
+            "properties": {
+              "shared_layer": {
+                "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer",
+                "type": "object",
+                "title": "The Shared_layer Schema",
+                "required": [
+                  "problem",
+                  "train",
+                  "arch"
+                ],
+                "properties": {
+                  "problem": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/problem",
+                    "type": "object",
+                    "title": "The Problem Schema",
+                    "required": [
+                      "save_path",
+                      "tf_records_path"
+                    ],
+                    "properties": {
+                      "save_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/problem/properties/save_path",
+                        "type": "string",
+                        "title": "The Save_path Schema",
+                        "default": "",
+                        "examples": [
+                          "results"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "tf_records_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/problem/properties/tf_records_path",
+                        "type": "string",
+                        "title": "The Tf_records_path Schema",
+                        "default": "",
+                        "examples": [
+                          "rnnlm/data/tfrecords"
+                        ],
+                        "pattern": "^(.*)$"
+                      }
+                    }
+                  },
+                  "train": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train",
+                    "type": "object",
+                    "title": "The Train Schema",
+                    "required": [
+                      "summary_steps",
+                      "save_checkpoint_steps",
+                      "keep_checkpoint_max",
+                      "num_multitask_epochs",
+                      "switch_each_epoch",
+                      "switch_each_batch"
+                    ],
+                    "properties": {
+                      "summary_steps": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train/properties/summary_steps",
+                        "type": "integer",
+                        "title": "The Summary_steps Schema",
+                        "default": 100,
+                        "examples": [
+                          100
+                        ]
+                      },
+                      "save_checkpoint_steps": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train/properties/save_checkpoint_steps",
+                        "type": "integer",
+                        "title": "The Save_checkpoint_steps Schema",
+                        "default": 200,
+                        "examples": [
+                          200
+                        ]
+                      },
+                      "keep_checkpoint_max": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train/properties/keep_checkpoint_max",
+                        "type": "integer",
+                        "title": "The Keep_checkpoint_max Schema",
+                        "default": 5,
+                        "examples": [
+                          5
+                        ]
+                      },
+                      "num_multitask_epochs": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train/properties/num_multitask_epochs",
+                        "type": "integer",
+                        "title": "The Num_multitask_epochs Schema",
+                        "default": 1,
+                        "examples": [
+                          20
+                        ]
+                      },
+                      "switch_each_epoch": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train/properties/switch_each_epoch",
+                        "type": "boolean",
+                        "title": "The Switch_each_epoch Schema",
+                        "default": false,
+                        "examples": [
+                          true
+                        ]
+                      },
+                      "switch_each_batch": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/train/properties/switch_each_batch",
+                        "type": "boolean",
+                        "title": "The Switch_each_batch Schema",
+                        "default": false,
+                        "examples": [
+                          false
+                        ]
+                      }
+                    }
+                  },
+                  "arch": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/arch",
+                    "type": "object",
+                    "title": "The Arch Schema",
+                    "required": [
+                      "sequence_length",
+                      "num_hidden_layers",
+                      "hidden_layer_size",
+                      "keep_prob"
+                    ],
+                    "properties": {
+                      "sequence_length": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/arch/properties/sequence_length",
+                        "type": "integer",
+                        "title": "The Sequence_length Schema",
+                        "default": 0,
+                        "examples": [
+                          20
+                        ]
+                      },
+                      "num_hidden_layers": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/arch/properties/num_hidden_layers",
+                        "type": "integer",
+                        "title": "The Num_hidden_layers Schema",
+                        "default": 0,
+                        "examples": [
+                          2
+                        ]
+                      },
+                      "hidden_layer_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/arch/properties/hidden_layer_size",
+                        "type": "integer",
+                        "title": "The Hidden_layer_size Schema",
+                        "default": 0,
+                        "examples": [
+                          200
+                        ]
+                      },
+                      "keep_prob": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_layer/properties/arch/properties/keep_prob",
+                        "type": "number",
+                        "title": "The Keep_prob Schema",
+                        "default": 0.0,
+                        "examples": [
+                          0.5
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "lstm_fast": {
+                "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast",
+                "type": "object",
+                "title": "The Lstm_fast Schema",
+                "required": [
+                  "problem",
+                  "train"
+                ],
+                "properties": {
+                  "problem": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem",
+                    "type": "object",
+                    "title": "The Problem Schema",
+                    "required": [
+                      "data_path",
+                      "train_raw_data_file",
+                      "valid_raw_data_file",
+                      "test_raw_data_file",
+                      "vocab_path",
+                      "vocab_size",
+                      "vocab_size_pos",
+                      "convert_raw_to_tf_records",
+                      "tf_record_train_file",
+                      "tf_record_valid_file",
+                      "tf_record_test_file"
+                    ],
+                    "properties": {
+                      "data_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/data_path",
+                        "type": "string",
+                        "title": "The Data_path Schema",
+                        "default": "",
+                        "examples": [
+                          "rnnlm/data"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "train_raw_data_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/train_raw_data_file",
+                        "type": "string",
+                        "title": "The Train_raw_data_file Schema",
+                        "default": "",
+                        "examples": [
+                          "train"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "valid_raw_data_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/valid_raw_data_file",
+                        "type": "string",
+                        "title": "The Valid_raw_data_file Schema",
+                        "default": "",
+                        "examples": [
+                          "valid"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "test_raw_data_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/test_raw_data_file",
+                        "type": "string",
+                        "title": "The Test_raw_data_file Schema",
+                        "default": "",
+                        "examples": [
+                          "test"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "vocab_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/vocab_path",
+                        "type": "string",
+                        "title": "The Vocab_path Schema",
+                        "default": "",
+                        "examples": [
+                          "rnnlm/data/wordlist.rnn.final"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "vocab_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/vocab_size",
+                        "type": "integer",
+                        "title": "The Vocab_size Schema",
+                        "default": 0,
+                        "examples": [
+                          10000
+                        ]
+                      },
+                      "vocab_size_pos": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/vocab_size_pos",
+                        "type": "integer",
+                        "title": "The Vocab_size_pos Schema",
+                        "default": 0,
+                        "examples": [
+                          37
+                        ]
+                      },
+                      "convert_raw_to_tf_records": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/convert_raw_to_tf_records",
+                        "type": "boolean",
+                        "title": "The Convert_raw_to_tf_records Schema",
+                        "default": false,
+                        "examples": [
+                          false
+                        ]
+                      },
+                      "tf_record_train_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/tf_record_train_file",
+                        "type": "string",
+                        "title": "The Tf_record_train_file Schema",
+                        "default": "",
+                        "examples": [
+                          "train.tfrecord"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "tf_record_valid_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/tf_record_valid_file",
+                        "type": "string",
+                        "title": "The Tf_record_valid_file Schema",
+                        "default": "",
+                        "examples": [
+                          "valid.tfrecord"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "tf_record_test_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/problem/properties/tf_record_test_file",
+                        "type": "string",
+                        "title": "The Tf_record_test_file Schema",
+                        "default": "",
+                        "examples": [
+                          "test.tfrecord"
+                        ],
+                        "pattern": "^(.*)$"
+                      }
+                    }
+                  },
+                  "train": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train",
+                    "type": "object",
+                    "title": "The Train Schema",
+                    "required": [
+                      "w_init_scale",
+                      "max_grad_norm",
+                      "learning_rate",
+                      "batch_size",
+                      "num_epochs",
+                      "epoch_size_train",
+                      "epoch_size_valid",
+                      "epoch_size_test",
+                      "shuffle",
+                      "shuffle_buffer_size"
+                    ],
+                    "properties": {
+                      "w_init_scale": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/w_init_scale",
+                        "type": "number",
+                        "title": "The W_init_scale Schema",
+                        "default": 0.0,
+                        "examples": [
+                          0.1
+                        ]
+                      },
+                      "max_grad_norm": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/max_grad_norm",
+                        "type": "integer",
+                        "title": "The Max_grad_norm Schema",
+                        "default": 0,
+                        "examples": [
+                          5
+                        ]
+                      },
+                      "learning_rate": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/learning_rate",
+                        "type": "object",
+                        "title": "The Learning_rate Schema",
+                        "required": [
+                          "type",
+                          "start_value",
+                          "decay",
+                          "decay_max_factor"
+                        ],
+                        "properties": {
+                          "type": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/learning_rate/properties/type",
+                            "type": "string",
+                            "title": "The Type Schema",
+                            "default": "",
+                            "examples": [
+                              "decay"
+                            ],
+                            "pattern": "^(.*)$"
+                          },
+                          "start_value": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/learning_rate/properties/start_value",
+                            "type": "integer",
+                            "title": "The Start_value Schema",
+                            "default": 0,
+                            "examples": [
+                              1
+                            ]
+                          },
+                          "decay": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/learning_rate/properties/decay",
+                            "type": "number",
+                            "title": "The Decay Schema",
+                            "default": 0.0,
+                            "examples": [
+                              0.8
+                            ]
+                          },
+                          "decay_max_factor": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/learning_rate/properties/decay_max_factor",
+                            "type": "integer",
+                            "title": "The Decay_max_factor Schema",
+                            "default": 0,
+                            "examples": [
+                              4
+                            ]
+                          }
+                        }
+                      },
+                      "batch_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/batch_size",
+                        "type": "integer",
+                        "title": "The Batch_size Schema",
+                        "default": 0,
+                        "examples": [
+                          64
+                        ]
+                      },
+                      "num_epochs": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/num_epochs",
+                        "type": "integer",
+                        "title": "The Num_epochs Schema",
+                        "default": 0,
+                        "examples": [
+                          20
+                        ]
+                      },
+                      "epoch_size_train": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/epoch_size_train",
+                        "type": "integer",
+                        "title": "The Epoch_size_train Schema",
+                        "default": 0,
+                        "examples": [
+                          646
+                        ]
+                      },
+                      "epoch_size_valid": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/epoch_size_valid",
+                        "type": "integer",
+                        "title": "The Epoch_size_valid Schema",
+                        "default": 0,
+                        "examples": [
+                          65
+                        ]
+                      },
+                      "epoch_size_test": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/epoch_size_test",
+                        "type": "integer",
+                        "title": "The Epoch_size_test Schema",
+                        "default": 0,
+                        "examples": [
+                          78
+                        ]
+                      },
+                      "shuffle": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/shuffle",
+                        "type": "boolean",
+                        "title": "The Shuffle Schema",
+                        "default": false,
+                        "examples": [
+                          true
+                        ]
+                      },
+                      "shuffle_buffer_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/shuffle_buffer_size",
+                        "type": "integer",
+                        "title": "The Shuffle_buffer_size Schema",
+                        "default": 0,
+                        "examples": [
+                          10000
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "pos_classifier": {
+                "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier",
+                "type": "object",
+                "title": "The Pos_classifier Schema",
+                "required": [
+                  "problem",
+                  "train"
+                ],
+                "properties": {
+                  "problem": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem",
+                    "type": "object",
+                    "title": "The Problem Schema",
+                    "required": [
+                      "data_path",
+                      "train_raw_data_file",
+                      "valid_raw_data_file",
+                      "test_raw_data_file",
+                      "vocab_path",
+                      "pos_vocab_path",
+                      "vocab_size",
+                      "vocab_size_pos",
+                      "convert_raw_to_tf_records",
+                      "tf_record_train_file",
+                      "tf_record_valid_file",
+                      "tf_record_test_file"
+                    ],
+                    "properties": {
+                      "data_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/data_path",
+                        "type": "string",
+                        "title": "The Data_path Schema",
+                        "default": "",
+                        "examples": [
+                          "rnnlm/data"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "train_raw_data_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/train_raw_data_file",
+                        "type": "string",
+                        "title": "The Train_raw_data_file Schema",
+                        "default": "",
+                        "examples": [
+                          "train"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "valid_raw_data_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/valid_raw_data_file",
+                        "type": "string",
+                        "title": "The Valid_raw_data_file Schema",
+                        "default": "",
+                        "examples": [
+                          "valid"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "test_raw_data_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/test_raw_data_file",
+                        "type": "string",
+                        "title": "The Test_raw_data_file Schema",
+                        "default": "",
+                        "examples": [
+                          "test"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "vocab_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/vocab_path",
+                        "type": "string",
+                        "title": "The Vocab_path Schema",
+                        "default": "",
+                        "examples": [
+                          "rnnlm/data/wordlist.rnn.final"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "pos_vocab_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/pos_vocab_path",
+                        "type": "string",
+                        "title": "The Pos_vocab_path Schema",
+                        "default": "",
+                        "examples": [
+                          "rnnlm/data/pos_tags"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "vocab_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/vocab_size",
+                        "type": "integer",
+                        "title": "The Vocab_size Schema",
+                        "default": 0,
+                        "examples": [
+                          10000
+                        ]
+                      },
+                      "vocab_size_pos": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/vocab_size_pos",
+                        "type": "integer",
+                        "title": "The Vocab_size_pos Schema",
+                        "default": 0,
+                        "examples": [
+                          37
+                        ]
+                      },
+                      "convert_raw_to_tf_records": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/convert_raw_to_tf_records",
+                        "type": "boolean",
+                        "title": "The Convert_raw_to_tf_records Schema",
+                        "default": false,
+                        "examples": [
+                          false
+                        ]
+                      },
+                      "tf_record_train_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/tf_record_train_file",
+                        "type": "string",
+                        "title": "The Tf_record_train_file Schema",
+                        "default": "",
+                        "examples": [
+                          "train_pos.tfrecord"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "tf_record_valid_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/tf_record_valid_file",
+                        "type": "string",
+                        "title": "The Tf_record_valid_file Schema",
+                        "default": "",
+                        "examples": [
+                          "valid_pos.tfrecord"
+                        ],
+                        "pattern": "^(.*)$"
+                      },
+                      "tf_record_test_file": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/problem/properties/tf_record_test_file",
+                        "type": "string",
+                        "title": "The Tf_record_test_file Schema",
+                        "default": "",
+                        "examples": [
+                          "test_pos.tfrecord"
+                        ],
+                        "pattern": "^(.*)$"
+                      }
+                    }
+                  },
+                  "train": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train",
+                    "type": "object",
+                    "title": "The Train Schema",
+                    "required": [
+                      "w_init_scale",
+                      "max_grad_norm",
+                      "learning_rate",
+                      "optimizer",
+                      "batch_size",
+                      "num_epochs",
+                      "epoch_size_train",
+                      "epoch_size_valid",
+                      "epoch_size_test",
+                      "shuffle",
+                      "shuffle_buffer_size"
+                    ],
+                    "properties": {
+                      "w_init_scale": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/w_init_scale",
+                        "type": "number",
+                        "title": "The W_init_scale Schema",
+                        "default": 0.0,
+                        "examples": [
+                          0.1
+                        ]
+                      },
+                      "max_grad_norm": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/max_grad_norm",
+                        "type": "integer",
+                        "title": "The Max_grad_norm Schema",
+                        "default": 0,
+                        "examples": [
+                          5
+                        ]
+                      },
+                      "learning_rate": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/learning_rate",
+                        "type": "object",
+                        "title": "The Learning_rate Schema",
+                        "required": [
+                          "type",
+                          "start_value",
+                          "decay",
+                          "decay_max_factor"
+                        ],
+                        "properties": {
+                          "type": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/learning_rate/properties/type",
+                            "type": "string",
+                            "title": "The Type Schema",
+                            "default": "",
+                            "examples": [
+                              "decay"
+                            ],
+                            "pattern": "^(.*)$"
+                          },
+                          "start_value": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/learning_rate/properties/start_value",
+                            "type": "integer",
+                            "title": "The Start_value Schema",
+                            "default": 0,
+                            "examples": [
+                              1
+                            ]
+                          },
+                          "decay": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/learning_rate/properties/decay",
+                            "type": "number",
+                            "title": "The Decay Schema",
+                            "default": 0.0,
+                            "examples": [
+                              0.8
+                            ]
+                          },
+                          "decay_max_factor": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/learning_rate/properties/decay_max_factor",
+                            "type": "integer",
+                            "title": "The Decay_max_factor Schema",
+                            "default": 0,
+                            "examples": [
+                              4
+                            ]
+                          }
+                        }
+                      },
+                      "optimizer": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/optimizer",
+                        "type": "object",
+                        "title": "The Optimizer Schema",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/optimizer/properties/type",
+                            "type": "string",
+                            "title": "The Type Schema",
+                            "default": "",
+                            "examples": [
+                              "adam"
+                            ],
+                            "pattern": "^(.*)$"
+                          }
+                        }
+                      },
+                      "batch_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/batch_size",
+                        "type": "integer",
+                        "title": "The Batch_size Schema",
+                        "default": 0,
+                        "examples": [
+                          64
+                        ]
+                      },
+                      "num_epochs": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/num_epochs",
+                        "type": "integer",
+                        "title": "The Num_epochs Schema",
+                        "default": 0,
+                        "examples": [
+                          20
+                        ]
+                      },
+                      "epoch_size_train": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/epoch_size_train",
+                        "type": "integer",
+                        "title": "The Epoch_size_train Schema",
+                        "default": 0,
+                        "examples": [
+                          1406
+                        ]
+                      },
+                      "epoch_size_valid": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/epoch_size_valid",
+                        "type": "integer",
+                        "title": "The Epoch_size_valid Schema",
+                        "default": 0,
+                        "examples": [
+                          144
+                        ]
+                      },
+                      "epoch_size_test": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/epoch_size_test",
+                        "type": "integer",
+                        "title": "The Epoch_size_test Schema",
+                        "default": 0,
+                        "examples": [
+                          178
+                        ]
+                      },
+                      "shuffle": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/shuffle",
+                        "type": "boolean",
+                        "title": "The Shuffle Schema",
+                        "default": false,
+                        "examples": [
+                          true
+                        ]
+                      },
+                      "shuffle_buffer_size": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/pos_classifier/properties/train/properties/shuffle_buffer_size",
+                        "type": "integer",
+                        "title": "The Shuffle_buffer_size Schema",
+                        "default": 0,
+                        "examples": [
+                          10000
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

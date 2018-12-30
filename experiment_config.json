@@ -1,14 +1,14 @@
 {
   "experiments": [
     {
-      "experiment_name": "exp_1",
+      "name": "exp_1",
       "models": [
         "lstm_fast",
         "pos_classifier"
       ],
       "learning_technique": "transfer",
       "hyperparameters": {
-        "shared": {
+        "shared_layer": {
           "problem": {
             "save_path": "results",
             "tf_records_path": "rnnlm/data/tfrecords"
@@ -51,15 +51,13 @@
               "decay": 0.8,
               "decay_max_factor": 4
             },
-            "optimizer": {
-              "type": "adam"
-            },
             "batch_size": 64,
             "num_epochs": 20,
             "epoch_size_train": 646,
             "epoch_size_valid": 65,
             "epoch_size_test": 78,
-            "shuffle": true
+            "shuffle": true,
+            "shuffle_buffer_size": 10000
           }
         },
         "pos_classifier": {
@@ -93,7 +91,9 @@
             "num_epochs": 20,
             "epoch_size_train": 1406,
             "epoch_size_valid": 144,
-            "epoch_size_test": 178
+            "epoch_size_test": 178,
+            "shuffle": true,
+            "shuffle_buffer_size": 10000
           }
         }
       }
