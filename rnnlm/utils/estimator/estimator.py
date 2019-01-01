@@ -112,11 +112,13 @@ def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
         print("path = {}".format(tf_record_path))
         print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
         shuffle = hyperparams.train.get_or_default(key="shuffle", default=False)
+        shuffle_buffer_size = hyperparams.train.get_or_default(key="shuffle_buffer_size", default=10000)
         dataset = load_dataset(abs_tf_record_path=tf_record_path,
                                batch_size=hyperparams.train.batch_size,
                                seq_len=shared_hyperparams.arch.sequence_length,
                                skip_first_n=dataset_step_counter[tf_record_path],
-                               shuffle=shuffle)
+                               shuffle=shuffle,
+                               shuffle_buffer_size=shuffle_buffer_size)
         # s = get_epoch_size_from_tf_dataset(dataset)
         # print(s)
         return dataset
