@@ -6,7 +6,7 @@
         "lstm_fast",
         "pos_classifier"
       ],
-      "learning_technique": "transfer",
+      "learning_technique": "lolo",
       "hyperparameters": {
         "shared_layer": {
           "problem": {

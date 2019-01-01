@@ -63,7 +63,7 @@
               "normal",
               "multitask"
             ],
-            "pattern": "^(.*)$"
+            "pattern": "^(transfer|normal|multitask)$"
           },
           "hyperparameters": {
             "$id": "#/properties/experiments/items/properties/hyperparameters",
