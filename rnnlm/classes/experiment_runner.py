@@ -58,7 +58,7 @@ class ExperimentRunner:
 
                 trainer.train_multitask(switch_each_epoch, switch_each_batch, num_multitask_epochs)
             else:
-                raise NotImplemented(
+                raise ValueError(
                     "unsupported learning technique {}\nonly normal, transfer and multitask are supported.".format(
                         technique)
                 )

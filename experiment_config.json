@@ -3,10 +3,9 @@
     {
       "name": "exp_1",
       "models": [
-        "lstm_fast",
-        "pos_classifier"
+        "lstm_fast"
       ],
-      "learning_technique": "lolo",
+      "learning_technique": "normal",
       "hyperparameters": {
         "shared_layer": {
           "problem": {
@@ -57,7 +56,8 @@
             "epoch_size_valid": 65,
             "epoch_size_test": 78,
             "shuffle": true,
-            "shuffle_buffer_size": 10000
+            "shuffle_buffer_size": 10000,
+            "max_steps_without_decrease": 10000
           }
         },
         "pos_classifier": {
@@ -93,7 +93,8 @@
             "epoch_size_valid": 144,
             "epoch_size_test": 178,
             "shuffle": true,
-            "shuffle_buffer_size": 10000
+            "shuffle_buffer_size": 10000,
+            "max_steps_without_decrease": 10000
           }
         }
       }

@@ -9,6 +9,8 @@ import tensorflow as tf
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
 
+LOSS_METRIC_NAME = "loss"
+
 
 def _create_tf_estimator_spec(create_model,
                               create_loss,
@@ -51,6 +53,10 @@ def _create_tf_estimator_spec(create_model,
         loss, metrics = create_loss(model, labels, params)
         estimator_params["loss"] = loss
         estimator_params["metrics"] = metrics
+
+        # Early Stopping Hook checks for a the loss in the metrics, so we add it here.
+        if LOSS_METRIC_NAME not in metrics:
+            metrics[LOSS_METRIC_NAME] = loss
 
         _training_hooks = list()
         _evaluation_hooks = list()
@@ -226,6 +232,19 @@ def train_and_evaluate_model(create_model,
     estimator = tf.estimator.Estimator(model_fn=estimator_spec,
                                        config=config,
                                        params=hyperparams)
+
+    # Add the EarlyStoppingHook
+    max_steps_without_decrease = hyperparams.train.max_steps_without_decrease
+
+    early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
+        estimator,
+        LOSS_METRIC_NAME,
+        max_steps_without_decrease
+    )
+
+    # This will be added to the training hooks even though we added it after we created
+    # the model_fn
+    training_hooks.append(lambda **kwargs: early_stopping)
 
     for i in range(num_epochs):
         print("Starting training epoch #{}".format(i + 1))
