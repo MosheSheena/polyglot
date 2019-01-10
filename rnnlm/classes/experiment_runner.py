@@ -1,4 +1,6 @@
 from rnnlm.classes.trainer import Trainer
+from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
+from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from rnnlm.utils.hyperparams import load_params
 from rnnlm.models.lstm_fast.model import create_model
 from datetime import datetime
@@ -16,6 +18,12 @@ class ExperimentRunner:
     def run(self):
 
         for experiment in self.experiment_config.experiments:
+
+            # TODO - global var managing
+            # define hooks global vars
+            EarlyStoppingHook.should_stop = False
+            LearningRateDecayHook.epoch_counter = 0
+
             print("{} running experiment {}".format(datetime.now(), experiment.name))
             shared_hyperparams = experiment.hyperparameters.shared_layer
 
@@ -58,7 +66,7 @@ class ExperimentRunner:
 
                 trainer.train_multitask(switch_each_epoch, switch_each_batch, num_multitask_epochs)
             else:
-                raise NotImplemented(
+                raise ValueError(
                     "unsupported learning technique {}\nonly normal, transfer and multitask are supported.".format(
                         technique)
                 )

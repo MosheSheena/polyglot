@@ -1,8 +1,7 @@
 from rnnlm.utils.tf_io.io_service import load_dataset
-from rnnlm.utils.hyperparams import load_params
+from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from collections import defaultdict
 
-import os
 import tensorflow as tf
 
 
@@ -78,6 +77,12 @@ def _create_tf_estimator_spec(create_model,
                     hook_instance = hook_class(**estimator_params)
                     _training_hooks.append(hook_instance)
 
+            stop_params = shared_hyperparams.train.early_stopping
+            early_stop = EarlyStoppingHook(loss_tensor=loss,
+                                           threshold=stop_params.threshold,
+                                           max_steps_without_improvement=stop_params.max_steps_without_improvement)
+            _training_hooks.append(early_stop)
+
             return tf.estimator.EstimatorSpec(mode=mode,
                                               loss=loss,
                                               train_op=train_op,
@@ -108,6 +113,7 @@ def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
         Returns:
             tf.data.Dataset object representing the dataset
         """
+        global dataset_step_counter
         # TODO replace with logging
         print("path = {}".format(tf_record_path))
         print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
@@ -196,6 +202,7 @@ def train_and_evaluate_model(create_model,
         None
     """
 
+    # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
                                      hyperparams=hyperparams,
                                      shared_hyperparams=shared_hyperparams)
@@ -239,6 +246,9 @@ def train_and_evaluate_model(create_model,
                             tf_record_path=valid_tf_record_path,
                             steps=epoch_size_valid)
         print("Finished training epoch #{}".format(i + 1))
+        if EarlyStoppingHook.should_stop:
+            print("early stopping detected, stop training")
+            break
 
     _evaluate_estimator(estimator=estimator,
                         dataset=test_dataset,

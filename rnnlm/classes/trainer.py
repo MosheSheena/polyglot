@@ -1,4 +1,5 @@
 from rnnlm.utils.estimator.estimator import train_and_evaluate_model
+from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 
 
@@ -74,7 +75,16 @@ class Trainer:
                                          checkpoint_path=self.checkpoint_path,
                                          training_hooks=task.training_hooks,
                                          evaluation_hooks=task.evaluation_hooks)
+
+                # break task switching loop
+                if EarlyStoppingHook.should_stop:
+                    break
+
             print("Finished multitask epoch #{}".format(multi_task_epoch + 1))
+
+            # break multitask training
+            if EarlyStoppingHook.should_stop:
+                break
 
     def train_transfer_learning(self):
         if not len(self.tasks) > 1:
@@ -103,3 +113,5 @@ class Trainer:
             # if more than one task has this hook this will decay the learning rate of the other tasks
             # unless, we reset it so each task will have it's learning rate
             LearningRateDecayHook.epoch_counter = 0
+            if EarlyStoppingHook.should_stop:
+                break

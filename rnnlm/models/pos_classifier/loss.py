@@ -9,7 +9,6 @@ def create_loss(model, labels, hyperparams):
     metrics = dict()
 
     batch_size = hyperparams.train.batch_size
-    # num_steps = hyperparams.arch.sequence_length
     num_steps = labels.get_shape().as_list()[1]
 
     loss_vector = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
