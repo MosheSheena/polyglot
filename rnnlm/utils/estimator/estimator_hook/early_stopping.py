@@ -65,7 +65,8 @@ class EarlyStoppingHook(tf.train.SessionRunHook):
             bool indicating whether to stop training or not
         """
 
-        print("Current loss: {} previous loss: {}".format(self.after_loss, self.before_loss))
+        # TODO - print to debug log
+        # print("Current loss: {} previous loss: {}".format(self.after_loss, self.before_loss))
         EarlyStoppingHook.should_stop = EarlyStoppingHook.no_improve_counter >= self.max_no_improvement
-        print("should_stop = {}".format(EarlyStoppingHook.should_stop))
+        # print("should_stop = {}".format(EarlyStoppingHook.should_stop))
         return EarlyStoppingHook.should_stop
