@@ -49,9 +49,7 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
     initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
                                                 hyperparams.train.w_init_scale)
 
-    with tf.variable_scope("lstm_fast", reuse=tf.AUTO_REUSE, initializer=initializer) as scope:
-        # if is_training:
-        #    scope.reuse_variables()
+    with tf.variable_scope("lstm_fast", reuse=tf.AUTO_REUSE, initializer=initializer):
 
         batch_size = hyperparams.train.batch_size
         num_steps = shared_hyperparams.arch.sequence_length
@@ -144,21 +142,23 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
                                              [1, size],
                                              name="test_cell_in")
 
-        softmax_w = tf.get_variable("softmax_w",
-                                    [size, vocab_size],
-                                    dtype=data_type(hyperparams))
-        softmax_b = tf.get_variable("softmax_b",
-                                    [vocab_size],
-                                    dtype=data_type(hyperparams))
-        softmax_b = softmax_b - 9.0
+        with tf.variable_scope("lstm_fast_softmax"):
+            softmax_w = tf.get_variable("softmax_w",
+                                        [size, vocab_size],
+                                        dtype=data_type(hyperparams))
+            softmax_b = tf.get_variable("softmax_b",
+                                        [vocab_size],
+                                        dtype=data_type(hyperparams))
+            softmax_b = softmax_b - 9.0
 
-        softmax_w_pos = tf.get_variable("softmax_w_pos",
-                                        [size, vocab_size_pos],
-                                        dtype=data_type(hyperparams))
-        softmax_b_pos = tf.get_variable("softmax_b_pos",
-                                        [vocab_size_pos],
-                                        dtype=data_type(hyperparams))
-        softmax_b_pos = softmax_b_pos - 9.0
+        with tf.variable_scope("pos_softmax"):
+            softmax_w_pos = tf.get_variable("softmax_w_pos",
+                                            [size, vocab_size_pos],
+                                            dtype=data_type(hyperparams))
+            softmax_b_pos = tf.get_variable("softmax_b_pos",
+                                            [vocab_size_pos],
+                                            dtype=data_type(hyperparams))
+            softmax_b_pos = softmax_b_pos - 9.0
 
         test_logits = tf.matmul(
             cellout_placeholder,
@@ -196,9 +196,15 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
                 outputs.append(cell_output)
 
         output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, size])
-        logits = tf.matmul(output, softmax_w) + softmax_b
-        logits_pos = tf.matmul(output, softmax_w_pos) + softmax_b_pos
+
+        with tf.variable_scope("lstm_fast_logits"):
+            logits = tf.matmul(output, softmax_w) + softmax_b
+
+        with tf.variable_scope("pos_logits"):
+            logits_pos = tf.matmul(output, softmax_w_pos) + softmax_b_pos
+
         _final_state = state
+
         model["final_state"] = _final_state
         model["logits"] = logits
         model["logits_pos"] = logits_pos

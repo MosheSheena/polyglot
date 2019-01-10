@@ -1,6 +1,5 @@
-import math
-
 from rnnlm.utils.tf_io.io_service import load_dataset
+from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from collections import defaultdict
 
 import tensorflow as tf
@@ -8,12 +7,6 @@ import tensorflow as tf
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
-
-no_improve_counter = 0
-current_loss = 0
-previous_loss = math.inf
-threshold = 0.01
-should_stop = False
 
 
 def _create_tf_estimator_spec(create_model,
@@ -39,7 +32,6 @@ def _create_tf_estimator_spec(create_model,
     """
 
     def my_model_fn(features, labels, mode, params):
-        global current_loss
         # Talk to the outside world, this dict will be pass to any hooks that
         # are created outside and passed here.
         estimator_params = dict()
@@ -56,7 +48,6 @@ def _create_tf_estimator_spec(create_model,
 
         # Create a loss
         loss, metrics = create_loss(model, labels, params)
-        current_loss = loss
         estimator_params["loss"] = loss
         estimator_params["metrics"] = metrics
 
@@ -85,6 +76,12 @@ def _create_tf_estimator_spec(create_model,
                 for hook_class in training_hooks:
                     hook_instance = hook_class(**estimator_params)
                     _training_hooks.append(hook_instance)
+
+            stop_params = shared_hyperparams.train.early_stopping
+            early_stop = EarlyStoppingHook(loss_tensor=loss,
+                                           threshold=stop_params.threshold,
+                                           max_steps_without_improvement=stop_params.max_steps_without_improvement)
+            _training_hooks.append(early_stop)
 
             return tf.estimator.EstimatorSpec(mode=mode,
                                               loss=loss,
@@ -205,6 +202,7 @@ def train_and_evaluate_model(create_model,
         None
     """
 
+    # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
                                      hyperparams=hyperparams,
                                      shared_hyperparams=shared_hyperparams)
@@ -236,18 +234,6 @@ def train_and_evaluate_model(create_model,
                                        config=config,
                                        params=hyperparams)
 
-    # Add the EarlyStoppingHook
-
-    early_stopping = tf.contrib.estimator.make_early_stopping_hook(
-        estimator,
-        should_stop_fn,
-        run_every_secs=60,
-        run_every_steps=None
-    )
-    # This will be added to the training hooks even though we added it after we created
-    # the model_fn
-    training_hooks.append(lambda **kwargs: early_stopping)
-
     for i in range(num_epochs):
         print("Starting training epoch #{}".format(i + 1))
         # Train and evaluate
@@ -260,42 +246,11 @@ def train_and_evaluate_model(create_model,
                             tf_record_path=valid_tf_record_path,
                             steps=epoch_size_valid)
         print("Finished training epoch #{}".format(i + 1))
-
-        if should_stop:
+        if EarlyStoppingHook.should_stop:
+            print("early stopping detected, stop training")
             break
 
     _evaluate_estimator(estimator=estimator,
                         dataset=test_dataset,
                         tf_record_path=test_tf_record_path,
                         steps=epoch_size_test)
-
-
-def should_stop_fn():
-    """
-    This function is needed for the early stopping of the estimator, if it return True,
-    then the estimator will stop training, else the training continues.
-    For some unknown reason, it must not take any arguments, hopefully tis will change.
-    But until then, we use a global variable for saving the previous loss and the no improvement
-    counter.
-    Returns:
-        bool indicating whether to stop training or not
-    """
-    global no_improve_counter
-    global previous_loss
-    global current_loss
-    global threshold
-    global should_stop
-
-    sess = tf.Session()
-
-    if math.isinf(previous_loss):
-        return False
-    _current_loss = sess.run(current_loss)
-    print("Current loss: {} previous loss: {}".format(_current_loss, previous_loss))
-    print("previous_loss - _current_loss: {}".format(previous_loss - _current_loss))
-    if abs(previous_loss - _current_loss) <= threshold:
-        should_stop = True
-    should_stop = False
-
-    previous_loss = _current_loss
-    return True
