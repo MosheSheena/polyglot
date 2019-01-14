@@ -1,8 +1,3 @@
-"""Utilities for parsing RNNLM files."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import tensorflow as tf
 
 
@@ -64,6 +59,15 @@ def read_tf_records(abs_tf_record_path,
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
     dataset = dataset.skip(count=skip_first_n)
     dataset = dataset.prefetch(buffer_size=1)
+    return dataset
+
+
+def convert_tensor_to_dataset(name_to_tensor_dict, batch_size):
+    # convert the inputs to a Dataset.
+    dataset = tf.data.Dataset.from_tensor_slices(name_to_tensor_dict)
+
+    dataset = dataset.batch(batch_size)
+
     return dataset
 
 

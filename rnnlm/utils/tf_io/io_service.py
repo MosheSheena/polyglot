@@ -56,3 +56,18 @@ def load_dataset(abs_tf_record_path,
                                   shuffle=shuffle,
                                   shuffle_buffer_size=shuffle_buffer_size,
                                   skip_first_n=skip_first_n)
+
+
+def create_dataset_from_tensor(name_to_tensor_dict, batch_size):
+    """
+    create a tf.data.Dataset from tensors
+    Args:
+        name_to_tensor_dict (dict): where each key is a name of the tensor and the value is
+        the tensor itself
+        batch_size (int): the batch size
+
+    Returns:
+        tf.data.Dataset
+    """
+    return reader.convert_tensor_to_dataset(name_to_tensor_dict=name_to_tensor_dict,
+                                            batch_size=batch_size)
