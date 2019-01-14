@@ -1,12 +1,16 @@
+import os
+
 from rnnlm.utils.tf_io.io_service import load_dataset
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from collections import defaultdict
+from shutil import copy2
 
 import tensorflow as tf
 
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
+PROJECTOR_METADATA_FILE_NAME = 'metadata.tsv'
 
 
 def _create_tf_estimator_spec(create_model,
@@ -201,6 +205,15 @@ def train_and_evaluate_model(create_model,
     Returns:
         None
     """
+
+    # Create labels for the embeddings projector
+    if not os.path.exists(checkpoint_path):
+        os.makedirs(checkpoint_path)
+    metadata_file = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
+    destination = os.path.join(checkpoint_path, PROJECTOR_METADATA_FILE_NAME)
+    copy2(metadata_file, destination)
+
+    copy2("config/projector/projector_config.pbtxt", checkpoint_path)
 
     # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
