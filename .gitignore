@@ -112,3 +112,7 @@ all_ops.txt
 checkpoint
 results.*
 
+checkpoint
+results.data-00000-of-00001
+results.index
+results.meta

@@ -1,5 +1,21 @@
+from rnnlm.models.lstm_fast import train, pre_training
+from rnnlm.utils.hyperparams import load_params
 import os
-from rnnlm.models.lstm_fast import train
+from time import gmtime, strftime
+import tensorflow as tf
 
+# tf.logging.set_verbosity(tf.logging.INFO)
 
-train.main()
+if __name__ == "__main__":
+    hyperparams = load_params(os.path.join(os.getcwd(), "rnnlm/models/lstm_fast/hyperparameters.json"))
+    print(strftime("start time: %Y-%m-%d %H:%M:%S", gmtime()))
+
+    if not hyperparams.problem.data_path:
+        raise ValueError("Must set data_path hyperparameters.json")
+
+    if hyperparams.problem.convert_raw_to_tf_records:
+        pre_training.main(hyperparams=hyperparams)
+
+    train.main(hyperparams=hyperparams)
+
+    print(strftime("end time: %Y-%m-%d %H:%M:%S", gmtime()))
