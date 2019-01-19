@@ -8,6 +8,7 @@ A module meant to enable word / sentence generation using a model
 import argparse
 import os
 import random
+import sys
 from datetime import datetime
 
 import numpy as np
@@ -28,10 +29,11 @@ ERROR = -1
 
 UNK = '<unk>'
 START = '</s>'
+ADD_START_FLAG = True
 
 DEFUALT_SENTENCE_LEN = 5
 DEFUALT_NUM_WORDS_FOR_FILE = 10
-DEFAULT_TEMPRATURE = 1
+DEFAULT_TEMPRATURE = 0.1
 
 WORD_BUFFER_SIZE = 50
 
@@ -153,12 +155,11 @@ def load_trained_model(log_dir_path):
         return None
 
 
-def get_language_model_probabilities(graph, sess, word, temperature=1, context=None):
+def get_language_model_probabilities(graph, sess, word, context=None):
     """
     Given a word, return all probabilities to predict following words from the word vocabulary
 
     Args:
-        temperature (float):
         graph (tf.Graph): a graph of the trained language model
         sess (tf.Session): a session to use running the ops in this function
         word (tf.int32): a word id representing a word from the vocabulary
@@ -199,13 +200,13 @@ def get_language_model_probabilities(graph, sess, word, temperature=1, context=N
         b=tensor_mapping_dict["softmax_w"]
     ) + tensor_mapping_dict["softmax_b"]
 
-    logits_after_temperature = logits / temperature
-
-    # probabilities_tensor = sess.run(tf.nn.log_softmax(logits=logits), feed_dict)
-    probabilities_tensor = sess.run(tf.nn.softmax(logits=logits), feed_dict)
+    logits = sess.run(logits, feed_dict)
+    
+    # probabilities_tensor = sess.run(tf.nn.softmax(logits=logits), feed_dict)
     context = run_res_dict["state_out"]
 
-    return probabilities_tensor, context
+    # return probabilities_tensor, context
+    return logits, context
 
 
 def generate_word(
@@ -220,7 +221,7 @@ def generate_word(
         temperature (int):
         graph (tf.Graph):
         sess (tf.Session):
-        word (int):
+        word (str):
         word_2_id (dict):
         id_2_word (dict):
         context (tf.Tensor):
@@ -231,24 +232,31 @@ def generate_word(
     """
     word_id = word_2_id.get(word, word_2_id.get(UNK))
 
-    prob_tensor, context = get_language_model_probabilities(
+    logits, context = get_language_model_probabilities(
         graph=graph,
         sess=sess,
         word=word_id,
-        temperature=temperature,
         context=context
     )
 
-    # NOTE: prob_tensor[0] and gen_word_index[0][0] are for shape compatibility across functions
-    gen_word_prob, gen_word_index = choose_random_word(
-        probability_tensor=prob_tensor[0], probability_distribution=prob_tensor[0])
+    logits = np.array(logits)
+    probabilities = np.exp(logits)
+    probabilities /= np.sum(probabilities)
+    probabilities = probabilities.ravel()
 
-    gen_word = id_2_word[gen_word_index[0][0]]
+    gen_word_index = np.random.choice(range(len(probabilities)), p=probabilities)
+    gen_word = id_2_word.get(gen_word_index, START)
+
+    # NOTE: prob_tensor[0] and gen_word_index[0][0] are for shape compatibility across functions
+    # generated_word = choose_random_word(
+    #     word_ids=range(len(prob_tensor)), probability_distribution=prob_tensor[0])
+
+    # gen_word = id_2_word[generated_word]
 
     return gen_word, context
 
 
-def choose_random_word(probability_tensor, probability_distribution=None):
+def choose_random_word(word_ids, probability_distribution=None):
     """
     Given a probability tensor shaped (1, <vocabulary_size>), choose a word using uniform random method
 
@@ -263,11 +271,11 @@ def choose_random_word(probability_tensor, probability_distribution=None):
             * index = the word's position within the tensor (which should correspond to the word's id)
 
     """
-    probability = np.random.choice(a=probability_tensor, p=probability_distribution)
+    word = np.random.choice(a=word_ids, p=probability_distribution)
 
-    index = np.where(probability_tensor == probability)
+    # index = np.where(probability_tensor == probability)
 
-    return probability, index
+    return word
 
 
 def parse_words_id_file_to_dict(file):
@@ -347,17 +355,15 @@ def choose_a_random_word(id_2_word):
     return id_2_word[random_id]
 
 
-def collect_action_arguments(action, word_2_id, id_2_word):
+def collect_action_arguments(action):
     """
     Gather all required arguments for the chosen action
 
     Args:
         action (int): action number from the action menu
-        word_2_id (dict): a dictionary mapping words to word id's
-        id_2_word (dict): a dictionary mapping id's to vocabulary words
+        
     Returns:
         dict: kwargs for action execution
-
     """
     def initial_word_settings():
         """
@@ -365,17 +371,28 @@ def collect_action_arguments(action, word_2_id, id_2_word):
 
         Returns:
             dict: a dictionary of the arguments required for executing an action
-
         """
+        global LM_CONTEXT
+        global ADD_START_FLAG
+
         _args = {}
-        _input = input("Enter a word/sentence: ")
+
+        _input = input("Enter a word/sentence: [random word]")
+
+        if _input.startswith("//"):
+            LM_CONTEXT = None  # reset the LSTM context
+            _input = _input[3:]
+        if _input.startswith(r"\\"):
+            ADD_START_FLAG = False  # start feeding the RNN without </s> at first
+            _input = _input[3:]
+
         sentence = _input.split()
         if sentence:
             # converting lower case words to upper case
             upper_sentence = [s.upper() for s in sentence]
-
+            
             _args["initial_input"] = upper_sentence
-        else:  # no words were provided so starting with the </s> word
+        else:  # Choosing an initial word in random
             _args["initial_input"] = [START]
 
         _temperature = input(
@@ -428,9 +445,16 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
 
     """
     global LM_CONTEXT
+    global ADD_START_FLAG
 
     action = action_args["action"]
-    words = action_args["initial_input"]
+
+    _words = action_args["initial_input"]
+    words = list(map(lambda x: str(x).upper(), _words))  # convert all words to upper case because of AMI dataset
+    if ADD_START_FLAG:
+        words = [START] + words  # adding </s> for start of sentence
+    ADD_START_FLAG = True  # reset for next sentence
+
     temperature = action_args["temperature"]
 
     if action == GEN_SENTENCE:
@@ -528,9 +552,18 @@ def main():
         if action < 1 or action > NUM_OPTIONS:
             print("Option invalid. please choose between 1 and {}".format(NUM_OPTIONS))
             continue  # return to loop condition
+        if action == GEN_SENTENCE:
+            while True:
+                args = collect_action_arguments(action=action)
+                args["action"] = action
+                execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
+                _quit = input("exit ? (y/n) [n]")
+                if _quit:
+                    sys.exit(0)
+
         if action == EXIT:
             break
-        args = collect_action_arguments(action=action, word_2_id=word_2_id, id_2_word=id_2_word)
+        args = collect_action_arguments(action=action)
         args["action"] = action
         execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
 

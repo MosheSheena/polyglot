@@ -1,23 +1,25 @@
 import tensorflow as tf
 
 
-def create_optimizer(model, losses, is_training, hyperparams):
-    if not is_training:
-        return
-
-    _lr = tf.Variable(0.0, trainable=False)
-    tvars = tf.trainable_variables()
-    grads, _ = tf.clip_by_global_norm(tf.gradients(losses["cost"], tvars),
+def create_optimizer(loss, hyperparams):
+    lr = tf.Variable(hyperparams.train.learning_rate.start_value, trainable=False)
+    t_vars = tf.trainable_variables()
+    grads, _ = tf.clip_by_global_norm(tf.gradients(loss, t_vars),
                                       hyperparams.train.max_grad_norm)
-    optimizer = tf.train.GradientDescentOptimizer(_lr)
+    optimizer = tf.train.GradientDescentOptimizer(lr)
     train_op = optimizer.apply_gradients(
-        zip(grads, tvars),
+        zip(grads, t_vars),
         global_step=tf.train.get_or_create_global_step()
     )
 
-    _new_lr = tf.placeholder(tf.float32,
-                             shape=[],
-                             name="new_learning_rate")
-    lr_update = tf.assign(_lr, _new_lr)
+    new_lr = tf.placeholder(tf.float32,
+                            shape=[],
+                            name="new_learning_rate")
+    lr_update_op = tf.assign(lr, new_lr)
 
-    return train_op, lr_update, _lr, _new_lr
+    optimizer_params = dict()
+    optimizer_params["lr_update_op"] = lr_update_op
+    optimizer_params["learning_rate"] = lr
+    optimizer_params["new_lr_placeholder"] = new_lr
+
+    return train_op, optimizer_params
