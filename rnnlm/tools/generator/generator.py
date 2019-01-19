@@ -38,15 +38,28 @@ WORD_BUFFER_SIZE = 50
 GENERATION_MSG = "Entered = {0} --> Generated = {1}"
 
 # Tensors required to load from model
+# TENSORS_OF_MODEL_DICT = {
+#     "word_in": "Test/Model/lstm_fast/test_word_in",
+#     "word_out": "Test/Model/lstm_fast/test_word_out",
+#     "initial_state": "Test/Model/lstm_fast/test_initial_state",
+#     "state_in": "Test/Model/lstm_fast/test_state_in",
+#     "state_out": "Test/Model/lstm_fast/test_state_out",
+#     "cell_in": "Test/Model/lstm_fast/test_cell_in",
+#     "cell_out": "Test/Model/lstm_fast/test_cell_out",
+#     "test_out": "Test/Model/lstm_fast/test_out",
+#     "softmax_w": "Model/lstm_fast/softmax_w",
+#     "softmax_b": "Model/lstm_fast/softmax_b"
+# }
+
 TENSORS_OF_MODEL_DICT = {
-    "word_in": "Test/Model/lstm_fast/test_word_in",
-    "word_out": "Test/Model/lstm_fast/test_word_out",
-    "initial_state": "Test/Model/lstm_fast/test_initial_state",
-    "state_in": "Test/Model/lstm_fast/test_state_in",
-    "state_out": "Test/Model/lstm_fast/test_state_out",
-    "cell_in": "Test/Model/lstm_fast/test_cell_in",
-    "cell_out": "Test/Model/lstm_fast/test_cell_out",
-    "test_out": "Test/Model/lstm_fast/test_out",
+    "word_in": "Train/Model/lstm_fast/test_word_in",
+    "word_out": "Train/Model/lstm_fast/test_word_out",
+    "initial_state": "Train/Model/lstm_fast/test_initial_state",
+    "state_in": "Train/Model/lstm_fast/test_state_in",
+    "state_out": "Train/Model/lstm_fast/test_state_out",
+    "cell_in": "Train/Model/lstm_fast/test_cell_in",
+    "cell_out": "Train/Model/lstm_fast/test_cell_out",
+    "test_out": "Train/Model/lstm_fast/test_out",
     "softmax_w": "Model/lstm_fast/softmax_w",
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
@@ -355,14 +368,18 @@ def collect_action_arguments(action, word_2_id, id_2_word):
 
         """
         _args = {}
-        _input = input("Enter a word/sentence: [random word]")
+        _input = input("Enter a word/sentence: ")
         sentence = _input.split()
         if sentence:
-            _args["initial_input"] = sentence
-        else:  # Choosing an initial word in random
-            _args["initial_input"] = [choose_a_random_word(id_2_word)]
+            # converting lower case words to upper case
+            upper_sentence = [s.upper() for s in sentence]
+
+            _args["initial_input"] = upper_sentence
+        else:  # no words were provided so starting with the </s> word
+            _args["initial_input"] = [START]
+
         _temperature = input(
-            "Enter temprature: [{def_temp}]".format(
+            "Enter temperature: [{def_temp}]".format(
                 def_temp=DEFAULT_TEMPRATURE
             )
         )
