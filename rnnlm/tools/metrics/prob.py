@@ -9,30 +9,56 @@ import argparse
 import collections
 import logging
 import os
+import sys
 from functools import reduce
 from math import exp
-
+from datetime import datetime
 import tensorflow as tf
 
 # Tensors required to load from model
+# TENSORS_OF_MODEL_DICT = {
+#     "word_in": "Test/Model/lstm_fast/test_word_in",
+#     "word_out": "Test/Model/lstm_fast/test_word_out",
+#     "initial_state": "Test/Model/lstm_fast/test_initial_state",
+#     "state_in": "Test/Model/lstm_fast/test_state_in",
+#     "state_out": "Test/Model/lstm_fast/test_state_out",
+#     "cell_in": "Test/Model/lstm_fast/test_cell_in",
+#     "cell_out": "Test/Model/lstm_fast/test_cell_out",
+#     "test_out": "Test/Model/lstm_fast/test_out",
+#     "softmax_w": "Model/lstm_fast/softmax_w",
+#     "softmax_b": "Model/lstm_fast/softmax_b"
+# }
+
 TENSORS_OF_MODEL_DICT = {
-    "word_in": "Test/Model/lstm_fast/test_word_in",
-    "word_out": "Test/Model/lstm_fast/test_word_out",
-    "initial_state": "Test/Model/lstm_fast/test_initial_state",
-    "state_in": "Test/Model/lstm_fast/test_state_in",
-    "state_out": "Test/Model/lstm_fast/test_state_out",
-    "cell_in": "Test/Model/lstm_fast/test_cell_in",
-    "cell_out": "Test/Model/lstm_fast/test_cell_out",
-    "test_out": "Test/Model/lstm_fast/test_out",
+    "word_in": "Train/Model/lstm_fast/test_word_in",
+    "word_out": "Train/Model/lstm_fast/test_word_out",
+    "initial_state": "Train/Model/lstm_fast/test_initial_state",
+    "state_in": "Train/Model/lstm_fast/test_state_in",
+    "state_out": "Train/Model/lstm_fast/test_state_out",
+    "cell_in": "Train/Model/lstm_fast/test_cell_in",
+    "cell_out": "Train/Model/lstm_fast/test_cell_out",
+    "test_out": "Train/Model/lstm_fast/test_out",
     "softmax_w": "Model/lstm_fast/softmax_w",
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
 
+# options in the menu
+INTERACTIVE_MODE = 1
+TEST_FILE_MODE = 2
+KALDI_FILE = 3
+EXIT = 4
+
+UNK = '<unk>'
+
+# global context to be adjusted as the program is running
+LM_CONTEXT = None
+
 
 def get_args():
-    """This function parses and return arguments passed in
+    """This function parses and return arguments passed in the cli
 
     Returns:
+        tuple: a tuple of
 
     """
     parser = argparse.ArgumentParser(
@@ -55,13 +81,19 @@ def get_args():
         type=str,
         help="Absolute path to file containing words/sentences (ONE PER LINE)"
     )
+    parser.add_argument(
+        "-k", "--kaldi",
+        type=str,
+        help="Absolute path to kaldi eval file"
+    )
     # Get arguments from command line
     args = parser.parse_args()
     model_path = args.model
     words_path = args.words
     data_path = args.data
+    kaldi_eval_path = args.kaldi
 
-    return model_path, words_path, data_path
+    return model_path, words_path, data_path, kaldi_eval_path
 
 
 def find_file_by_extension(path, extension):
@@ -213,7 +245,8 @@ def _words_to_ids(words, id_dict):
         list: a list of same length as words param where all elements are id's (int) corresponding to their words
 
     """
-    return [id_dict[word] for word in words]
+    words_upper_case = list(map(lambda x: str(x).upper(), words))
+    return [id_dict.get(word, id_dict.get(UNK)) for word in words_upper_case]
 
 
 def build_id_dicts_for_prob(words_file):
@@ -231,9 +264,10 @@ def build_id_dicts_for_prob(words_file):
 
     """
     word_list_raw = _file_to_list(words_file)
-    word_list = list(map(lambda word: word.strip(), word_list_raw))
+    word_list = list(map(lambda x: x.strip(), word_list_raw))
     count = collections.Counter(word_list).most_common()
     dictionary = {}
+    reverse_dictionary = {}
     for word, _ in count:
         dictionary[word] = len(dictionary)
         reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
@@ -278,9 +312,9 @@ def prepare_test_batch(sentence, id_dict):
 
     id_list = _words_to_ids(words=sentence, id_dict=id_dict)
 
-    for id in id_list:
-        batch_list.append((word_in_id, id))
-        word_in_id = id
+    for _id in id_list:
+        batch_list.append((word_in_id, _id))
+        word_in_id = _id
 
     return batch_list
 
@@ -328,16 +362,48 @@ def get_log_prob(graph, sess, word_in, word_out, context=None):
     feed_dict[tensor_mapping["cell_in"]] = run_res_dict["cell_out"]
 
     probability = sess.run(tensor_mapping["test_out"], feed_dict)
+    context = run_res_dict["state_out"]
 
     return probability, context
 
 
-if __name__ == "__main__":
+def parse_kaldi_file(file_path):
+    """
+
+    Args:
+        file_path (str):
+
+    Yields:
+        tuple: a tuple of the form (<REF LINE>, <HYP LINE>)
+    """
+    ref_line_flag = False
+    ref_line = None
+    hyp_line = None
+
+    with open(file=file_path, mode='r') as f:
+        for line in f:
+            if ref_line_flag:  # if a REF line was read
+                if line.startswith('HYP'):
+                    hyp_line = line  # save the HYP line
+
+                    yield (ref_line, hyp_line)
+
+            if line.startswith('REF'):  # if a REF line was read
+                ref_line = line  # save the REF line
+
+                ref_line_flag = True  # next line will be a HYP line
+
+
+def main():
+    # globals
+    global LM_CONTEXT
+
     # ========== LOGGING SETUP ==========
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     # create a file handler
-    handler = logging.FileHandler('prob.log')
+    time_sig = "_".join(str(datetime.now())[:19].split())  # 19 is the length for YYYY-MM-dd_HH:mm:ss
+    handler = logging.FileHandler(time_sig + '_prob.log')
     handler.setLevel(logging.INFO)
     # create a logging format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -346,7 +412,7 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     # ========== LOGGING SETUP ==========
 
-    model_path, word_path, data_path = get_args()  # parsing the cli flags
+    model_path, word_path, data_path, kaldi_file_path = get_args()  # cli parse
 
     logger.info("Loading the model...")
     graph, sess = load_trained_model(log_dir_path=model_path)
@@ -354,39 +420,213 @@ if __name__ == "__main__":
     _dict = parse_words_id_file_to_dict(file=word_path)
     reversed_dict = create_reverse_dict(id_to_word_dict=_dict)
 
-    data_matrix = build_prob_dataset(data_path)
+    action = create_action_menu()
+    if action == INTERACTIVE_MODE:
 
-    context = None  # for initial state init in getLogProb
+        continue_flag = True
 
-    logger.info("------------------------------------------------------")
+        while continue_flag:
+            sentence_string = input("Enter a word/sentence: ")
+            sentence = sentence_string.split()
+            num_words = len(sentence)
 
-    for sentence in data_matrix:
-        logger.info("Computing probability for sentence: {}".format(" ".join(sentence)))
-        batch = prepare_test_batch(sentence=sentence, id_dict=_dict)
+            batch = prepare_test_batch(sentence=sentence, id_dict=_dict)
+            log_probs_of_sentence = []
 
-        log_probs_of_sentence = []
+            for word_in_id, word_out_id in batch:
+                prob, LM_CONTEXT = get_log_prob(
+                    graph=graph,
+                    sess=sess,
+                    word_in=word_in_id,
+                    word_out=word_out_id,
+                    context=LM_CONTEXT
+                )
+                log_probs_of_sentence.append(prob)
 
-        for word_in_id, word_out_id in batch:
-            prob, context = get_log_prob(
-                graph=graph,
-                sess=sess,
-                word_in=word_in_id,
-                word_out=word_out_id,
-                context=context
-            )
+            sentence_log_prob = reduce(lambda x, y: x+y, log_probs_of_sentence)
+            average_sentence_log_prob = sentence_log_prob / num_words
 
-            logger.info(
-                "prob({word_out} | {word_in})={prob}".format(
-                    word_out=reversed_dict[word_out_id],
-                    word_in=reversed_dict[word_in_id],
-                    prob=prob
+            print("""
+                =========================
+                Sentence -> {sentence}
+                Log probabilty -> {log_prob}
+                Average log probabilty -> {avg_log_prob}
+                =========================
+                """.format(
+                    sentence=" ".join(sentence),
+                    log_prob=sentence_log_prob,
+                    avg_log_prob=average_sentence_log_prob
                 )
             )
 
-            log_probs_of_sentence.append(prob)
+            continue_input = input("continue Y/N? [Y]")
+            if continue_input == 'N' or continue_input == 'n':
+                continue_flag = False
 
-        log_prob_for_entire_sentence = reduce(lambda x, y: x+y, log_probs_of_sentence)
-        exp_log_prob_for_entire_sentence = exp(log_prob_for_entire_sentence)
-        logger.info("log prob for sentence: {}={}".format(" ".join(sentence), log_prob_for_entire_sentence))
-        logger.info("exp of log prob for sentence: {}={}".format(" ".join(sentence), exp_log_prob_for_entire_sentence))
+    elif action == TEST_FILE_MODE:
+
+        data_matrix = build_prob_dataset(data_path)
+
         logger.info("------------------------------------------------------")
+
+        for sentence in data_matrix:
+            logger.info("Computing probability for sentence: {}".format(" ".join(sentence)))
+            batch = prepare_test_batch(sentence=sentence, id_dict=_dict)
+
+            log_probs_of_sentence = []
+
+            for word_in_id, word_out_id in batch:
+                prob, LM_CONTEXT = get_log_prob(
+                    graph=graph,
+                    sess=sess,
+                    word_in=word_in_id,
+                    word_out=word_out_id,
+                    context=LM_CONTEXT
+                )
+
+                logger.info(
+                    "prob({word_out} | {word_in})={prob}".format(
+                        word_out=reversed_dict[word_out_id],
+                        word_in=reversed_dict[word_in_id],
+                        prob=prob
+                    )
+                )
+
+                log_probs_of_sentence.append(prob)
+
+            log_prob_for_entire_sentence = reduce(lambda x, y: x + y, log_probs_of_sentence)
+            exp_log_prob_for_entire_sentence = exp(log_prob_for_entire_sentence)
+            logger.info("log prob for sentence: {}={}".format(" ".join(sentence), log_prob_for_entire_sentence))
+            logger.info(
+                "exp of log prob for sentence: {}={}".format(" ".join(sentence), exp_log_prob_for_entire_sentence))
+            logger.info("------------------------------------------------------")
+
+            sys.exit(0)
+
+    elif action == KALDI_FILE:
+
+        ref_context = None  # for REF sentences
+        hyp_context = None  # for HYP sentences
+
+        if not kaldi_file_path:
+            print("Please pass the -k flag to the script")
+            sys.exit(1)
+        else:
+            logger.info("=======================================================")
+
+            avg_log_prob_ref_sentences = 0.0
+            avg_log_prob_hyp_sentences = 0.0
+            num_sentences_of_eval = 0
+
+            for ref, hyp in parse_kaldi_file(kaldi_file_path):
+                ref_words_list = ref.split()[1:]  # get rid of 'REF:'
+                ref_sentence = list(map(lambda word: word.strip(), ref_words_list))
+                ref_sentence_len = len(ref_sentence)
+
+                hyp_words_list = hyp.split()[1:]  # get rid of 'HYP:'
+                _hyp_sentence = list(map(lambda word: word.strip(), hyp_words_list))
+                hyp_sentence = list(filter(lambda x: not str(x).startswith('*'), _hyp_sentence))
+                hyp_sentence_len = len(hyp_sentence)
+                if hyp_sentence_len < 1:  # a case of hyp of the form **
+                    continue
+
+                ref_batch = prepare_test_batch(sentence=ref_sentence, id_dict=_dict)
+                hyp_batch = prepare_test_batch(sentence=hyp_sentence, id_dict=_dict)
+
+                log_probs_of_ref_sentence = []
+
+                for word_in_id, word_out_id in ref_batch:
+                    prob, ref_context = get_log_prob(
+                        graph=graph,
+                        sess=sess,
+                        word_in=word_in_id,
+                        word_out=word_out_id,
+                        context=ref_context
+                    )
+                    log_probs_of_ref_sentence.append(prob)
+
+                log_probs_of_hyp_sentence = []
+
+                for word_in_id, word_out_id in hyp_batch:
+                    prob, hyp_context = get_log_prob(
+                        graph=graph,
+                        sess=sess,
+                        word_in=word_in_id,
+                        word_out=word_out_id,
+                        context=hyp_context
+                    )
+                    log_probs_of_hyp_sentence.append(prob)
+
+                ref_sentence_log_prob = reduce(lambda x, y: x + y, log_probs_of_ref_sentence) * (-1)
+                ref_sentence_avg_log_prob = ref_sentence_log_prob / ref_sentence_len
+
+                hyp_sentence_log_prob = reduce(lambda x, y: x + y, log_probs_of_hyp_sentence) * (-1)
+                hyp_sentence_avg_log_prob = hyp_sentence_log_prob / hyp_sentence_len
+
+                logger.info(
+                    ref[:-2] + " -> [log_prob] = {} [avg_log_prob] = {}".format(
+                        ref_sentence_log_prob, ref_sentence_avg_log_prob
+                    )
+                )
+                logger.info(
+                    hyp[:-2] + " -> [log_prob] = {} [avg_log_prob] = {}".format(
+                        hyp_sentence_log_prob, hyp_sentence_avg_log_prob
+                    )
+                )
+                logger.info("ratio = {}".format(str(ref_sentence_log_prob / hyp_sentence_log_prob)))
+
+                avg_log_prob_ref_sentences += ref_sentence_avg_log_prob
+                avg_log_prob_hyp_sentences += hyp_sentence_avg_log_prob
+                num_sentences_of_eval += 1
+
+            _avg_ref = avg_log_prob_ref_sentences / num_sentences_of_eval
+            _avg_hyp = avg_log_prob_hyp_sentences / num_sentences_of_eval
+
+            logger.info(
+                "avg log prob for all REF sentences = {}".format(
+                    _avg_ref
+                )
+            )
+            logger.info(
+                "avg log prob for all HYP sentences = {}".format(
+                    _avg_hyp
+                )
+            )
+            logger.info(
+                "ratio between all REF and all HYP = {}".format(
+                    _avg_ref / _avg_hyp
+                )
+            )
+        sys.exit(0)
+
+    elif action == EXIT:
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
+
+def create_action_menu():
+    """
+    Print a menu with actions using the language model
+
+    Returns:
+        int: an option the user selected
+
+    """
+    print(
+        """
+    ******** Language-Model-Probabilities-Estimator ********
+
+    1. Work interactive
+    2. Work using a test file
+    3. Parse Kaldi eval file
+    4. Exit
+        """
+    )
+    option = input("Choose an option:")
+
+    return int(option)
+
+
+if __name__ == "__main__":
+    main()

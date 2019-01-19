@@ -8,24 +8,36 @@ A module meant to enable word / sentence generation using a model
 import argparse
 import os
 import random
+import sys
+from datetime import datetime
 
 import numpy as np
 import tensorflow as tf
 
 from rnnlm.tools.generator import (
-    helper as gen_helper,
-    config as gen_conf
+    helper as gen_helper
 )
 
 # Constants
 NUM_OPTIONS = 4
 
-GEN_WORD = 1
-GEN_SENTENCE = 2
-GEN_SENTENCES = 3
-EXIT = 4
+GEN_SENTENCE = 1
+GEN_SENTENCES = 2
+EXIT = 3
 
 ERROR = -1
+
+UNK = '<unk>'
+START = '</s>'
+ADD_START_FLAG = True
+
+DEFUALT_SENTENCE_LEN = 5
+DEFUALT_NUM_WORDS_FOR_FILE = 10
+DEFAULT_TEMPRATURE = 0.1
+
+WORD_BUFFER_SIZE = 50
+
+GENERATION_MSG = "Entered = {0} --> Generated = {1}"
 
 # Tensors required to load from model
 TENSORS_OF_MODEL_DICT = {
@@ -40,6 +52,10 @@ TENSORS_OF_MODEL_DICT = {
     "softmax_w": "Model/lstm_fast/softmax_w",
     "softmax_b": "Model/lstm_fast/softmax_b"
 }
+
+# global context to be adjusted as the program is running
+LM_CONTEXT = None
+
 
 def get_args():
     """
@@ -62,32 +78,14 @@ def get_args():
     )
     parser.add_argument(
         "-w", "--words",
-        help="Absolute path to wordlist.rnn.final file",
+        help="Absolute path to wordlist.rnn.id file",
         required=True
     )
-    parser.add_argument(
-        "-s", "--single",
-        help="Generate a single word"
-    )
-    parser.add_argument(
-        "-S", "--sentence",
-        help="Generate a single sentence"
-    )
-    parser.add_argument(
-        "-f", "--word-file",
-        help="Generate a file of words"
-    )
-    parser.add_argument(
-        "-F", "--sentence-file",
-        help="Generate a file of sentences"
-    )
+
     # Get arguments from command line
     args = parser.parse_args()
     model_path = args.model
     words_path = args.words
-
-    if args.single is not None:
-
 
     return model_path, words_path
 
@@ -189,12 +187,63 @@ def get_language_model_probabilities(graph, sess, word, context=None):
         b=tensor_mapping_dict["softmax_w"]
     ) + tensor_mapping_dict["softmax_b"]
 
-    probabilities_tensor = sess.run(tf.nn.log_softmax(logits=logits), feed_dict)
+    logits = sess.run(logits, feed_dict)
+    
+    # probabilities_tensor = sess.run(tf.nn.softmax(logits=logits), feed_dict)
+    context = run_res_dict["state_out"]
 
-    return probabilities_tensor, context
+    # return probabilities_tensor, context
+    return logits, context
 
 
-def choose_random_word(probability_tensor, probability_distribution=None):
+def generate_word(
+        graph, sess, word,
+        word_2_id, id_2_word,
+        temperature=1, context=None
+):
+    """
+    Given a single word, generate a word using a language model
+
+    Args:
+        temperature (int):
+        graph (tf.Graph):
+        sess (tf.Session):
+        word (str):
+        word_2_id (dict):
+        id_2_word (dict):
+        context (tf.Tensor):
+
+    Returns:
+        tuple:
+
+    """
+    word_id = word_2_id.get(word, word_2_id.get(UNK))
+
+    logits, context = get_language_model_probabilities(
+        graph=graph,
+        sess=sess,
+        word=word_id,
+        context=context
+    )
+
+    logits = np.array(logits)
+    probabilities = np.exp(logits)
+    probabilities /= np.sum(probabilities)
+    probabilities = probabilities.ravel()
+
+    gen_word_index = np.random.choice(range(len(probabilities)), p=probabilities)
+    gen_word = id_2_word.get(gen_word_index, START)
+
+    # NOTE: prob_tensor[0] and gen_word_index[0][0] are for shape compatibility across functions
+    # generated_word = choose_random_word(
+    #     word_ids=range(len(prob_tensor)), probability_distribution=prob_tensor[0])
+
+    # gen_word = id_2_word[generated_word]
+
+    return gen_word, context
+
+
+def choose_random_word(word_ids, probability_distribution=None):
     """
     Given a probability tensor shaped (1, <vocabulary_size>), choose a word using uniform random method
 
@@ -209,14 +258,11 @@ def choose_random_word(probability_tensor, probability_distribution=None):
             * index = the word's position within the tensor (which should correspond to the word's id)
 
     """
-    if probability_distribution:
-        probability = np.random.choice(a=probability_tensor, size=1, p=probability_distribution)
-    else:
-        probability = np.random.choice(a=probability_tensor, size=1)
+    word = np.random.choice(a=word_ids, p=probability_distribution)
 
-    index = np.where(probability_tensor == probability)
+    # index = np.where(probability_tensor == probability)
 
-    return probability, index
+    return word
 
 
 def parse_words_id_file_to_dict(file):
@@ -269,15 +315,14 @@ def create_action_menu():
         """
     ******** Language-Model-Generator ********
     
-    1. Generate a word
-    2. Generate a sentence
-    3. Generate a file of sentences
-    4. Exit
+    1. Generate interactively
+    2. Generate a file
+    3. Exit
         """
     )
-    option = input("Choose an option by typing a number:")
+    option = input("Choose an option:")
 
-    return option
+    return int(option)
 
 
 def choose_a_random_word(id_2_word):
@@ -297,90 +342,213 @@ def choose_a_random_word(id_2_word):
     return id_2_word[random_id]
 
 
-def collect_action_arguments(action, word_2_id, id_2_word):
+def collect_action_arguments(action):
     """
     Gather all required arguments for the chosen action
 
     Args:
         action (int): action number from the action menu
-        word_2_id (dict): a dictionary mapping words to word id's
-        id_2_word (dict): a dictionary mapping id's to vocabulary words
+        
     Returns:
         dict: kwargs for action execution
-
     """
-    args = {}
-    if action == GEN_WORD:
-        init_word_from_user = input("Provide initial word [Y/N]?")
-        if init_word_from_user == 'y' or init_word_from_user == 'Y':
-            word = input("Enter a word:")
-            word = word_2_id.get(word, None)
-            if word is None:
-                print("word does not belong in the vocabulary")
-                return ERROR
-            else:
-                args["word"] = word
-                return args
+    def initial_word_settings():
+        """
+        Ask the user if he wants to provide an initial word or to choose one at random
+
+        Returns:
+            dict: a dictionary of the arguments required for executing an action
+        """
+        global LM_CONTEXT
+        global ADD_START_FLAG
+
+        _args = {}
+        _input = input("Enter a word/sentence: [random word]")
+
+        if _input.startswith("//"):
+            LM_CONTEXT = None  # reset the LSTM context
+            _input = _input[3:]
+        if _input.startswith(r"\\"):
+            ADD_START_FLAG = False  # start feeding the RNN without </s> at first
+            _input = _input[3:]
+
+        sentence = _input.split()
+        if sentence:
+            _args["initial_input"] = sentence
         else:  # Choosing an initial word in random
-            args["word"] = choose_a_random_word(id_2_word)
+            _args["initial_input"] = [START]
+        _temperature = input(
+            "Enter temperature: [{def_temp}]".format(
+                def_temp=DEFAULT_TEMPRATURE
+            )
+        )
+        temperature = float(_temperature) if _temperature else DEFAULT_TEMPRATURE
+        _args["temperature"] = temperature
 
-    elif action == GEN_SENTENCE:
-        pass
+        return _args
+
+    args = initial_word_settings()
+
+    if action == GEN_SENTENCE:
+        sentence_len = input(
+            "Enter number of words: [{def_len}]".format(
+                def_len=DEFUALT_SENTENCE_LEN
+            )
+        )
+        sentence_len = int(sentence_len) if sentence_len else DEFUALT_SENTENCE_LEN
+
+        args["sentence_len"] = sentence_len
+
     elif action == GEN_SENTENCES:
-        pass
+        num_words = input(
+            "Enter number of words: [{def_num}]".format(
+                def_num=DEFUALT_NUM_WORDS_FOR_FILE
+            )
+        )
+        num_words = num_words if num_words else DEFUALT_NUM_WORDS_FOR_FILE
+
+        args["num_words"] = num_words
+
+    return args
 
 
-
-
-
-def execute_action(action):
+def execute_action(action_args, graph, sess, word_2_id, id_2_word):
     """
+    Execute an action using the language model
 
     Args:
-        action:
+        action_args (dict): a dictionary containing all arguments necessary for an action
+        graph (tf.Graph):
+        sess (tf.Session):
+        word_2_id (dict):
+        id_2_word (dict):
 
     Returns:
 
     """
+    global LM_CONTEXT
+    global ADD_START_FLAG
+
+    action = action_args["action"]
+
+    _words = action_args["initial_input"]
+    words = list(map(lambda x: str(x).upper(), _words))  # convert all words to upper case because of AMI dataset
+    if ADD_START_FLAG:
+        words = [START] + words  # adding </s> for start of sentence
+    ADD_START_FLAG = True  # reset for next sentence
+
+    temperature = action_args["temperature"]
+
+    if action == GEN_SENTENCE:
+        sentence_len = int(action_args["sentence_len"])
+
+        end_of_feed_word = None
+
+        if len(words) > 1:  # first feed the model with the input without printing
+            for i in range(len(words)):
+                gen_word, LM_CONTEXT = generate_word(
+                    graph=graph, sess=sess,
+                    word=words[i],
+                    word_2_id=word_2_id,
+                    id_2_word=id_2_word,
+                    temperature=temperature,
+                    context=LM_CONTEXT
+                )
+                end_of_feed_word = gen_word
+        else:
+            end_of_feed_word = words[0]
+
+        word_queue = [end_of_feed_word]
+
+        print_sentence = []
+        print_sentence.extend(words)
+
+        for i in range(sentence_len):
+            gen_word, LM_CONTEXT = generate_word(
+                graph=graph, sess=sess,
+                word=word_queue[i],
+                word_2_id=word_2_id,
+                id_2_word=id_2_word,
+                temperature=temperature,
+                context=LM_CONTEXT
+            )
+            word_queue.append(gen_word)
+            print_sentence.append(gen_word)
+
+        print(" ".join(print_sentence))
+
+    elif action == GEN_SENTENCES:
+        num_words = int(action_args["num_words"])
+        time_sig = "_".join(str(datetime.now())[:19].split())  # 19 is the length for YYYY-MM-dd_HH:mm:ss
+        file_name = time_sig + "_gen_words.txt"
+
+        end_of_feed_word = None
+
+        if len(words) > 1:  # first feed the model with the input without printing
+            for i in range(len(words)):
+                gen_word, LM_CONTEXT = generate_word(
+                    graph=graph, sess=sess,
+                    word=words[i],
+                    word_2_id=word_2_id, id_2_word=id_2_word,
+                    context=LM_CONTEXT
+                )
+                end_of_feed_word = gen_word
+        else:
+            end_of_feed_word = words[0]
+
+        word_queue = [end_of_feed_word]
+        buffer = []
+        buffer.extend(words)
+
+        with open(file_name, 'w') as file:
+            for i in range(num_words):
+                gen_word, LM_CONTEXT = generate_word(
+                    graph=graph, sess=sess,
+                    word=word_queue[i],
+                    word_2_id=word_2_id, id_2_word=id_2_word,
+                    context=LM_CONTEXT
+                )
+                word_queue.append(gen_word)
+                buffer.append(gen_word)
+
+            for word in buffer:
+                file.write(word + " ") if word != START else file.write("\n")
 
 
-
-if __name__ == "__main__":
+def main():
     # Parsing the cli args passed to the script
     model_path, word_path = get_args()  # parsing the cli flags
 
     # Loading the graph and session
     graph, sess = load_trained_model(log_dir_path=model_path)
-    word_2_id_dict = parse_words_id_file_to_dict(file=word_path)
-    id_2_word_dict = create_reverse_dict(_dict=word_2_id_dict)
 
-    # Generating a choice menu and prompt the user for actions
+    # Creating the vocabulary dicts required for generation
+    word_2_id = parse_words_id_file_to_dict(file=word_path)
+    id_2_word = create_reverse_dict(_dict=word_2_id)
+
     action = None
     while action != EXIT:
+        # Generating a choice menu and prompt the user for actions
         action = create_action_menu()
         # Execute an action the user chose
-        if not isinstance(action, int):
+        if action < 1 or action > NUM_OPTIONS:
             print("Option invalid. please choose between 1 and {}".format(NUM_OPTIONS))
             continue  # return to loop condition
+        if action == GEN_SENTENCE:
+            while True:
+                args = collect_action_arguments(action=action)
+                args["action"] = action
+                execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
+                _quit = input("exit ? (y/n) [n]")
+                if _quit:
+                    sys.exit(0)
+
+        if action == EXIT:
+            break
+        args = collect_action_arguments(action=action)
+        args["action"] = action
+        execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
 
 
-    #################################
-    init_word = "THIS"
-    init_word_id = word_2_id_dict[init_word]
-    context = None
-    num_words_to_generate = 5
-    word_list = [init_word]
-
-    for i in range(num_words_to_generate):
-        prob_tensor, context = get_language_model_probabilities(
-            graph=graph,
-            sess=sess,
-            word=word_2_id_dict[word_list[i]],
-            context=context
-        )
-        # NOTE: prob_tensor[0] and gen_word_index[0][0] are for shape compatibility across functions
-        gen_word_prob, gen_word_index = choose_random_word(probability_tensor=prob_tensor[0])
-
-        word_list.append(id_2_word_dict[gen_word_index[0][0]])
-
-    print("Generated sentence: {}".format(" ".join(word_list)))
+if __name__ == "__main__":
+    main()
