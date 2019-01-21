@@ -62,9 +62,9 @@ def read_tf_records(abs_tf_record_path,
     return dataset
 
 
-def convert_tensor_to_dataset(name_to_tensor_dict, batch_size):
+def convert_tensor_to_dataset(tensor, batch_size):
     # convert the inputs to a Dataset.
-    dataset = tf.data.Dataset.from_tensor_slices(name_to_tensor_dict)
+    dataset = tf.data.Dataset.from_tensor_slices(tensor)
 
     dataset = dataset.batch(batch_size)
 
