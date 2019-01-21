@@ -1,12 +1,12 @@
 import os
 
-from rnnlm.utils.tf_io.io_service import load_dataset
+from rnnlm.utils.tf_io.io_service import load_dataset, create_dataset_from_tensor
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from collections import defaultdict
 from shutil import copy2
 
 import tensorflow as tf
-
+import numpy as np
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
@@ -49,7 +49,12 @@ def _create_tf_estimator_spec(create_model,
         estimator_params["model"] = model
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            return tf.estimator.EstimatorSpec(mode=mode, predictions=model)
+            predictions = {
+                "logits": model["logits"],
+                "arg_max": tf.argmax(model["logits"], 1)
+                #"softmax": tf.nn.softmax(model["logits"])
+            }
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         # Create a loss
         loss, metrics = create_loss(model, labels, params)
@@ -147,7 +152,7 @@ def _evaluate_estimator(estimator, dataset, tf_record_path, steps):
     dataset_step_counter[tf_record_path] += steps
 
 
-def create_prediction_estimator(create_model, checkpoint_path, shared_hyperparams, hyperparams):
+def create_prediction_estimator(create_model, prediction_dict, checkpoint_path, shared_hyperparams, hyperparams):
 
     estimator_spec = _create_tf_estimator_spec(create_model=create_model,
                                                create_loss=None,
@@ -158,7 +163,10 @@ def create_prediction_estimator(create_model, checkpoint_path, shared_hyperparam
                                        model_dir=checkpoint_path,
                                        params=hyperparams)
 
-    return estimator
+    predict_input = create_dataset_from_tensor(tensor=prediction_dict,
+                                               batch_size=hyperparams.train.batch_size)
+
+    return estimator, predict_input
 
 
 def train_and_evaluate_model(create_model,
@@ -206,7 +214,8 @@ def train_and_evaluate_model(create_model,
     Returns:
         None
     """
-
+    x = lambda: create_dataset_from_tensor(tensor=np.random.random_integers(0, 10000, (64, 20)),
+                                           batch_size=hyperparams.train.batch_size)
     # Create labels for the embeddings projector
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
@@ -248,6 +257,8 @@ def train_and_evaluate_model(create_model,
                                        config=config,
                                        params=hyperparams)
 
+    p = estimator.predict(x)
+    next(p)
     for i in range(num_epochs):
         print("Starting training epoch #{}".format(i + 1))
         # Train and evaluate
