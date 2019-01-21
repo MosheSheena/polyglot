@@ -24,15 +24,11 @@ def main(shared_hyperparams, hyperparams):
     print("converting pos tf records")
 
     seq_len = shared_hyperparams.arch.sequence_length
-
-    x_shifts = hyperparams.problem.get_or_default(key="num_shifts_x", default=seq_len)
-
-    gen_fn = extractor.extract_x_y_words_with_x_shifting_by_n_each_time
+    gen_fn = extractor.extract_words_and_their_pos_tags
 
     for raw_path, tf_record_path in zip(raw_files, tf_record_outputs):
         with open(raw_path, 'r') as f:
-            preprocess_elements_with_vocab(gen_fn=gen_fn(file_obj=f, seq_len=seq_len, n=x_shifts),
+            preprocess_elements_with_vocab(gen_fn=gen_fn(file_obj=f, seq_len=seq_len),
                                            abs_vocab_path_features=abs_vocab_path,
                                            abs_vocab_path_labels=abs_pos_vocab_path,
                                            abs_output_tf_record_path=tf_record_path)
-

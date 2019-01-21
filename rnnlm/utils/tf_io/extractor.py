@@ -281,7 +281,7 @@ def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
             break
 
 
-def gen_pos_tagger(file_obj, seq_len):
+def extract_words_and_their_pos_tags(file_obj, seq_len):
     """
     Each call to this generator generates a tuple of x, y
     where x is list of words with a list size of seq_len

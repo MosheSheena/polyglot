@@ -27,9 +27,7 @@ def main(shared_hyperparams, hyperparams):
     # preprocess for classic training
     print("converting original data to tf record")
     seq_len = shared_hyperparams.arch.sequence_length
-
     x_shifts = hyperparams.problem.get_or_default(key="num_shifts_x", default=seq_len)
-
     gen_fn = extractor.extract_x_y_words_with_x_shifting_by_n_each_time
 
     for raw_path, tf_record_path in zip(raw_files, tf_record_outputs):

@@ -44,6 +44,10 @@ class ExperimentRunner:
                 task = importlib.import_module("rnnlm.models.{}.task".format(model))
 
                 if tasks_hyperparams[model].problem.convert_raw_to_tf_records:
+                    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
+                    if not os.path.exists(abs_tf_record_path):
+                        os.makedirs(abs_tf_record_path)
+
                     print("Converting raw data to tfrecord format")
                     pre_training.main(shared_hyperparams=shared_hyperparams,
                                       hyperparams=tasks_hyperparams[model])
