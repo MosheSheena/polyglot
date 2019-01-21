@@ -30,7 +30,7 @@ def _gen_n_words(file_obj,
     """
     Generates n words from file. if shift flag is true than num_shifts arg is
     expected, the function will yield words shifted by num_shifts.
-    E.g given the raw text data:
+    Examples: given the raw text data:
     "WONDER HOW MUCH OF THE MEETINGS IS TALKING ABOUT THE STUFF AT THE MEETINGS </s>
     YEAH </s>"
     and the following args passed: n=4 , shift=False
@@ -91,10 +91,63 @@ def _gen_n_words(file_obj,
     #     yield n_words
 
 
+def extract_x_y_words_with_x_shifting_by_n_each_time(file_obj, seq_len, n):
+    """
+    extracts x with a shift of n each yield, y is always extracted with a shift of
+    1 relative to x
+    Examples:
+    given the raw text data:
+    "WONDER HOW MUCH OF THE MEETINGS IS TALKING ABOUT THE STUFF AT THE MEETINGS </s>
+    YEAH </s>"
+    and seq_len=4, n=2
+    the function will yield (ignoring remainder):
+
+    Yield #1:
+      x = ['WONDER', 'HOW', 'MUCH', 'OF'], y = ['HOW', 'MUCH', 'OF', 'THE']
+    Yield #2:
+      x = ['MUCH', 'OF', 'THE', 'MEETINGS'], y = ['OF', 'THE', 'MEETINGS', 'IS']
+    Yield #3:
+      x = ['THE', 'MEETINGS', 'IS', 'TALKING'], y = ['MEETINGS', 'IS', 'TALKING', 'ABOUT']
+    Yield #4:
+      x = ['IS', 'TALKING', 'ABOUT', 'THE'], y = ['TALKING', 'ABOUT', 'THE', 'AT']
+    Yield #5:
+      x = ['ABOUT', 'THE', 'AT', 'THE'], y = ['THE', 'AT', 'THE', 'MEETINGS']
+    Yield #6:
+      x = ['AT', 'THE', 'MEETINGS', '</s>], y = ['THE', 'MEETINGS', '</s>', 'YEAH']
+
+
+    Args:
+        file_obj : an opened file that has the raw data
+        seq_len (int): the sequence length of the yield
+        n (int): num of shifts to perform on x
+
+    Yields:
+        tuple of 2 containing x and y.
+    """
+    assert n <= seq_len, "cannot overlap more than sequence length {}".format(seq_len)
+    shifter = _gen_n_words(file_obj=file_obj, n=1)
+
+    accumulator = list()
+    while True:
+        try:
+            while len(accumulator) < seq_len:
+                accumulator += next(shifter)
+            x = list(accumulator)
+            accumulator.pop(0)
+            accumulator += next(shifter)
+            y = list(accumulator)
+            yield x, y
+            for i in range(n - 1):
+                accumulator.pop(0)
+        except StopIteration:
+            break
+
+
 def extract_without_overlap_in_same_and_between_yields(file_obj, seq_len):
     """
     Generates x, y where each element is shifted by seq_len
-    E.g given the raw text data:
+    Examples:
+    given the raw text data:
     "WONDER HOW MUCH OF THE MEETINGS IS TALKING ABOUT THE STUFF AT THE MEETINGS </s>
     YEAH </s>"
     and seq_len=4
@@ -110,7 +163,7 @@ def extract_without_overlap_in_same_and_between_yields(file_obj, seq_len):
         seq_len (int):
 
     Yields:
-
+    tuple of x and y.
     """
     gen_w = _gen_n_words(file_obj=file_obj, n=seq_len)
     while True:
@@ -131,7 +184,8 @@ def extract_with_overlap_of_n_minus_1_words_in_same_and_between_yields(file_obj,
     and the second element is a shift of 1 of those words, the two elements have
     seq_len - 1 shared words.
 
-    E.g given the raw text data:
+    Examples:
+    given the raw text data:
     "WONDER HOW MUCH OF THE MEETINGS IS TALKING ABOUT THE STUFF AT THE MEETINGS </s>
     YEAH </s> NOT"
     and seq_len=4
@@ -183,7 +237,8 @@ def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
     simply x contains words and y contains those words shifted by 1.
     No overlap between x from different yields.
 
-    E.g given the raw text data:
+    Examples:
+    given the raw text data:
     "WONDER HOW MUCH OF THE MEETINGS IS TALKING ABOUT THE STUFF AT THE MEETINGS </s>
     YEAH </s> NOT"
     and seq_len=4
@@ -226,7 +281,7 @@ def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
             break
 
 
-def gen_pos_tagger(file_obj, seq_len):
+def extract_words_and_their_pos_tags(file_obj, seq_len):
     """
     Each call to this generator generates a tuple of x, y
     where x is list of words with a list size of seq_len

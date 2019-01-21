@@ -3,34 +3,26 @@ import tensorflow as tf
 from rnnlm.utils.tf_io import reader, writer
 
 
-def raw_to_tf_records(gen_raw_data,
+def raw_to_tf_records(gen_fn_raw_data,
                       abs_tf_record_path,
                       preprocessor_feature_fn=None,
-                      preprocessor_feature_params=None,
-                      preprocessor_label_fn=None,
-                      preprocessor_label_params=None):
+                      preprocessor_label_fn=None):
     """
     convert raw data (sentences) into tf records format
     Args:
-        gen_raw_data (generator): function that defines how to iterate the data
+        gen_fn_raw_data (generator): function that defines how to iterate the data
         abs_tf_record_path (str): absolute path to tfrecord file of the data
         preprocessor_feature_fn (func): returns the preprocessed tensor
-        preprocessor_feature_params (args*): additional args for preprocessor_feature_fn besides
-         features, if there is any.
         preprocessor_label_fn (func): returns the preprocessed tensor
-        preprocessor_label_params (args*): additional args for preprocessor_label_fn besides
-         labels, if there is any.
 
     Returns:
         None
     """
 
-    writer.write_tf_records(gen_words=gen_raw_data,
+    writer.write_tf_records(gen_fn_words=gen_fn_raw_data,
                             destination_path=abs_tf_record_path,
                             preprocessor_feature_fn=preprocessor_feature_fn,
-                            preprocessor_feature_params=preprocessor_feature_params,
-                            preprocessor_label_fn=preprocessor_label_fn,
-                            preprocessor_label_params=preprocessor_label_params)
+                            preprocessor_label_fn=preprocessor_label_fn)
 
 
 def load_dataset(abs_tf_record_path,
