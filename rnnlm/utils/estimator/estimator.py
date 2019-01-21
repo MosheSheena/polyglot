@@ -11,6 +11,7 @@ import tensorflow as tf
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
 PROJECTOR_METADATA_FILE_NAME = 'metadata.tsv'
+PROJECTOR_CONFIG_FILE = 'config/projector/projector_config.pbtxt'
 
 
 def _create_tf_estimator_spec(create_model,
@@ -213,7 +214,7 @@ def train_and_evaluate_model(create_model,
     destination = os.path.join(checkpoint_path, PROJECTOR_METADATA_FILE_NAME)
     copy2(metadata_file, destination)
 
-    copy2("config/projector/projector_config.pbtxt", checkpoint_path)
+    copy2(PROJECTOR_CONFIG_FILE, checkpoint_path)
 
     # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
