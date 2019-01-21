@@ -18,14 +18,21 @@ def main(shared_hyperparams, hyperparams):
     valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_valid_file)
     test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_test_file)
 
+    raw_files = [train_raw_data_path, valid_raw_data_path, test_raw_data_path]
+    tf_record_outputs = [train_tf_record_path, valid_tf_record_path, test_tf_record_path]
+
     print("converting pos tf records")
-    preprocess_elements_with_vocab(gen_fn=extractor.gen_pos_tagger,
-                                   seq_len=shared_hyperparams.arch.sequence_length,
-                                   abs_vocab_path_features=abs_vocab_path,
-                                   abs_vocab_path_labels=abs_pos_vocab_path,
-                                   abs_raw_data_train=train_raw_data_path,
-                                   abs_raw_data_valid=valid_raw_data_path,
-                                   abs_raw_data_test=test_raw_data_path,
-                                   abs_train_tf_record_path=train_tf_record_path,
-                                   abs_valid_tf_record_path=valid_tf_record_path,
-                                   abs_test_tf_record_path=test_tf_record_path)
+
+    seq_len = shared_hyperparams.arch.sequence_length
+
+    x_shifts = hyperparams.problem.get_or_default(key="num_shifts_x", default=seq_len)
+
+    gen_fn = extractor.extract_x_y_words_with_x_shifting_by_n_each_time
+
+    for raw_path, tf_record_path in zip(raw_files, tf_record_outputs):
+        with open(raw_path, 'r') as f:
+            preprocess_elements_with_vocab(gen_fn=gen_fn(file_obj=f, seq_len=seq_len, n=x_shifts),
+                                           abs_vocab_path_features=abs_vocab_path,
+                                           abs_vocab_path_labels=abs_pos_vocab_path,
+                                           abs_output_tf_record_path=tf_record_path)
+

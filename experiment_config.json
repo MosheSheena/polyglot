@@ -41,7 +41,7 @@
             "vocab_path": "rnnlm/data/wordlist.rnn.final",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "convert_raw_to_tf_records": false,
+            "convert_raw_to_tf_records": true,
             "tf_record_train_file": "train.tfrecord",
             "tf_record_valid_file": "valid.tfrecord",
             "tf_record_test_file": "test.tfrecord"
@@ -75,7 +75,7 @@
             "pos_vocab_path": "rnnlm/data/pos_tags",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "convert_raw_to_tf_records": false,
+            "convert_raw_to_tf_records": true,
             "tf_record_train_file": "train_pos.tfrecord",
             "tf_record_valid_file": "valid_pos.tfrecord",
             "tf_record_test_file": "test_pos.tfrecord"

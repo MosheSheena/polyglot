@@ -23,37 +23,31 @@ def _bytes_feature_wrap(bytes_values):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=bytes_values))
 
 
-def write_tf_records(gen_words,
+def write_tf_records(gen_fn_words,
                      destination_path,
                      preprocessor_feature_fn=None,
-                     preprocessor_feature_params=None,
-                     preprocessor_label_fn=None,
-                     preprocessor_label_params=None):
+                     preprocessor_label_fn=None):
     """
     Writes the data in a tf record format
     Args:
-        gen_words (generator):  each call to next(gen_word) will yield a tuple of x, y
+        gen_fn_words (generator):  each call to next(gen_word) will yield a tuple of x, y
         destination_path (str): where to write the tf records files
         preprocessor_feature_fn (func):  preprocessor function for feature before writing
-        preprocessor_feature_params (args): for preprocessor function, this will be unpacked
-        like this fn(x_feature, unpacked_args)
         preprocessor_label_fn (func):  preprocessor function for label before writing
-        preprocessor_label_params (args): for preprocessor function, this will be unpacked
-        like this fn(y_label, unpacked_args)
     Returns:
         None
     """
     with tf.python_io.TFRecordWriter(destination_path) as writer:
 
-        for x, y in gen_words:
+        for x, y in gen_fn_words:
 
             if preprocessor_feature_fn is not None:
-                x = preprocessor_feature_fn(x, *preprocessor_feature_params)
+                x = preprocessor_feature_fn(x)
             # TODO support float and byte features
             x_feature = _int64_feature_wrap(int_values=x)
 
             if preprocessor_label_fn is not None:
-                y = preprocessor_label_fn(y, *preprocessor_label_params)
+                y = preprocessor_label_fn(y)
             # TODO support float and byte features
             y_label = _int64_feature_wrap(int_values=y)
             feature_dict = {
