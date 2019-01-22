@@ -71,3 +71,8 @@ def create_dataset_from_tensor(tensor, batch_size):
     """
     return reader.convert_tensor_to_dataset(tensor=tensor,
                                             batch_size=batch_size)
+
+
+def create_vocab(file_obj):
+    return reader.read_and_build_vocab(file_obj)
+
