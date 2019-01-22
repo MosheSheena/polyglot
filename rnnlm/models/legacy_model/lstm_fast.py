@@ -33,8 +33,6 @@ import tensorflow as tf
 
 from rnnlm.utils.new_softmax import new_softmax
 
-from rnnlm.utils.tf_io import reader
-
 
 class Config(object):
     """Small config."""
