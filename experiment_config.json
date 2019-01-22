@@ -5,9 +5,11 @@
       "models": [
         "lstm_fast"
       ],
+      "predict_mode": true,
       "learning_technique": "normal",
       "hyperparameters": {
         "shared_layer": {
+          "create_model": "lstm_fast",
           "problem": {
             "save_path": "results",
             "tf_records_path": "rnnlm/data/tfrecords"
