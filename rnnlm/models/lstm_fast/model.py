@@ -172,6 +172,10 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
 
         p_word = test_logits[0, 0]
         test_out = tf.identity(p_word, name="test_out")
+        # model["logits"] = test_out
+
+        # if mode == tf.estimator.ModeKeys.PREDICT:
+        #     return model
 
         if mode == tf.estimator.ModeKeys.TRAIN and shared_hyperparams.arch.keep_prob < 1:
             inputs = tf.nn.dropout(inputs, shared_hyperparams.arch.keep_prob)

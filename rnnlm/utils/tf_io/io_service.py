@@ -56,3 +56,23 @@ def load_dataset(abs_tf_record_path,
                                   shuffle=shuffle,
                                   shuffle_buffer_size=shuffle_buffer_size,
                                   skip_first_n=skip_first_n)
+
+
+def create_dataset_from_tensor(tensor, batch_size):
+    """
+    create a tf.data.Dataset from tensors
+    Args:
+        tensor: where each key is a name of the tensor and the value is
+        the tensor itself
+        batch_size (int): the batch size
+
+    Returns:
+        tf.data.Dataset
+    """
+    return reader.convert_tensor_to_dataset(tensor=tensor,
+                                            batch_size=batch_size)
+
+
+def create_vocab(file_obj):
+    return reader.read_and_build_vocab(file_obj)
+

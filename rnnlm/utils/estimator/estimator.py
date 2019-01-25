@@ -1,15 +1,16 @@
 import os
 
-from rnnlm.utils.tf_io.io_service import load_dataset
+from rnnlm.utils.tf_io.io_service import load_dataset, create_dataset_from_tensor, create_vocab
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from collections import defaultdict
 from shutil import copy2
 
 import tensorflow as tf
-
+import numpy as np
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
+
 PROJECTOR_METADATA_FILE_NAME = 'metadata.tsv'
 PROJECTOR_CONFIG_FILE = 'config/projector/projector_config.pbtxt'
 
@@ -21,7 +22,7 @@ def _create_tf_estimator_spec(create_model,
                               training_hooks=None,
                               evaluation_hooks=None):
     """
-    create a generic model_fn required for the estimator to train
+    create a generic model_fn required for the estimator to train, eval or predict
     Args:
         create_model (func): function defining the model
         create_loss (func): function defining the loss
@@ -49,7 +50,13 @@ def _create_tf_estimator_spec(create_model,
         estimator_params["model"] = model
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            return tf.estimator.EstimatorSpec(mode=mode, predictions=model)
+            softmax = tf.nn.softmax(model["logits"])
+            predictions = {
+                "logits": model["logits"],
+                "arg_max": tf.argmax(softmax, 1),
+                "softmax": softmax
+            }
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         # Create a loss
         loss, metrics = create_loss(model, labels, params)
@@ -147,18 +154,45 @@ def _evaluate_estimator(estimator, dataset, tf_record_path, steps):
     dataset_step_counter[tf_record_path] += steps
 
 
-def create_prediction_estimator(create_model, checkpoint_path, shared_hyperparams, hyperparams):
+def _predict_estimator(estimator, shared_hyperparams, hyperparams):
+    vocab_size = hyperparams.problem.vocab_size
+    batch_size = hyperparams.train.batch_size
+    seq_len = shared_hyperparams.arch.sequence_length
 
-    estimator_spec = _create_tf_estimator_spec(create_model=create_model,
-                                               create_loss=None,
-                                               create_optimizer=None,
-                                               shared_hyperparams=shared_hyperparams)
+    def predict_data():
+        return create_dataset_from_tensor(tensor=np.random.random_integers(0, vocab_size - 1, (batch_size, seq_len)),
+                                          batch_size=hyperparams.train.batch_size)
 
-    estimator = tf.estimator.Estimator(estimator_spec,
-                                       model_dir=checkpoint_path,
-                                       params=hyperparams)
+    word_2_id = hyperparams.problem.vocab_path
+    with open(word_2_id) as f:
+        word_2_id = create_vocab(f)
+    id_2_word = dict(zip(word_2_id.values(), word_2_id.keys()))
 
-    return estimator
+    predictions = estimator.predict(predict_data)
+
+    num_predicted = 0
+    # predict returns a generator object
+    for p in predictions:
+        predicted_word = id_2_word[p["arg_max"]]
+        print(predicted_word)
+        num_predicted += 1
+
+    # prints batch_size * seq_len as expected
+    print(num_predicted)
+
+
+def _create_labels_for_embeddings_projector(checkpoint_path, hyperparams):
+    if not os.path.exists(checkpoint_path):
+        os.makedirs(checkpoint_path)
+
+    # the metadata file should contain the mapping from data to labels
+    # in our case its just the vocabulary
+    metadata_file = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
+    destination = os.path.join(checkpoint_path, PROJECTOR_METADATA_FILE_NAME)
+    copy2(metadata_file, destination)
+
+    # the projector config files states what name is given to the metadata file
+    copy2(PROJECTOR_CONFIG_FILE, checkpoint_path)
 
 
 def train_and_evaluate_model(create_model,
@@ -180,13 +214,13 @@ def train_and_evaluate_model(create_model,
     Invoke tf.estimator with the passed args
 
     Args:
-        create_model (func): creates the model, the function arguments must be (features, mode, params)
+        create_model (func): creates the model, the function arguments must be (features, mode, params, shared_params)
             where feature is the input_fn (in our case the input pipeline from tf.data) mode is an instance of
-            tf.estimator.ModeKeys and params is a dict containing hyperparams used in model
+            tf.estimator.ModeKeys and params is a dict containing hyperparams used in model.
         create_loss (func): defines the loss, receives as args the model in a dict from create model,
-            the labels and hyperparams. Must return a dict containing key 'cost' the is the loss as a scalar
+            the labels and hyperparams.
         create_optimizer (func): defines the optimizer, receives as args the loss dict from create loss and hyperparams.
-            Returns the train_op
+            Returns the train_op and a dictionary that can contain additional info for hooks.
         hyperparams (Dict2Obj): contains the hyperparams configuration
         shared_hyperparams (Dict2Obj): contains hyperparams that are shared between tasks
         train_tf_record_path (str): full path of train data in tf record format
@@ -206,15 +240,8 @@ def train_and_evaluate_model(create_model,
     Returns:
         None
     """
-
     # Create labels for the embeddings projector
-    if not os.path.exists(checkpoint_path):
-        os.makedirs(checkpoint_path)
-    metadata_file = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
-    destination = os.path.join(checkpoint_path, PROJECTOR_METADATA_FILE_NAME)
-    copy2(metadata_file, destination)
-
-    copy2(PROJECTOR_CONFIG_FILE, checkpoint_path)
+    _create_labels_for_embeddings_projector(checkpoint_path=checkpoint_path, hyperparams=hyperparams)
 
     # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
@@ -268,3 +295,16 @@ def train_and_evaluate_model(create_model,
                         dataset=test_dataset,
                         tf_record_path=test_tf_record_path,
                         steps=epoch_size_test)
+
+
+def predict_with_model(create_model, shared_hyperparams, hyperparams, checkpoint_path):
+    estimator_spec = _create_tf_estimator_spec(create_model=create_model,
+                                               create_loss=None,
+                                               create_optimizer=None,
+                                               shared_hyperparams=shared_hyperparams)
+
+    estimator = tf.estimator.Estimator(model_fn=estimator_spec,
+                                       model_dir=checkpoint_path,
+                                       params=hyperparams)
+
+    _predict_estimator(estimator=estimator, shared_hyperparams=shared_hyperparams, hyperparams=hyperparams)

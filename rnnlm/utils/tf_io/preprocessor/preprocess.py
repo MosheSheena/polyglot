@@ -1,5 +1,5 @@
 import tensorflow as tf
-from rnnlm.utils.tf_io import reader, io_service
+from rnnlm.utils.tf_io import io_service
 
 
 def preprocess_elements_with_vocab(gen_fn,
@@ -41,5 +41,5 @@ def map_elements_to_ids(elements, vocab):
 
 def build_vocab(vocab_file_path):
     with tf.gfile.GFile(vocab_file_path, 'r') as vocab_file:
-        vocab = reader.read_and_build_vocab(vocab_file)
+        vocab = io_service.create_vocab(vocab_file)
     return vocab

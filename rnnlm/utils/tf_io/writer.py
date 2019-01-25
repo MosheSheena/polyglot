@@ -1,5 +1,4 @@
 import tensorflow as tf
-import rnnlm.utils.pos as pos
 
 
 def _int64_feature_wrap(int_values):

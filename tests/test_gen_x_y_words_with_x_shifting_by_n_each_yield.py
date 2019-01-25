@@ -1,24 +1,24 @@
 import unittest
-from rnnlm.utils.tf_io.extractor import extract_x_y_words_with_x_shifting_by_n_each_time
+from rnnlm.utils.tf_io.extractor import extract_x_y_words_with_x_shifting_by_n_each_yield
 
 
-class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
+class TestExtractXYWordsWithXShiftingByNEachYield(unittest.TestCase):
 
     def test_empty_file_with_n_0(self):
         with open('test_files/empty') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=2, n=0)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=2, n=0)
             res = list(g)
         self.assertEqual(len(res), 0)
 
     def test_empty_file_with_n_1(self):
         with open('test_files/empty') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=2, n=1)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=2, n=1)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_one_line_without_leftover(self):
         with open('test_files/one_line') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=4, n=2)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=4, n=2)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -33,7 +33,7 @@ class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
 
     def test_one_line_with_leftover(self):
         with open('test_files/one_line') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=7, n=5)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=7, n=5)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -50,7 +50,7 @@ class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
 
     def test_one_line_with_seq_len_of_1(self):
         with open('test_files/one_line') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=1, n=1)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=1, n=1)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -66,26 +66,26 @@ class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
 
     def test_one_line_seq_len_equal_num_words_in_file(self):
         with open('test_files/one_line') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=15, n=15)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=15, n=15)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_one_line_seq_len_bigger_than_words_in_file(self):
         with open('test_files/one_line') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=16, n=16)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=16, n=16)
             res = list(g)
         self.assertEqual(res, [])
 
     def test_one_line_n_bigger_than_seq_len(self):
         with open('test_files/one_line') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=4, n=5)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=4, n=5)
 
         self.assertRaisesRegex(AssertionError, '.*cannot overlap more than sequence length.*',
                                lambda: list(g))
 
     def test_short_lines_with_leftover(self):
         with open('test_files/short_lines') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=7, n=6)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=7, n=6)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -114,7 +114,7 @@ class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
 
     def test_short_lines_with_n_equal_to_seq_len(self):
         with open('test_files/short_lines') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=7, n=7)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=7, n=7)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -139,7 +139,7 @@ class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
 
     def test_short_lines_n_on_short_lines(self):
         with open('test_files/short_lines') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=8, n=4)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=8, n=4)
             res = list(g)
         self.assertEqual(res,
                          [
@@ -176,7 +176,7 @@ class TestExtractXYWordsWithXShiftingByNEachTime(unittest.TestCase):
 
     def test_short_lines_with_seq_len_and_n_that_overlaps_lines(self):
         with open('test_files/short_lines') as f:
-            g = extract_x_y_words_with_x_shifting_by_n_each_time(file_obj=f, seq_len=17, n=16)
+            g = extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj=f, seq_len=17, n=16)
             res = list(g)
         self.assertEqual(res,
                          [
