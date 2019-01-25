@@ -6,6 +6,7 @@ A module meant to enable word / sentence generation using a model
 
 # Imports
 import argparse
+import io
 import os
 import random
 import sys
@@ -81,13 +82,19 @@ def get_args():
         help="Absolute path to wordlist.rnn.id file",
         required=True
     )
+    parser.add_argument(
+        "-d", "--dest",
+        help="Absolute path to generate words file",
+        required=False
+    )
 
     # Get arguments from command line
     args = parser.parse_args()
     model_path = args.model
     words_path = args.words
+    gen_file_path = args.dest
 
-    return model_path, words_path
+    return model_path, words_path, gen_file_path
 
 
 def find_file_by_extension(path, extension):
@@ -364,7 +371,7 @@ def collect_action_arguments(action):
 
         _args = {}
 
-        _input = input("Enter a word/sentence: [random word]")
+        _input = input("Enter a word/sentence: [</s>]")
 
         if _input.startswith("//"):
             LM_CONTEXT = None  # reset the LSTM context
@@ -375,12 +382,10 @@ def collect_action_arguments(action):
 
         sentence = _input.split()
         if sentence:
-            # converting lower case words to upper case
-            upper_sentence = [s.upper() for s in sentence]
-            
-            _args["initial_input"] = upper_sentence
-        else:  # Choosing an initial word in random
+            _args["initial_input"] = sentence
+        else:  # Using </s> as the initial word
             _args["initial_input"] = [START]
+            ADD_START_FLAG = False
 
         _temperature = input(
             "Enter temperature: [{def_temp}]".format(
@@ -440,6 +445,7 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
     words = list(map(lambda x: str(x).upper(), _words))  # convert all words to upper case because of AMI dataset
     if ADD_START_FLAG:
         words = [START] + words  # adding </s> for start of sentence
+
     ADD_START_FLAG = True  # reset for next sentence
 
     temperature = action_args["temperature"]
@@ -449,7 +455,7 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
 
         end_of_feed_word = None
 
-        if len(words) > 1:  # first feed the model with the input without printing
+        if len(words) > 1:  # first feed the model with the input without printing the words
             for i in range(len(words)):
                 gen_word, LM_CONTEXT = generate_word(
                     graph=graph, sess=sess,
@@ -485,7 +491,10 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
     elif action == GEN_SENTENCES:
         num_words = int(action_args["num_words"])
         time_sig = "_".join(str(datetime.now())[:19].split())  # 19 is the length for YYYY-MM-dd_HH:mm:ss
-        file_name = time_sig + "_gen_words.txt"
+        if action_args["gen_file_path"]:
+            file_name = action_args["gen_file_path"] + time_sig + "_gen_words.txt"
+        else:
+            file_name = time_sig + "_gen_words.txt"
 
         end_of_feed_word = None
 
@@ -505,7 +514,7 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
         buffer = []
         buffer.extend(words)
 
-        with open(file_name, 'w') as file:
+        with open(file=file_name, mode='w', buffering=io.DEFAULT_BUFFER_SIZE) as file:
             for i in range(num_words):
                 gen_word, LM_CONTEXT = generate_word(
                     graph=graph, sess=sess,
@@ -517,12 +526,13 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
                 buffer.append(gen_word)
 
             for word in buffer:
-                file.write(word + " ") if word != START else file.write("\n")
+                next_char = '\n' if word == START else ' '
+                file.write(word + next_char)
 
 
 def main():
     # Parsing the cli args passed to the script
-    model_path, word_path = get_args()  # parsing the cli flags
+    model_path, word_path, gen_file_path = get_args()  # parsing the cli flags
 
     # Loading the graph and session
     graph, sess = load_trained_model(log_dir_path=model_path)
@@ -539,6 +549,7 @@ def main():
         if action < 1 or action > NUM_OPTIONS:
             print("Option invalid. please choose between 1 and {}".format(NUM_OPTIONS))
             continue  # return to loop condition
+
         if action == GEN_SENTENCE:
             while True:
                 args = collect_action_arguments(action=action)
@@ -548,11 +559,15 @@ def main():
                 if _quit:
                     sys.exit(0)
 
+        if action == GEN_SENTENCES:
+            args = collect_action_arguments(action=action)
+            args["action"] = action
+            args["gen_file_path"] = gen_file_path
+            execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
+            sys.exit(0)
+
         if action == EXIT:
             break
-        args = collect_action_arguments(action=action)
-        args["action"] = action
-        execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
 
 
 if __name__ == "__main__":
