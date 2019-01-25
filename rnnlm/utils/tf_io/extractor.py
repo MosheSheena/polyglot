@@ -91,7 +91,7 @@ def _gen_n_words(file_obj,
     #     yield n_words
 
 
-def extract_x_y_words_with_x_shifting_by_n_each_time(file_obj, seq_len, n):
+def extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj, seq_len, n):
     """
     extracts x with a shift of n each yield, y is always extracted with a shift of
     1 relative to x

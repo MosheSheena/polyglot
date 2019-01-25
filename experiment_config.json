@@ -8,7 +8,7 @@
       "predict_mode": true,
       "learning_technique": "normal",
       "hyperparameters": {
-        "shared_layer": {
+        "shared_params": {
           "create_model": "lstm_fast",
           "problem": {
             "save_path": "results",

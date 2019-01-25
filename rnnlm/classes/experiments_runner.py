@@ -26,10 +26,10 @@ class ExperimentsRunner:
 
             print("{} running experiment {}".format(datetime.now(), experiment.name))
 
-            # TODO Test and manage the logic so it will fit to train a single model
-            shared_hyperparams = experiment.hyperparameters.shared_layer
+            shared_hyperparams = experiment.hyperparameters.shared_params
 
             abs_save_path = os.path.join(os.getcwd(), shared_hyperparams.problem.save_path)
+            experiment_results_path = os.path.join(abs_save_path, experiment.name)
 
             shared_model_name = shared_hyperparams.create_model
             shared_layer_builder = importlib.import_module("rnnlm.models.{}.model".format(shared_model_name))
@@ -39,13 +39,13 @@ class ExperimentsRunner:
                                                 create_model=shared_layer_builder.create_model,
                                                 shared_model_name=shared_model_name,
                                                 shared_hyperparams=shared_hyperparams,
-                                                checkpoint_path=abs_save_path)
+                                                checkpoint_path=experiment_results_path)
 
             else:
                 self._run_training_and_evaluation_experiment(experiment=experiment,
                                                              create_model=shared_layer_builder.create_model,
                                                              shared_hyperparams=shared_hyperparams,
-                                                             checkpoint_path=abs_save_path)
+                                                             checkpoint_path=experiment_results_path)
 
             print("{} done running experiment {}".format(datetime.now(), experiment.name))
 
@@ -102,7 +102,7 @@ class ExperimentsRunner:
         if not model_hyperparams:
             raise ValueError(
                 "no hyperparams found for model {}. Make sure the name {} exists under hyperparams settings"
-                    .format(model, model)
+                .format(model, model)
             )
 
         if not model_hyperparams.problem.data_path:

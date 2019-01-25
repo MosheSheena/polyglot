@@ -214,13 +214,13 @@ def train_and_evaluate_model(create_model,
     Invoke tf.estimator with the passed args
 
     Args:
-        create_model (func): creates the model, the function arguments must be (features, mode, params)
+        create_model (func): creates the model, the function arguments must be (features, mode, params, shared_params)
             where feature is the input_fn (in our case the input pipeline from tf.data) mode is an instance of
-            tf.estimator.ModeKeys and params is a dict containing hyperparams used in model
+            tf.estimator.ModeKeys and params is a dict containing hyperparams used in model.
         create_loss (func): defines the loss, receives as args the model in a dict from create model,
-            the labels and hyperparams. Must return a dict containing key 'cost' the is the loss as a scalar
+            the labels and hyperparams.
         create_optimizer (func): defines the optimizer, receives as args the loss dict from create loss and hyperparams.
-            Returns the train_op
+            Returns the train_op and a dictionary that can contain additional info for hooks.
         hyperparams (Dict2Obj): contains the hyperparams configuration
         shared_hyperparams (Dict2Obj): contains hyperparams that are shared between tasks
         train_tf_record_path (str): full path of train data in tf record format
