@@ -158,7 +158,14 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
             softmax_b_pos = tf.get_variable("softmax_b_pos",
                                             [vocab_size_pos],
                                             dtype=data_type(hyperparams))
-            softmax_b_pos = softmax_b_pos - 9.0
+
+        with tf.variable_scope("gen_softmax"):
+            softmax_w_gen = tf.get_variable("softmax_w_gen",
+                                            [size, 2],
+                                            dtype=data_type(hyperparams))
+            softmax_b_gen = tf.get_variable("softmax_b_gen",
+                                            [2],
+                                            dtype=data_type(hyperparams))
 
         test_logits = tf.matmul(
             cellout_placeholder,
@@ -207,9 +214,13 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
         with tf.variable_scope("pos_logits"):
             logits_pos = tf.matmul(output, softmax_w_pos) + softmax_b_pos
 
+        with tf.variable_scope("gen_logits"):
+            logits_gen = tf.matmul(output, softmax_w_gen) + softmax_b_gen
+
         _final_state = state
 
         model["final_state"] = _final_state
         model["logits"] = logits
         model["logits_pos"] = logits_pos
+        model["logits_gen"] = logits_gen
     return model
