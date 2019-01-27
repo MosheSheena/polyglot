@@ -34,7 +34,6 @@ def main(shared_hyperparams, hyperparams):
     for raw_path, tf_record_path in zip(raw_files, tf_record_outputs):
         with open(raw_path, 'r') as f:
 
-            # TODO - change below
             preprocess_elements_with_vocab(gen_fn=gen_fn(file_obj=f, seq_len=seq_len, n=x_shifts),
                                            abs_vocab_path_features=abs_vocab_path,
                                            abs_vocab_path_labels=abs_gen_vocab_path,
