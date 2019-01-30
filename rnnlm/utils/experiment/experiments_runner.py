@@ -1,5 +1,5 @@
-from rnnlm.classes.predictor import Predictor
-from rnnlm.classes.trainer import Trainer
+from rnnlm.utils.predict.predictor import Predictor
+from rnnlm.utils.trainer import Trainer
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from datetime import datetime

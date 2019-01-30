@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
-from rnnlm.classes.experiments_runner import ExperimentsRunner
-from rnnlm.utils.hyperparams import load_params
+from rnnlm.utils.experiment.experiments_runner import ExperimentsRunner
+from rnnlm.utils.tf_io.hyperparams.hyperparams import load_params
 
 
 if __name__ == "__main__":

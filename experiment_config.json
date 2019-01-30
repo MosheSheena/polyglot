@@ -3,9 +3,9 @@
     {
       "name": "exp_1",
       "models": [
-        "gen_classifier"
+        "lstm_fast"
       ],
-      "predict_mode": false,
+      "predict_mode": true,
       "learning_technique": "normal",
       "hyperparameters": {
         "shared_params": {
