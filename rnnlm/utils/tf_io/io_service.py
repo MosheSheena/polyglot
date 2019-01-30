@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rnnlm.utils.tf_io import reader, writer
+from rnnlm.utils.tf_io.tf_records import reader, writer
 
 
 def raw_to_tf_records(gen_fn_raw_data,

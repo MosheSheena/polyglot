@@ -3,7 +3,7 @@ from rnnlm.models.lstm_fast.optimizer import create_optimizer
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from rnnlm.utils.estimator.estimator_hook.init_legacy_model import InitLegacyModelHook
 from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
-from rnnlm.classes.task import Task
+from rnnlm.utils.task import Task
 import os
 
 

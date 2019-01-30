@@ -1,4 +1,4 @@
-from rnnlm.utils.dict2obj import json_file_to_object
+from rnnlm.utils.tf_io.hyperparams.dict2obj import json_file_to_object
 
 
 def load_params(filepath):

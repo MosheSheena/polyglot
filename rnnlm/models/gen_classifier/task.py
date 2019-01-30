@@ -2,7 +2,7 @@ from rnnlm.models.gen_classifier.loss import create_loss
 from rnnlm.models.gen_classifier.optimizer import create_optimizer
 from rnnlm.utils.estimator.estimator_hook.loss import ShowNormalLossHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
-from rnnlm.classes.task import Task
+from rnnlm.utils.task import Task
 import os
 
 

@@ -1,5 +1,5 @@
 import os
-from rnnlm.classes.task import Task
+from rnnlm.utils.task import Task
 from rnnlm.models.pos_classifier.loss import create_loss
 from rnnlm.models.pos_classifier.optimizer import create_optimizer
 from rnnlm.utils.estimator.estimator_hook.loss import ShowNormalLossHook

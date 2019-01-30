@@ -1,4 +1,4 @@
-from rnnlm.utils.pos import gen_pos_dataset
+from rnnlm.utils.tf_io.pos import gen_pos_dataset
 
 
 def _gen_next_word(file_obj):
