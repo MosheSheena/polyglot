@@ -5,15 +5,12 @@ Bsc SW Eng. degree final project - improving performance for an RNN based LSTM l
 TensorFlow version: 1.12
 Install the following:
 ```shell
-source ~/tensorflow/bin/activate  # activate venv
-pip install jsmin
-pip install numpy
+pip install -r requirements.txt
 ```
 
 ## How to Run
 Make sure your current working directory is the project's root folder
 ```shell
-source ~/tensorflow/bin/activate  # activate venv
 python main.py
 ```
 
