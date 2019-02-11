@@ -1,34 +1,24 @@
-import os
 from rnnlm.utils.tf_io import extractor
 from rnnlm.utils.tf_io.preprocessor.preprocess import preprocess_elements_with_vocab
 
 
-def main(shared_hyperparams, hyperparams):
-    abs_data_path = os.path.join(os.getcwd(), hyperparams.problem.data_path)
-    abs_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path)
-
-    train_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.train_raw_data_file)
-    valid_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.valid_raw_data_file)
-    test_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.test_raw_data_file)
-
-    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
-    abs_pos_vocab_path = os.path.join(os.getcwd(), hyperparams.problem.pos_vocab_path)
-
-    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_train_file)
-    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_valid_file)
-    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_test_file)
-
-    raw_files = [train_raw_data_path, valid_raw_data_path, test_raw_data_path]
-    tf_record_outputs = [train_tf_record_path, valid_tf_record_path, test_tf_record_path]
+def main(raw_files,
+         tf_record_outputs,
+         features_vocab,
+         labels_vocab,
+         shared_hyperparams,
+         hyperparams):
 
     print("converting pos tf records")
-
     seq_len = shared_hyperparams.arch.sequence_length
-    gen_fn = extractor.extract_words_and_their_pos_tags
+    extract_fn = extractor.extract_words_and_their_pos_tags
 
     for raw_path, tf_record_path in zip(raw_files, tf_record_outputs):
         with open(raw_path, 'r') as f:
-            preprocess_elements_with_vocab(gen_fn=gen_fn(file_obj=f, seq_len=seq_len),
-                                           abs_vocab_path_features=abs_vocab_path,
-                                           abs_vocab_path_labels=abs_pos_vocab_path,
+
+            data_extractor = extract_fn(opened_file=f, seq_len=seq_len)
+
+            preprocess_elements_with_vocab(extractor=data_extractor,
+                                           abs_vocab_path_features=features_vocab,
+                                           abs_vocab_path_labels=labels_vocab,
                                            abs_output_tf_record_path=tf_record_path)
