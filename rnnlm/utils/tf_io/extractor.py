@@ -1,18 +1,18 @@
 from rnnlm.utils.tf_io.pos import gen_pos_dataset
 
 
-def _gen_next_word(file_obj):
+def _gen_next_word(opened_file):
     """
     Yields all the words from an opened file, one by one, without loading line by line
     Args:
-        file_obj: an opened file
+        opened_file: an opened file
 
     Yields:
         the next word from the file
     """
     last = ""
     while True:
-        buf = file_obj.read(3000)
+        buf = opened_file.read(3000)
         if not buf:
             break
         words = (last+buf).split()
@@ -23,7 +23,7 @@ def _gen_next_word(file_obj):
         yield last
 
 
-def _gen_n_words(file_obj,
+def _gen_n_words(opened_file,
                  n,
                  shift=False,
                  num_shifts=0):
@@ -60,7 +60,7 @@ def _gen_n_words(file_obj,
          ['MEETINGS', '</s>', 'YEAH', '</s>']
      ]
     Args:
-        file_obj (file): opened file
+        opened_file (file): opened file
         n (int): num of words to read from file
         shift (bool): whether to yield shifted words from file instead on yielding
          n different each time
@@ -72,7 +72,7 @@ def _gen_n_words(file_obj,
 
     n_words = list()
 
-    gen_read_words = _gen_next_word(file_obj)
+    gen_read_words = _gen_next_word(opened_file)
     for word in gen_read_words:
         n_words.append(word)
         if len(n_words) == n:
@@ -91,7 +91,7 @@ def _gen_n_words(file_obj,
     #     yield n_words
 
 
-def extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj, seq_len, n):
+def extract_x_y_words_with_x_shifting_by_n_each_yield(opened_file, seq_len, n):
     """
     extracts x with a shift of n each yield, y is always extracted with a shift of
     1 relative to x
@@ -117,7 +117,7 @@ def extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj, seq_len, n):
 
 
     Args:
-        file_obj : an opened file that has the raw data
+        opened_file : an opened file that has the raw data
         seq_len (int): the sequence length of the yield
         n (int): num of shifts to perform on x
 
@@ -125,7 +125,7 @@ def extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj, seq_len, n):
         tuple of 2 containing x and y.
     """
     assert n <= seq_len, "cannot overlap more than sequence length {}".format(seq_len)
-    shifter = _gen_n_words(file_obj=file_obj, n=1)
+    shifter = _gen_n_words(opened_file=opened_file, n=1)
 
     accumulator = list()
     while True:
@@ -143,7 +143,7 @@ def extract_x_y_words_with_x_shifting_by_n_each_yield(file_obj, seq_len, n):
             break
 
 
-def extract_without_overlap_in_same_and_between_yields(file_obj, seq_len):
+def extract_without_overlap_in_same_and_between_yields(opened_file, seq_len):
     """
     Generates x, y where each element is shifted by seq_len
     Examples:
@@ -159,13 +159,13 @@ def extract_without_overlap_in_same_and_between_yields(file_obj, seq_len):
       x = ['ABOUT', 'THE', 'STUFF', 'AT'], y = ['THE', 'MEETINGS' '</s>', 'YEAH']
 
     Args:
-        file_obj (file): opened file
+        opened_file (file): opened file
         seq_len (int):
 
     Yields:
     tuple of x and y.
     """
-    gen_w = _gen_n_words(file_obj=file_obj, n=seq_len)
+    gen_w = _gen_n_words(opened_file=opened_file, n=seq_len)
     while True:
         try:
             x = next(gen_w)
@@ -177,7 +177,7 @@ def extract_without_overlap_in_same_and_between_yields(file_obj, seq_len):
             break
 
 
-def extract_with_overlap_of_n_minus_1_words_in_same_and_between_yields(file_obj, seq_len):
+def extract_with_overlap_of_n_minus_1_words_in_same_and_between_yields(opened_file, seq_len):
     """
     Given a file with words w1, w2, w3, ... wn and seq_len = k
     this func generates a tuple of two where the first element is a list of words
@@ -207,14 +207,14 @@ def extract_with_overlap_of_n_minus_1_words_in_same_and_between_yields(file_obj,
       x = ['THE', 'MEETINGS', '</s>', 'YEAH'], y = ['MEETINGS', '</s>', 'YEAH', '</s>']
 
     Args:
-        file_obj (file): opened file
+        opened_file (file): opened file
         seq_len (int):
 
     Yields:
         pair of x and y that contains words shifted by 1
 
     """
-    gen_words = _gen_n_words(file_obj=file_obj,
+    gen_words = _gen_n_words(opened_file=opened_file,
                              n=seq_len,
                              shift=True,
                              num_shifts=1)
@@ -231,7 +231,7 @@ def extract_with_overlap_of_n_minus_1_words_in_same_and_between_yields(file_obj,
             break
 
 
-def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
+def extract_x_without_overlap_y_shifted_by_1(opened_file, seq_len):
     """
     The classic approach is representing data to a language model.
     simply x contains words and y contains those words shifted by 1.
@@ -252,7 +252,7 @@ def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
       x=['ABOUT', 'THE', 'STUFF', 'AT'], y=['THE', 'STUFF', 'AT', 'THE']
 
     Args:
-        file_obj (file): opened file
+        opened_file (file): opened file
         seq_len (int):
 
     Yields:
@@ -262,7 +262,7 @@ def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
     """
     x = list()
     y = list()
-    gen_w = _gen_next_word(file_obj=file_obj)
+    gen_w = _gen_next_word(opened_file=opened_file)
 
     while True:
         try:
@@ -281,14 +281,14 @@ def extract_x_without_overlap_y_shifted_by_1(file_obj, seq_len):
             break
 
 
-def extract_words_and_their_pos_tags(file_obj, seq_len):
+def extract_words_and_their_pos_tags(opened_file, seq_len):
     """
     Each call to this generator generates a tuple of x, y
     where x is list of words with a list size of seq_len
     and y is a list of part-of-speech tags of the words
     in x accordingly.
     Args:
-        file_obj: opened file of raw data, we  a
+        opened_file: opened file of raw data, we  a
         seq_len: the length of how much we will read from the
             file in each generation
 
@@ -297,7 +297,7 @@ def extract_words_and_their_pos_tags(file_obj, seq_len):
         and y is a list of part-of-speech tags of the words in x accordingly.
     """
 
-    gen_words = _gen_n_words(file_obj=file_obj, n=seq_len)
+    gen_words = _gen_n_words(opened_file=opened_file, n=seq_len)
     words = list()
     tags = list()
     for word, tag in gen_pos_dataset(gen_words):

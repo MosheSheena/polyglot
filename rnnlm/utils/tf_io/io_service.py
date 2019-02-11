@@ -3,14 +3,14 @@ import tensorflow as tf
 from rnnlm.utils.tf_io.tf_records import reader, writer
 
 
-def raw_to_tf_records(gen_fn_raw_data,
+def raw_to_tf_records(extractor_raw_data,
                       abs_tf_record_path,
                       preprocessor_feature_fn=None,
                       preprocessor_label_fn=None):
     """
     convert raw data (sentences) into tf records format
     Args:
-        gen_fn_raw_data (generator): function that defines how to iterate the data
+        extractor_raw_data (generator): function that defines how to iterate the data
         abs_tf_record_path (str): absolute path to tfrecord file of the data
         preprocessor_feature_fn (func): returns the preprocessed tensor
         preprocessor_label_fn (func): returns the preprocessed tensor
@@ -19,7 +19,7 @@ def raw_to_tf_records(gen_fn_raw_data,
         None
     """
 
-    writer.write_tf_records(gen_fn_words=gen_fn_raw_data,
+    writer.write_tf_records(gen_fn_words=extractor_raw_data,
                             destination_path=abs_tf_record_path,
                             preprocessor_feature_fn=preprocessor_feature_fn,
                             preprocessor_label_fn=preprocessor_label_fn)
@@ -73,6 +73,6 @@ def create_dataset_from_tensor(tensor, batch_size):
                                             batch_size=batch_size)
 
 
-def create_vocab(file_obj):
-    return reader.read_and_build_vocab(file_obj)
+def create_vocab(opened_file):
+    return reader.read_and_build_vocab(opened_file)
 

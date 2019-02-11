@@ -71,15 +71,15 @@ def convert_tensor_to_dataset(tensor, batch_size):
     return dataset
 
 
-def read_and_build_vocab(file_obj):
+def read_and_build_vocab(opened_file):
     """
     Create a mapping for each element of the vocab to its ID.
     Args:
-        file_obj: Opened vocab file
+        opened_file: Opened vocab file
 
     Returns:
         dict that maps elements to its ID
     """
-    elements = file_obj.read().split()
+    elements = opened_file.read().split()
     element_to_id = dict(zip(elements, range(len(elements))))
     return element_to_id
