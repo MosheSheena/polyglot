@@ -49,11 +49,16 @@ class ExperimentsRunner:
 
             print("{} done running experiment {}".format(datetime.now(), experiment.name))
 
-    def _run_prediction_experiment(self, experiment, create_model, shared_model_name, shared_hyperparams, checkpoint_path):
+    def _run_prediction_experiment(self,
+                                   experiment,
+                                   create_model,
+                                   shared_model_name,
+                                   shared_hyperparams,
+                                   checkpoint_path):
         create_model_hyperparams = experiment.hyperparameters.get_or_default(key=shared_model_name, default=None)
 
         if not create_model_hyperparams:
-            raise ValueError("must defined the name of the model that will build the shared layer")
+            raise ValueError("must define the name of the model that will build the shared layers")
         predictor = Predictor(create_model=create_model,
                               checkpoint_path=checkpoint_path,
                               shared_hyperparams=shared_hyperparams,
@@ -70,24 +75,26 @@ class ExperimentsRunner:
                           checkpoint_path=checkpoint_path,
                           shared_hyperparams=shared_hyperparams)
 
-        tasks_hyperparams = dict()
         for model in experiment.models:
-            tasks_hyperparams[model] = self._collect_model_hyperparams(model, experiment)
-
+            tasks_hyperparams = self._collect_task_hyperparams(model, experiment)
             pre_training = importlib.import_module("rnnlm.models.{}.pre_training".format(model))
             task = importlib.import_module("rnnlm.models.{}.task".format(model))
 
-            if tasks_hyperparams[model].problem.convert_raw_to_tf_records:
-                abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
-                if not os.path.exists(abs_tf_record_path):
-                    os.makedirs(abs_tf_record_path)
+            if tasks_hyperparams.problem.pre_train:
+                raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(shared_hyperparams,
+                                                                                 tasks_hyperparams)
+                features_vocab, labels_vocab = vocabs
 
                 print("Converting raw data to tfrecord format")
-                pre_training.main(shared_hyperparams=shared_hyperparams,
-                                  hyperparams=tasks_hyperparams[model])
+                pre_training.main(raw_files=raw_files,
+                                  tf_record_outputs=tf_record_outputs,
+                                  features_vocab=features_vocab,
+                                  labels_vocab=labels_vocab,
+                                  shared_hyperparams=shared_hyperparams,
+                                  hyperparams=tasks_hyperparams)
 
             task_to_train = task.create_task(shared_hyperparams=shared_hyperparams,
-                                             hyperparams=tasks_hyperparams[model])
+                                             hyperparams=tasks_hyperparams)
             trainer.add_task(task_to_train)
 
         learning_technique = experiment.learning_technique
@@ -96,17 +103,17 @@ class ExperimentsRunner:
         self._train_according_to_learning_technique(trainer, learning_technique, shared_hyperparams)
         print("End training")
 
-    def _collect_model_hyperparams(self, model, experiment):
-        model_hyperparams = experiment.hyperparameters.get_or_default(key=model, default=None)
+    def _collect_task_hyperparams(self, task, experiment):
+        model_hyperparams = experiment.hyperparameters.get_or_default(key=task, default=None)
 
         if not model_hyperparams:
             raise ValueError(
-                "no hyperparams found for model {}. Make sure the name {} exists under hyperparams settings"
-                .format(model, model)
+                "no hyperparams found for task {}. Make sure the name {} exists under hyperparams settings"
+                    .format(task, task)
             )
 
         if not model_hyperparams.problem.data_path:
-            raise ValueError("Must set data_path in hyperparams config for model {}".format(model))
+            raise ValueError("Must set data_path in hyperparams config for task {}".format(task))
 
         return model_hyperparams
 
@@ -126,3 +133,28 @@ class ExperimentsRunner:
                 "unsupported learning technique {}\nonly normal, transfer and multitask are supported.".format(
                     learning_technique)
             )
+
+
+def _get_data_paths_each_task(shared_hyperparams, hyperparams):
+    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
+
+    if not os.path.exists(abs_tf_record_path):
+        os.makedirs(abs_tf_record_path)
+
+    abs_data_path = os.path.join(os.getcwd(), hyperparams.problem.data_path)
+    abs_vocab_features_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path_features)
+    abs_vocab_labels_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path_labels)
+
+    train_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.train_raw_data_file)
+    valid_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.valid_raw_data_file)
+    test_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.test_raw_data_file)
+
+    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_train_file)
+    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_valid_file)
+    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_test_file)
+
+    raw_files = (train_raw_data_path, valid_raw_data_path, test_raw_data_path)
+    tf_record_outputs = (train_tf_record_path, valid_tf_record_path, test_tf_record_path)
+    vocabs = (abs_vocab_features_path, abs_vocab_labels_path)
+
+    return raw_files, tf_record_outputs, vocabs
