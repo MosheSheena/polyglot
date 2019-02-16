@@ -1,4 +1,22 @@
+import logging
+
 import tensorflow as tf
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('trainer.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class EarlyStoppingHook(tf.train.SessionRunHook):
@@ -64,9 +82,7 @@ class EarlyStoppingHook(tf.train.SessionRunHook):
         Returns:
             bool indicating whether to stop training or not
         """
-
-        # TODO - print to debug log
-        # print("Current loss: {} previous loss: {}".format(self.after_loss, self.before_loss))
+        logger.debug("current loss=%s .. previous loss=%s", self.after_loss, self.before_loss)
         EarlyStoppingHook.should_stop = EarlyStoppingHook.no_improve_counter >= self.max_no_improvement
-        # print("should_stop = {}".format(EarlyStoppingHook.should_stop))
+        logger.debug("expected stop=%s", EarlyStoppingHook.should_stop)
         return EarlyStoppingHook.should_stop

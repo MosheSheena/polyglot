@@ -1,7 +1,24 @@
+import logging
 import time
 
 import numpy as np
 import tensorflow as tf
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('trainer.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class MeasurePerplexityHook(tf.train.SessionRunHook):
@@ -37,11 +54,14 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
         self.iterations += self.shared_hyperparams.arch.sequence_length
 
         if self.step % 100 == 0:
-            print("mode: %s perplexity: %.3f speed: %.0f wps" %
-                  (self.mode, np.exp(self.costs / self.iterations),
-                   self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)))
+            logger.debug(
+                "mode: %s perplexity: %.3f speed: %.0f wps",
+                self.mode,
+                np.exp(self.costs / self.iterations),
+                self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)
+            )
 
         self.step += 1
 
     def end(self, session):
-        print("mode: %s perplexity: %.3f" % (self.mode, np.exp(self.costs / self.iterations)))
+        logger.info("mode: %s perplexity: %.3f", self.mode, np.exp(self.costs / self.iterations))

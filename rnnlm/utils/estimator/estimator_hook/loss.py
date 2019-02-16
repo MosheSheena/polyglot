@@ -1,4 +1,22 @@
+import logging
+
 import tensorflow as tf
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('trainer.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class ShowNormalLossHook(tf.train.SessionRunHook):
@@ -18,5 +36,5 @@ class ShowNormalLossHook(tf.train.SessionRunHook):
 
         current_loss = results["loss"]
         if self.steps % 100 == 0:
-            print("loss: {}".format(current_loss))
+            logger.debug("loss=%s", current_loss)
         self.steps += 1

@@ -1,5 +1,23 @@
-from nltk import pos_tag, sent_tokenize, word_tokenize
+import logging
 from collections import defaultdict
+
+from nltk import pos_tag, sent_tokenize, word_tokenize
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('pos.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 def get_words_without_tags(words_list):
@@ -61,6 +79,6 @@ def gen_pos_dataset(gen_words):
 
         num_of_iterations += 1
 
-    print("num of diff tags = {}".format(len(count_diff_tags)))
-    print("tags = {}".format(count_diff_tags))
-    print("num of iterations = {}".format(num_of_iterations))
+    logger.info("number of different tags=%s", len(count_diff_tags))
+    logger.debug("tags found=%s", count_diff_tags)
+    logger.debug("total number of iterations=%s", num_of_iterations)
