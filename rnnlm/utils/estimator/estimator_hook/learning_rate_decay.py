@@ -1,4 +1,22 @@
+import logging
+
 import tensorflow as tf
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('trainer.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class LearningRateDecayHook(tf.train.SessionRunHook):
@@ -25,7 +43,7 @@ class LearningRateDecayHook(tf.train.SessionRunHook):
                   self.lr_update_op,
                   self.hyperparams.train.learning_rate.start_value * lr_decay,
                   self.new_lr)
-        print("Learning rate: {}".format(session.run(self.current_lr)))
+        logger.debug("learning rate=%s", session.run(self.current_lr))
 
     def end(self, session):
         LearningRateDecayHook.epoch_counter += 1

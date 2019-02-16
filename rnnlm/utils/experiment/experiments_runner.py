@@ -1,10 +1,27 @@
-from rnnlm.utils.predict.predictor import Predictor
-from rnnlm.utils.trainer import Trainer
+import importlib
+import logging
+import os
+
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
-from datetime import datetime
-import os
-import importlib
+from rnnlm.utils.predict.predictor import Predictor
+from rnnlm.utils.trainer import Trainer
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('experiments_runner.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class ExperimentsRunner:
@@ -24,7 +41,7 @@ class ExperimentsRunner:
             EarlyStoppingHook.should_stop = False
             LearningRateDecayHook.epoch_counter = 0
 
-            print("{} running experiment {}".format(datetime.now(), experiment.name))
+            logger.info("running experiment %s", experiment.name)
 
             shared_hyperparams = experiment.hyperparameters.shared_params
 
@@ -47,7 +64,7 @@ class ExperimentsRunner:
                                                              shared_hyperparams=shared_hyperparams,
                                                              checkpoint_path=experiment_results_path)
 
-            print("{} done running experiment {}".format(datetime.now(), experiment.name))
+            logger.info("finished running experiment %s", experiment.name)
 
     def _run_prediction_experiment(self,
                                    experiment,
@@ -85,7 +102,7 @@ class ExperimentsRunner:
                                                                                  tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
 
-                print("Converting raw data to tfrecord format")
+                logger.debug("converting raw data to tfrecord format in experiment %s", experiment.name)
                 pre_training.main(raw_files=raw_files,
                                   tf_record_outputs=tf_record_outputs,
                                   features_vocab=features_vocab,
@@ -99,9 +116,9 @@ class ExperimentsRunner:
 
         learning_technique = experiment.learning_technique
 
-        print("Start training")
+        logger.info("start training experiment %s", experiment.name)
         self._train_according_to_learning_technique(trainer, learning_technique, shared_hyperparams)
-        print("End training")
+        logger.info("finished training experiment %s", experiment.name)
 
     def _collect_task_hyperparams(self, task, experiment):
         model_hyperparams = experiment.hyperparameters.get_or_default(key=task, default=None)

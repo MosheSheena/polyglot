@@ -1,6 +1,24 @@
+import logging
+
 from rnnlm.utils.estimator.estimator import train_and_evaluate_model
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+fh = logging.FileHandler('trainer.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(file_formatter)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch.setFormatter(console_formatter)
+
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class Trainer:
@@ -24,7 +42,8 @@ class Trainer:
         if len(self.tasks) != 1:
             raise ValueError("can only train a single task when normal training or no tasks given")
         task = self.tasks[0]
-        print("training {}".format(task.name))
+        logger.debug("training using traditional training")
+        logger.info("training task %s", task.name)
         train_and_evaluate_model(create_model=self.create_model,
                                  create_loss=task.create_loss,
                                  create_optimizer=task.create_optimizer,
@@ -49,7 +68,7 @@ class Trainer:
         if not switch_each_epoch and not switch_each_batch:
             raise ValueError("switch_each_epoch or switch_each_batch must be True")
         for multi_task_epoch in range(num_multitask_epochs):
-            print("Starting multitask epoch #{}".format(multi_task_epoch + 1))
+            logger.debug("starting multitask epoch #%s", multi_task_epoch + 1)
             for task in self.tasks:
                 epoch_size_train = task.hyperparams.train.epoch_size_train
                 num_epochs = task.hyperparams.train.num_epochs
@@ -57,9 +76,12 @@ class Trainer:
                     epoch_size_train = 1
                 if switch_each_epoch:
                     num_epochs = 1
-                print("training {} with epoch_size_train {} and num_epochs {}".format(task.name,
-                                                                                      epoch_size_train,
-                                                                                      num_epochs))
+                logger.info(
+                    "training task %s with epoch size=%s and number of epochs=%s",
+                    task.name,
+                    epoch_size_train,
+                    num_epochs
+                )
                 train_and_evaluate_model(create_model=self.create_model,
                                          create_loss=task.create_loss,
                                          create_optimizer=task.create_optimizer,
@@ -80,7 +102,7 @@ class Trainer:
                 if EarlyStoppingHook.should_stop:
                     break
 
-            print("Finished multitask epoch #{}".format(multi_task_epoch + 1))
+            logger.debug("finished multitask epoch #%s", multi_task_epoch + 1)
 
             # break multitask training
             if EarlyStoppingHook.should_stop:
@@ -91,8 +113,9 @@ class Trainer:
             raise ValueError(
                 "transfer learning must have more than 1 task current is {}".format(self.tasks)
             )
+        logger.debug("training using transfer learning")
         for task in self.tasks:
-            print("training {}".format(task.name))
+            logger.info("training task %s", task.name)
             train_and_evaluate_model(create_model=self.create_model,
                                      create_loss=task.create_loss,
                                      create_optimizer=task.create_optimizer,
