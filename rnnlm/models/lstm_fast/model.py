@@ -25,13 +25,13 @@ def lstm_cell(num_neurons_in_layer):
 
 def lstm_cell_with_dropout(num_neurons_in_layer, keep_prob):
     """
-
+    Create a rnn cell with dropout
     Args:
         num_neurons_in_layer(int): number of neurons in a single hidden layer
         keep_prob(float): dropout probability between 0-1
 
     Returns:
-
+        tf.nn.rnn_cell.DropoutWrapper - the rnn cell with dropout
     """
     return tf.nn.rnn_cell.DropoutWrapper(
         cell=lstm_cell(num_neurons_in_layer),
@@ -84,6 +84,21 @@ def _create_input_test_tensors(multi_rnn_cell,
                                num_neurons_in_layer,
                                num_hidden_layers,
                                dtype):
+    """
+    Create the input tensors for the test phase.
+    Kaldi uses these tensors, it searches it by name scope
+    Do NOT change these tensors names
+    Args:
+        multi_rnn_cell(tf.nn.rnn_cell.MultiRNNCell): the multi rnn cell object
+        num_neurons_in_layer(int): num neurons in a single layer
+        num_hidden_layers(int): number of hidden layers
+        dtype(tf.dtype): the type of the zero state tensor of the multi rnn cell
+
+    Returns:
+        A tuple of 2:
+        1. Input tensor for the word to test
+        2. Input tensor for the state (context) of that word
+    """
 
     initial_state_single = multi_rnn_cell.zero_state(1, dtype)
 
@@ -105,9 +120,13 @@ def _create_input_test_tensors(multi_rnn_cell,
         name="test_state_in"
     )
 
-    l = tf.unstack(state_placeholder, axis=0)
+    # partition each state of each cell to a group of c states and group of h states
+    partition_c_and_m = tf.unstack(state_placeholder, axis=0)
+
+    # iterate each states for multi rnn cell
+    # each iteration defines a placeholder for the c and h states
     test_input_state = tuple(
-        [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
+        [tf.nn.rnn_cell.LSTMStateTuple(partition_c_and_m[idx][0], partition_c_and_m[idx][1])
          for idx in range(num_hidden_layers)]
     )
 
@@ -118,10 +137,10 @@ def _create_embeddings_layer(input_tensor,
                              test_inputs,
                              vocab_size,
                              num_neurons_in_layer,
-                             hyperparams):
+                             dtype):
     with tf.device("/cpu:0"):
         embedding = tf.get_variable(
-            "embedding", [vocab_size, num_neurons_in_layer], dtype=data_type(hyperparams))
+            "embedding", [vocab_size, num_neurons_in_layer], dtype=dtype)
 
         input_embeddings = tf.nn.embedding_lookup(embedding,
                                                   input_tensor)
@@ -135,7 +154,7 @@ def _create_test_cells(multi_rnn_cell,
                        num_neurons_in_layer,
                        test_inputs,
                        test_input_state,
-                       shared_hyperparams):
+                       num_hidden_layers):
     with tf.variable_scope("test_cells"):
         test_cell_output, test_output_state = multi_rnn_cell(
             test_inputs[:, 0, :],
@@ -147,7 +166,7 @@ def _create_test_cells(multi_rnn_cell,
             axis=0,
             values=test_output_state
         ),
-        [shared_hyperparams.arch.num_hidden_layers, 2, 1, num_neurons_in_layer],
+        [num_hidden_layers, 2, 1, num_neurons_in_layer],
         name="test_state_out"
     )
 
@@ -201,34 +220,34 @@ def _create_softmax(output,
                     num_neurons_in_layer,
                     vocab_size,
                     vocab_size_pos,
-                    hyperparams,
+                    dtype,
                     cell_out_placeholder,
                     test_word_out):
     with tf.variable_scope("lstm_fast_softmax"):
         softmax_w = tf.get_variable("softmax_w",
                                     [num_neurons_in_layer, vocab_size],
-                                    dtype=data_type(hyperparams))
+                                    dtype=dtype)
         softmax_b = tf.get_variable("softmax_b",
                                     [vocab_size],
-                                    dtype=data_type(hyperparams))
+                                    dtype=dtype)
         softmax_b = softmax_b - 9.0
 
     with tf.variable_scope("pos_softmax"):
         softmax_w_pos = tf.get_variable("softmax_w_pos",
                                         [num_neurons_in_layer, vocab_size_pos],
-                                        dtype=data_type(hyperparams))
+                                        dtype=dtype)
         softmax_b_pos = tf.get_variable("softmax_b_pos",
                                         [vocab_size_pos],
-                                        dtype=data_type(hyperparams))
+                                        dtype=dtype)
 
     with tf.variable_scope("gen_softmax"):
         num_classifications = 2  # either a sentence is generated or not
         softmax_w_gen = tf.get_variable("softmax_w_gen",
                                         [num_neurons_in_layer, num_classifications],
-                                        dtype=data_type(hyperparams))
+                                        dtype=dtype)
         softmax_b_gen = tf.get_variable("softmax_b_gen",
                                         [num_classifications],
-                                        dtype=data_type(hyperparams))
+                                        dtype=dtype)
 
     test_logits = tf.matmul(
         cell_out_placeholder,
@@ -298,31 +317,33 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
         vocab_size_pos = hyperparams.problem.vocab_size_pos
         keep_prob = shared_hyperparams.arch.keep_prob
         num_hidden_layers = shared_hyperparams.arch.num_hidden_layers
+        dtype = data_type(hyperparams)
 
         multi_rnn_cell, initial_state = _create_multi_rnn_cell(num_neurons_in_hidden_layer=num_neurons_in_layer,
                                                                num_hidden_layers=num_hidden_layers,
                                                                keep_prob=keep_prob,
                                                                mode=mode,
                                                                batch_size=batch_size,
-                                                               dtype=data_type(hyperparams))
+                                                               dtype=dtype)
         model["initial_state"] = initial_state
 
         test_word_in, test_input_state = _create_input_test_tensors(multi_rnn_cell=multi_rnn_cell,
                                                                     num_neurons_in_layer=num_neurons_in_layer,
                                                                     num_hidden_layers=num_hidden_layers,
-                                                                    dtype=data_type(hyperparams))
+                                                                    dtype=dtype)
 
         input_embeddings, test_embeddings = _create_embeddings_layer(input_tensor=input_tensor,
                                                                      test_inputs=test_word_in,
+                                                                     # TODO - what about the pos vocab?
                                                                      vocab_size=vocab_size,
                                                                      num_neurons_in_layer=num_neurons_in_layer,
-                                                                     hyperparams=hyperparams)
+                                                                     dtype=dtype)
 
         test_word_out, cell_out_placeholder = _create_test_cells(multi_rnn_cell=multi_rnn_cell,
                                                                  num_neurons_in_layer=num_neurons_in_layer,
                                                                  test_inputs=test_embeddings,
                                                                  test_input_state=test_input_state,
-                                                                 shared_hyperparams=shared_hyperparams)
+                                                                 num_hidden_layers=num_hidden_layers)
 
         if mode == tf.estimator.ModeKeys.TRAIN and shared_hyperparams.arch.keep_prob < 1:
             input_embeddings = tf.nn.dropout(input_embeddings, shared_hyperparams.arch.keep_prob)
@@ -337,7 +358,7 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
                                                          num_neurons_in_layer=num_neurons_in_layer,
                                                          vocab_size=vocab_size,
                                                          vocab_size_pos=vocab_size_pos,
-                                                         hyperparams=hyperparams,
+                                                         dtype=dtype,
                                                          cell_out_placeholder=cell_out_placeholder,
                                                          test_word_out=test_word_out)
 
