@@ -14,8 +14,14 @@ pip install -r requirements.txt
 
 ## How to Run
 ### Using Docker
-1. Build the image (notice the dot at the end): ```shell docker build -t lstm_fast .```
-2. Run the image: ```shell docker run lstm_fast```
+1. Build the image (notice the dot at the end): 
+```shell
+docker build -t lstm_fast .
+```
+2. Run the image: 
+```shell
+docker run lstm_fast
+```
 
 ### Manual
 Make sure your current working directory is the project's root folder
