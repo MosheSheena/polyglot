@@ -100,6 +100,7 @@ def _create_input_test_tensors(multi_rnn_cell,
         2. Input tensor for the state (context) of that word
     """
 
+    # create a single input tensor with shape of (1, 20)
     initial_state_single = multi_rnn_cell.zero_state(1, dtype)
 
     test_initial_state = tf.reshape(
