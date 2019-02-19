@@ -5,7 +5,7 @@
       "models": [
         "lstm_fast"
       ],
-      "predict_mode": true,
+      "predict_mode": false,
       "learning_technique": "normal",
       "hyperparameters": {
         "shared_params": {
