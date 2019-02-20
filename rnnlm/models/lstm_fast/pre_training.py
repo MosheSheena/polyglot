@@ -12,7 +12,7 @@ def main(raw_files,
     # preprocess for classic training
     print("converting language model data to tf record")
     seq_len = shared_hyperparams.arch.sequence_length
-    x_shifts = hyperparams.problem.get_or_default(key="num_shifts_x", default=seq_len)
+    x_shifts = hyperparams.data.get_or_default(key="num_shifts_x", default=seq_len)
     extract_fn = extractor.extract_x_y_words_with_x_shifting_by_n_each_yield
 
     for raw_path, tf_record_path in zip(raw_files, tf_record_outputs):

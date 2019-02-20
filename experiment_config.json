@@ -10,7 +10,7 @@
       "hyperparameters": {
         "shared_params": {
           "create_model": "lstm_fast",
-          "problem": {
+          "data": {
             "save_path": "results",
             "tf_records_path": "rnnlm/data/tfrecords"
           },
@@ -18,9 +18,11 @@
             "summary_steps": 100,
             "save_checkpoint_steps": 200,
             "keep_checkpoint_max": 5,
-            "num_multitask_epochs": 20,
-            "switch_each_epoch": true,
-            "switch_each_batch": true,
+            "multitask": {
+              "num_multitask_epochs": 20,
+              "switch_each_epoch": true,
+              "switch_each_batch": true
+            },
             "early_stopping": {
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
@@ -34,7 +36,8 @@
           }
         },
         "lstm_fast": {
-          "problem": {
+          "data": {
+            "pre_train": false,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train",
             "valid_raw_data_file": "valid",
@@ -43,10 +46,11 @@
             "vocab_path_labels": "rnnlm/data/wordlist.rnn.final",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "pre_train": false,
             "tf_record_train_file": "train.tfrecord",
             "tf_record_valid_file": "valid.tfrecord",
-            "tf_record_test_file": "test.tfrecord"
+            "tf_record_test_file": "test.tfrecord",
+            "shuffle": false,
+            "shuffle_buffer_size": 10000
           },
           "train": {
             "w_init_scale": 0.1,
@@ -61,14 +65,12 @@
             "num_epochs": 20,
             "epoch_size_train": 1292,
             "epoch_size_valid": 130,
-            "epoch_size_test": 156,
-            "shuffle": false,
-            "shuffle_buffer_size": 10000,
-            "max_steps_without_decrease": 10000
+            "epoch_size_test": 156
           }
         },
         "pos_classifier": {
-          "problem": {
+          "data": {
+            "pre_train": false,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train",
             "valid_raw_data_file": "valid",
@@ -77,10 +79,11 @@
             "vocab_path_labels": "rnnlm/data/pos_tags",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "pre_train": false,
             "tf_record_train_file": "train_pos.tfrecord",
             "tf_record_valid_file": "valid_pos.tfrecord",
-            "tf_record_test_file": "test_pos.tfrecord"
+            "tf_record_test_file": "test_pos.tfrecord",
+            "shuffle": false,
+            "shuffle_buffer_size": 10000
           },
           "train": {
             "w_init_scale": 0.1,
@@ -91,21 +94,16 @@
               "decay": 0.8,
               "decay_max_factor": 4
             },
-            "optimizer": {
-              "type": "adam"
-            },
             "batch_size": 64,
             "num_epochs": 20,
             "epoch_size_train": 1406,
             "epoch_size_valid": 144,
-            "epoch_size_test": 178,
-            "shuffle": false,
-            "shuffle_buffer_size": 10000,
-            "max_steps_without_decrease": 10000
+            "epoch_size_test": 178
           }
         },
         "gen_classifier": {
-          "problem": {
+          "data": {
+            "pre_train": true,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train_gen",
             "valid_raw_data_file": "valid_gen",
@@ -114,10 +112,11 @@
             "vocab_path_labels": "rnnlm/data/generated_tags",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "pre_train": true,
             "tf_record_train_file": "train_gen.tfrecord",
             "tf_record_valid_file": "valid_gen.tfrecord",
-            "tf_record_test_file": "test_gen.tfrecord"
+            "tf_record_test_file": "test_gen.tfrecord",
+            "shuffle": false,
+            "shuffle_buffer_size": 10000
           },
           "train": {
             "w_init_scale": 0.1,
@@ -128,17 +127,11 @@
               "decay": 0.8,
               "decay_max_factor": 4
             },
-            "optimizer": {
-              "type": "adam"
-            },
             "batch_size": 64,
             "num_epochs": 20,
             "epoch_size_train": 1406,
             "epoch_size_valid": 144,
-            "epoch_size_test": 178,
-            "shuffle": false,
-            "shuffle_buffer_size": 10000,
-            "max_steps_without_decrease": 10000
+            "epoch_size_test": 178
           }
         }
       }

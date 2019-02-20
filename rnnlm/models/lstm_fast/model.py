@@ -314,8 +314,8 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
         batch_size = hyperparams.train.batch_size
         seq_len = shared_hyperparams.arch.sequence_length
         num_neurons_in_layer = shared_hyperparams.arch.hidden_layer_size
-        vocab_size = hyperparams.problem.vocab_size
-        vocab_size_pos = hyperparams.problem.vocab_size_pos
+        vocab_size = hyperparams.data.vocab_size
+        vocab_size_pos = hyperparams.data.vocab_size_pos
         keep_prob = shared_hyperparams.arch.keep_prob
         num_hidden_layers = shared_hyperparams.arch.num_hidden_layers
         dtype = data_type(hyperparams)
