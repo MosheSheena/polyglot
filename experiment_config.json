@@ -46,7 +46,7 @@
             "vocab_path_labels": "wordlist.rnn.final",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "tf_records_path": "rnnlm/data/tfrecords",
+            "tf_records_path": "tfrecords",
             "tf_record_train_file": "train.tfrecord",
             "tf_record_valid_file": "valid.tfrecord",
             "tf_record_test_file": "test.tfrecord",

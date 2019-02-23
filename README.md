@@ -27,3 +27,27 @@ we assume of the following:
 2. We need the num batches of each {train, test, validation} to be inserted into hyperparameters.json
 this is due to the fact that tf.data.Dataset loads in mini batches your data without taking into how much data there is.
 
+
+## Configuring the JSON Schema
+
+### Using PyCharm
+
+1. Open the experiment_config.json in Pycharm
+
+2. You should see something like this:
+
+3. Click on the "No Json Schema" button (marked red)
+
+4. Choose "New Schema Mapping":
+
+5. Give the mapping any name you wish
+
+6. Choose the file schema - schema.json:
+
+7. Choose Schema version - "JSON Schema Version 7"
+
+8. Your final settings should look this:
+
+
+### Using The Web
+
