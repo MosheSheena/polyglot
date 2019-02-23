@@ -28,7 +28,7 @@ class ExperimentsRunner:
 
             shared_hyperparams = experiment.hyperparameters.shared_params
 
-            abs_save_path = os.path.join(os.getcwd(), shared_hyperparams.problem.save_path)
+            abs_save_path = os.path.join(os.getcwd(), shared_hyperparams.data.save_path)
             experiment_results_path = os.path.join(abs_save_path, experiment.name)
 
             shared_model_name = shared_hyperparams.create_model
@@ -80,9 +80,8 @@ class ExperimentsRunner:
             pre_training = importlib.import_module("rnnlm.models.{}.pre_training".format(model))
             task = importlib.import_module("rnnlm.models.{}.task".format(model))
 
-            if tasks_hyperparams.problem.pre_train:
-                raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(shared_hyperparams,
-                                                                                 tasks_hyperparams)
+            if tasks_hyperparams.data.pre_train:
+                raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
 
                 print("Converting raw data to tfrecord format")
@@ -93,8 +92,7 @@ class ExperimentsRunner:
                                   shared_hyperparams=shared_hyperparams,
                                   hyperparams=tasks_hyperparams)
 
-            task_to_train = task.create_task(shared_hyperparams=shared_hyperparams,
-                                             hyperparams=tasks_hyperparams)
+            task_to_train = task.create_task(hyperparams=tasks_hyperparams)
             trainer.add_task(task_to_train)
 
         learning_technique = experiment.learning_technique
@@ -112,7 +110,7 @@ class ExperimentsRunner:
                     .format(task, task)
             )
 
-        if not model_hyperparams.problem.data_path:
+        if not model_hyperparams.data.data_path:
             raise ValueError("Must set data_path in hyperparams config for task {}".format(task))
 
         return model_hyperparams
@@ -123,9 +121,9 @@ class ExperimentsRunner:
         elif learning_technique == "transfer":
             trainer.train_transfer_learning()
         elif learning_technique == "multitask":
-            switch_each_epoch = shared_hyperparams.train.switch_each_epoch
-            switch_each_batch = shared_hyperparams.train.switch_each_batch
-            num_multitask_epochs = shared_hyperparams.train.num_multitask_epochs
+            switch_each_epoch = shared_hyperparams.train.multitask.switch_each_epoch
+            switch_each_batch = shared_hyperparams.train.multitask.switch_each_batch
+            num_multitask_epochs = shared_hyperparams.train.multitask.num_multitask_epochs
 
             trainer.train_multitask(switch_each_epoch, switch_each_batch, num_multitask_epochs)
         else:
@@ -135,23 +133,23 @@ class ExperimentsRunner:
             )
 
 
-def _get_data_paths_each_task(shared_hyperparams, hyperparams):
-    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
+def _get_data_paths_each_task(hyperparams):
+    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.data.tf_records_path)
 
     if not os.path.exists(abs_tf_record_path):
         os.makedirs(abs_tf_record_path)
 
-    abs_data_path = os.path.join(os.getcwd(), hyperparams.problem.data_path)
-    abs_vocab_features_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path_features)
-    abs_vocab_labels_path = os.path.join(os.getcwd(), hyperparams.problem.vocab_path_labels)
+    abs_data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
+    abs_vocab_features_path = os.path.join(abs_data_path, hyperparams.data.vocab_path_features)
+    abs_vocab_labels_path = os.path.join(abs_data_path, hyperparams.data.vocab_path_labels)
 
-    train_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.train_raw_data_file)
-    valid_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.valid_raw_data_file)
-    test_raw_data_path = os.path.join(abs_data_path, hyperparams.problem.test_raw_data_file)
+    train_raw_data_path = os.path.join(abs_data_path, hyperparams.data.train_raw_data_file)
+    valid_raw_data_path = os.path.join(abs_data_path, hyperparams.data.valid_raw_data_file)
+    test_raw_data_path = os.path.join(abs_data_path, hyperparams.data.test_raw_data_file)
 
-    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_train_file)
-    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_valid_file)
-    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_test_file)
+    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_train_file)
+    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_valid_file)
+    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_test_file)
 
     raw_files = (train_raw_data_path, valid_raw_data_path, test_raw_data_path)
     tf_record_outputs = (train_tf_record_path, valid_tf_record_path, test_tf_record_path)

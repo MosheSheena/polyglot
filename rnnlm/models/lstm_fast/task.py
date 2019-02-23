@@ -7,13 +7,13 @@ from rnnlm.utils.task import Task
 import os
 
 
-def create_task(shared_hyperparams, hyperparams):
+def create_task(hyperparams):
 
-    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.problem.tf_records_path)
+    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.data.tf_records_path)
 
-    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_train_file)
-    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_valid_file)
-    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.problem.tf_record_test_file)
+    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_train_file)
+    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_valid_file)
+    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_test_file)
 
     lstm_fast_model = Task(name="lstm_fast_model",
                            create_loss=create_loss,

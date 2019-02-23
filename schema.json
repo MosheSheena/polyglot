@@ -1,0 +1,523 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "experiments"
+  ],
+  "properties": {
+    "experiments": {
+      "$id": "#/properties/experiments",
+      "type": "array",
+      "title": "The Experiments Schema",
+      "description": "Experiments to run by order",
+      "default": null,
+      "minItems": 1,
+      "items": {
+        "$id": "#/properties/experiments/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": [
+          "name",
+          "models",
+          "predict_mode",
+          "learning_technique",
+          "hyperparameters"
+        ],
+        "properties": {
+          "name": {
+            "$id": "#/properties/experiments/items/properties/name",
+            "type": "string",
+            "title": "name of experiment",
+            "description": "MUST BE UNIQUE",
+            "default": "",
+            "examples": [
+              "exp_1"
+            ],
+            "minLength": 1,
+            "pattern": "^(.*)$"
+          },
+          "models": {
+            "$id": "#/properties/experiments/items/properties/models",
+            "type": "array",
+            "title": "Models to run",
+            "description": "must match the name of folder under rnnlm/models and the key in the hyperparameters hash",
+            "default": null,
+            "minItems": 1,
+            "uniqueItems": true,
+            "additionalItems": false,
+            "items": {
+              "$id": "#/properties/experiments/items/properties/models/items",
+              "type": "string",
+              "title": "The Items Schema",
+              "default": "",
+              "examples": [
+                "lstm_fast"
+              ],
+              "pattern": "^(.*)$"
+            }
+          },
+          "predict_mode": {
+            "$id": "#/properties/experiments/items/properties/predict_mode",
+            "type": "boolean",
+            "title": "Prediction mode",
+            "description": "whether to use the model to predict (true) or train (false)",
+            "default": false,
+            "examples": [
+              false
+            ]
+          },
+          "learning_technique": {
+            "$id": "#/properties/experiments/items/properties/learning_technique",
+            "type": "string",
+            "title": "Learning technique",
+            "description": "what learning technique to use to train the model",
+            "default": "normal",
+            "examples": [
+              "normal",
+              "transfer",
+              "multitask"
+            ],
+            "minLength": 1,
+            "pattern": "^(.*)$"
+          },
+          "hyperparameters": {
+            "$id": "#/properties/experiments/items/properties/hyperparameters",
+            "type": "object",
+            "title": "Hyperparameters Schema",
+            "description": "Hyperparameters per model. Each key must match the model name in 'models' array and the folder under rnnlm/models",
+            "default": null,
+            "required": [
+              "shared_params"
+            ],
+            "properties": {
+              "shared_params": {
+                "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params",
+                "type": "object",
+                "title": "The Shared_params Schema",
+                "description": "hyperparameters for the shared layer between tasks, if training one task, here you define the parameters for the hidden layer etc.",
+                "default": null,
+                "required": [
+                  "create_model",
+                  "data",
+                  "train",
+                  "arch"
+                ],
+                "properties": {
+                  "create_model": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/create_model",
+                    "type": "string",
+                    "title": "The Create_model Schema",
+                    "description": "The name of the model that will be used to create the hidden layers that are shared between all tasks.",
+                    "default": "",
+                    "examples": [
+                      "lstm_fast"
+                    ],
+                    "minLength": 1,
+                    "pattern": "^(.*)$"
+                  },
+                  "data": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/data",
+                    "type": "object",
+                    "title": "The Data Schema",
+                    "description": "Contains paths and configurations for the data files",
+                    "default": null,
+                    "required": [
+                      "save_path"
+                    ],
+                    "properties": {
+                      "save_path": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/data/properties/save_path",
+                        "type": "string",
+                        "title": "The Save_path Schema",
+                        "description": "Path where the results will be saved",
+                        "default": "",
+                        "examples": [
+                          "results"
+                        ],
+                        "minLength": 1,
+                        "pattern": "^(.*)$"
+                      }
+                    }
+                  },
+                  "train": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train",
+                    "type": "object",
+                    "title": "The Train Schema",
+                    "description": "shared training parameters",
+                    "default": null,
+                    "required": [
+                      "summary_steps",
+                      "save_checkpoint_steps",
+                      "keep_checkpoint_max",
+                      "early_stopping"
+                    ],
+                    "properties": {
+                      "summary_steps": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/summary_steps",
+                        "type": "integer",
+                        "title": "The Summary_steps Schema",
+                        "description": "Steps interval for saving TensorBoard summarizes",
+                        "default": 100,
+                        "examples": [
+                          100
+                        ],
+                        "minimum": 0
+                      },
+                      "save_checkpoint_steps": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/save_checkpoint_steps",
+                        "type": "integer",
+                        "title": "The Save_checkpoint_steps Schema",
+                        "description": "Steps interval for saving checkpoints",
+                        "default": 5,
+                        "examples": [
+                          200
+                        ],
+                        "minimum": 10
+                      },
+                      "keep_checkpoint_max": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/keep_checkpoint_max",
+                        "type": "integer",
+                        "title": "The Keep_checkpoint_max Schema",
+                        "description": "how many files to keep for checkpoint history",
+                        "default": 5,
+                        "examples": [
+                          5
+                        ],
+                        "minimum": 1,
+                        "maximum": 10
+                      },
+                      "multitask": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/multitask",
+                        "type": "object",
+                        "title": "The Multitask Schema",
+                        "description": "Parameters for multitask learning",
+                        "default": null,
+                        "required": [
+                          "num_multitask_epochs",
+                          "switch_each_epoch",
+                          "switch_each_batch"
+                        ],
+                        "properties": {
+                          "num_multitask_epochs": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/multitask/properties/num_multitask_epochs",
+                            "type": "integer",
+                            "title": "The Num_multitask_epochs Schema",
+                            "description": "Number of multitask epochs",
+                            "default": 0,
+                            "examples": [
+                              20
+                            ],
+                            "minimum": 0.0
+                          },
+                          "switch_each_epoch": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/multitask/properties/switch_each_epoch",
+                            "type": "boolean",
+                            "title": "The Switch_each_epoch Schema",
+                            "default": false,
+                            "examples": [
+                              true
+                            ]
+                          },
+                          "switch_each_batch": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/multitask/properties/switch_each_batch",
+                            "type": "boolean",
+                            "title": "The Switch_each_batch Schema",
+                            "default": false,
+                            "examples": [
+                              true
+                            ]
+                          }
+                        }
+                      },
+                      "early_stopping": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/early_stopping",
+                        "type": "object",
+                        "title": "The Early_stopping Schema",
+                        "description": "Early stopping configuration",
+                        "required": [
+                          "threshold",
+                          "max_steps_without_improvement"
+                        ],
+                        "properties": {
+                          "threshold": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/early_stopping/properties/threshold",
+                            "type": "number",
+                            "title": "The Threshold Schema",
+                            "default": 0.0,
+                            "examples": [
+                              0.001
+                            ],
+                            "minimum": 0.0
+                          },
+                          "max_steps_without_improvement": {
+                            "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/early_stopping/properties/max_steps_without_improvement",
+                            "type": "integer",
+                            "title": "The Max_steps_without_improvement Schema",
+                            "default": 0,
+                            "examples": [
+                              10000
+                            ],
+                            "minimum": 1.0
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "arch": {
+                    "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/arch",
+                    "type": "object",
+                    "title": "The Arch Schema",
+                    "description": "Architecture parameters for the model",
+                    "default": null,
+                    "required": [
+                    ],
+                    "properties": {}
+                  }
+                }
+              }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "title": "Hyperparamters for model schema",
+              "required": [
+                "data",
+                "train"
+              ],
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "title": "The Data Schema",
+                  "description": "Contains params for the data files",
+                  "required": [
+                    "pre_train",
+                    "data_path",
+                    "train_raw_data_file",
+                    "valid_raw_data_file",
+                    "test_raw_data_file",
+                    "tf_record_train_file",
+                    "tf_record_valid_file",
+                    "tf_record_test_file"
+                  ],
+                  "properties": {
+                    "pre_train": {
+                      "type": "boolean",
+                      "title": "The Pre_train Schema",
+                      "description": "Whether to perform actions before training. If true, the models/model_name/pre_training.py will ran. You can do in pre_training some pre-process and the conversion of the data to tf record format",
+                      "default": false,
+                      "examples": [
+                        false
+                      ]
+                    },
+                    "data_path": {
+                      "type": "string",
+                      "title": "The Data_path Schema",
+                      "description": "The path to the data folder, must be relative to the project's root folder",
+                      "default": "rnnlm/data",
+                      "examples": [
+                        "rnnlm/data"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "train_raw_data_file": {
+                      "type": "string",
+                      "title": "The Train_raw_data_file Schema",
+                      "description": "The file containing training data that has not been pre processed",
+                      "default": "",
+                      "examples": [
+                        "train"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "valid_raw_data_file": {
+                      "type": "string",
+                      "title": "The Valid_raw_data_file Schema",
+                      "default": "",
+                      "description": "The file containing validation data that has not been pre processed",
+                      "examples": [
+                        "valid"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "test_raw_data_file": {
+                      "type": "string",
+                      "title": "The Test_raw_data_file Schema",
+                      "description": "The file containing test data that has not been pre processed",
+                      "default": "",
+                      "minLength": 1,
+                      "examples": [
+                        "test"
+                      ],
+                      "pattern": "^(.*)$"
+                    },
+                    "vocab_path_features": {
+                      "type": "string",
+                      "title": "The Vocab_path_features Schema",
+                      "description": "File path relative to data_path. Vocabulary of words that appear as features in the data.",
+                      "default": "",
+                      "examples": [
+                        "wordlist.rnn.final"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "vocab_path_labels": {
+                      "type": "string",
+                      "title": "The Vocab_path_labels Schema",
+                      "description": "File path relative to data_path. Vocabulary of words that appear as labels in the data.",
+                      "default": "",
+                      "minLength": 1,
+                      "examples": [
+                        "wordlist.rnn.final"
+                      ],
+                      "pattern": "^(.*)$"
+                    },
+                    "vocab_size": {
+                      "type": "integer",
+                      "title": "The Vocab_size Schema",
+                      "description": "Size of the vocabulary",
+                      "default": 0,
+                      "minimum": 1,
+                      "examples": [
+                        10000
+                      ]
+                    },
+                    "vocab_size_pos": {
+                      "type": "integer",
+                      "title": "The Vocab_size_pos Schema",
+                      "description": "Vocab size of the Part-of-Speech tags",
+                      "default": 0,
+                      "examples": [
+                        37
+                      ]
+                    },
+                    "tf_record_train_file": {
+                      "type": "string",
+                      "title": "The Tf_record_train_file Schema",
+                      "description": "File name of the training tf record file. If pre_train is true this file will be created. Relative to data_path.",
+                      "default": "",
+                      "examples": [
+                        "train.tfrecord"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "tf_record_valid_file": {
+                      "type": "string",
+                      "title": "The Tf_record_valid_file Schema",
+                      "default": "",
+                      "description": "File name of the validation tf record file. If pre_train is true this file will be created. Relative to data_path.",
+                      "examples": [
+                        "valid.tfrecord"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "tf_record_test_file": {
+                      "type": "string",
+                      "title": "The Tf_record_test_file Schema",
+                      "default": "",
+                      "description": "File name of the test tf record file. If pre_train is true this file will be created. Relative to data_path.",
+                      "examples": [
+                        "test.tfrecord"
+                      ],
+                      "minLength": 1,
+                      "pattern": "^(.*)$"
+                    },
+                    "shuffle": {
+                      "type": "boolean",
+                      "title": "The Shuffle Schema",
+                      "description": "Whether to shuffle the data while training or not. Will shuffles batches of data",
+                      "default": false,
+                      "examples": [
+                        false
+                      ]
+                    },
+                    "shuffle_buffer_size": {
+                      "type": "integer",
+                      "title": "The Shuffle_buffer_size Schema",
+                      "description": "How many to shuffle from",
+                      "default": 10000,
+                      "minimum": 0,
+                      "examples": [
+                        10000
+                      ]
+                    }
+                  }
+                },
+                "train": {
+                  "type": "object",
+                  "title": "The Train Schema",
+                  "description": "Contains hyperparameters for training the model",
+                  "required": [
+                    "batch_size",
+                    "num_epochs",
+                    "epoch_size_train",
+                    "epoch_size_valid",
+                    "epoch_size_test"
+                  ],
+                  "properties": {
+                    "batch_size": {
+                      "type": "integer",
+                      "title": "The Batch_size Schema",
+                      "description": "Batch size",
+                      "default": 64,
+                      "minimum": 1,
+                      "examples": [
+                        64
+                      ]
+                    },
+                    "num_epochs": {
+                      "type": "integer",
+                      "title": "The Num_epochs Schema",
+                      "description": "Number of training epochs",
+                      "default": 20,
+                      "minimum": 1,
+                      "examples": [
+                        20
+                      ]
+                    },
+                    "epoch_size_train": {
+                      "type": "integer",
+                      "title": "The Epoch_size_train Schema",
+                      "description": "Number of words in a training epoch",
+                      "default": 0,
+                      "examples": [
+                        1292
+                      ]
+                    },
+                    "epoch_size_valid": {
+                      "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/epoch_size_valid",
+                      "type": "integer",
+                      "title": "The Epoch_size_valid Schema",
+                      "description": "Number of words in a validation epoch",
+                      "default": 0,
+                      "examples": [
+                        130
+                      ]
+                    },
+                    "epoch_size_test": {
+                      "$id": "#/properties/experiments/items/properties/hyperparameters/properties/lstm_fast/properties/train/properties/epoch_size_test",
+                      "type": "integer",
+                      "title": "The Epoch_size_test Schema",
+                      "description": "Number of words in a test epoch",
+                      "default": 0,
+                      "examples": [
+                        156
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
