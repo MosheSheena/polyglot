@@ -19,7 +19,7 @@
             "save_checkpoint_steps": 200,
             "keep_checkpoint_max": 5,
             "multitask": {
-              "num_multitask_epochs": 20,
+              "num_multitask_epochs": 1,
               "switch_each_epoch": true,
               "switch_each_batch": true
             },
@@ -80,7 +80,7 @@
             "vocab_path_labels": "pos_tags",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "tf_records_path": "rnnlm/data/tfrecords",
+            "tf_records_path": "tfrecords",
             "tf_record_train_file": "train_pos.tfrecord",
             "tf_record_valid_file": "valid_pos.tfrecord",
             "tf_record_test_file": "test_pos.tfrecord",
@@ -114,7 +114,7 @@
             "vocab_path_labels": "generated_tags",
             "vocab_size": 10000,
             "vocab_size_pos": 37,
-            "tf_records_path": "rnnlm/data/tfrecords",
+            "tf_records_path": "tfrecords",
             "tf_record_train_file": "train_gen.tfrecord",
             "tf_record_valid_file": "valid_gen.tfrecord",
             "tf_record_test_file": "test_gen.tfrecord",

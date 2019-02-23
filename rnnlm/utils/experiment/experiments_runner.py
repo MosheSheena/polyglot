@@ -144,12 +144,13 @@ class ExperimentsRunner:
 
 
 def _get_data_paths_each_task(hyperparams):
-    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.data.tf_records_path)
+
+    abs_data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
+    abs_tf_record_path = os.path.join(abs_data_path, hyperparams.data.tf_records_path)
 
     if not os.path.exists(abs_tf_record_path):
         os.makedirs(abs_tf_record_path)
 
-    abs_data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
     abs_vocab_features_path = os.path.join(abs_data_path, hyperparams.data.vocab_path_features)
     abs_vocab_labels_path = os.path.join(abs_data_path, hyperparams.data.vocab_path_labels)
 

@@ -8,8 +8,8 @@ import os
 
 
 def create_task(hyperparams):
-
-    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.data.tf_records_path)
+    abs_data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
+    abs_tf_record_path = os.path.join(abs_data_path, hyperparams.data.tf_records_path)
 
     train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_train_file)
     valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_valid_file)

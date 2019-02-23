@@ -26,5 +26,5 @@ class ShowNormalLossHook(tf.train.SessionRunHook):
 
         current_loss = results["loss"]
         if self.steps % 100 == 0:
-            logger.debug("loss=%s", current_loss)
+            logger.info("loss=%s", current_loss)
         self.steps += 1
