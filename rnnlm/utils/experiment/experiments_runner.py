@@ -81,8 +81,7 @@ class ExperimentsRunner:
             task = importlib.import_module("rnnlm.models.{}.task".format(model))
 
             if tasks_hyperparams.data.pre_train:
-                raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(shared_hyperparams,
-                                                                                 tasks_hyperparams)
+                raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
 
                 print("Converting raw data to tfrecord format")
@@ -93,8 +92,7 @@ class ExperimentsRunner:
                                   shared_hyperparams=shared_hyperparams,
                                   hyperparams=tasks_hyperparams)
 
-            task_to_train = task.create_task(shared_hyperparams=shared_hyperparams,
-                                             hyperparams=tasks_hyperparams)
+            task_to_train = task.create_task(hyperparams=tasks_hyperparams)
             trainer.add_task(task_to_train)
 
         learning_technique = experiment.learning_technique
@@ -135,15 +133,15 @@ class ExperimentsRunner:
             )
 
 
-def _get_data_paths_each_task(shared_hyperparams, hyperparams):
-    abs_tf_record_path = os.path.join(os.getcwd(), shared_hyperparams.data.tf_records_path)
+def _get_data_paths_each_task(hyperparams):
+    abs_tf_record_path = os.path.join(os.getcwd(), hyperparams.data.tf_records_path)
 
     if not os.path.exists(abs_tf_record_path):
         os.makedirs(abs_tf_record_path)
 
     abs_data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
-    abs_vocab_features_path = os.path.join(os.getcwd(), hyperparams.data.vocab_path_features)
-    abs_vocab_labels_path = os.path.join(os.getcwd(), hyperparams.data.vocab_path_labels)
+    abs_vocab_features_path = os.path.join(abs_data_path, hyperparams.data.vocab_path_features)
+    abs_vocab_labels_path = os.path.join(abs_data_path, hyperparams.data.vocab_path_labels)
 
     train_raw_data_path = os.path.join(abs_data_path, hyperparams.data.train_raw_data_file)
     valid_raw_data_path = os.path.join(abs_data_path, hyperparams.data.valid_raw_data_file)

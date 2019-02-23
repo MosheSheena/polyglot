@@ -163,7 +163,8 @@ def _predict_estimator(estimator, shared_hyperparams, hyperparams):
         return create_dataset_from_tensor(tensor=np.random.random_integers(0, vocab_size - 1, (batch_size, seq_len)),
                                           batch_size=hyperparams.train.batch_size)
 
-    word_2_id = hyperparams.data.vocab_path_features
+    data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
+    word_2_id = os.path.join(data_path, hyperparams.data.vocab_path_features)
     with open(word_2_id) as f:
         word_2_id = create_vocab(f)
     id_2_word = dict(zip(word_2_id.values(), word_2_id.keys()))
@@ -187,7 +188,8 @@ def _create_labels_for_embeddings_projector(checkpoint_path, hyperparams):
 
     # the metadata file should contain the mapping from data to labels
     # in our case its just the vocabulary
-    metadata_file = os.path.join(os.getcwd(), hyperparams.data.vocab_path_features)
+    data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
+    metadata_file = os.path.join(data_path, hyperparams.data.vocab_path_features)
     destination = os.path.join(checkpoint_path, PROJECTOR_METADATA_FILE_NAME)
     copy2(metadata_file, destination)
 

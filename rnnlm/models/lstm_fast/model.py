@@ -307,9 +307,9 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
     """
 
     model = dict()
+
     initializer = tf.random_uniform_initializer(-hyperparams.train.w_init_scale,
                                                 hyperparams.train.w_init_scale)
-
     with tf.variable_scope("lstm_fast", reuse=tf.AUTO_REUSE, initializer=initializer):
         batch_size = hyperparams.train.batch_size
         seq_len = shared_hyperparams.arch.sequence_length
