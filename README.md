@@ -8,6 +8,13 @@ Install the following:
 pip install -r requirements.txt
 ```
 
+Open Python console and run:
+```python
+import nltk
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+```
+
 ## How to Run
 Make sure your current working directory is the project's root folder
 ```shell
