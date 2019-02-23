@@ -1,10 +1,18 @@
-from rnnlm.utils.predict.predictor import Predictor
-from rnnlm.utils.trainer import Trainer
+import importlib
+import logging.config
+import os
+
+import yaml
+
+from rnnlm import config as rnnlm_config
+
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
-from datetime import datetime
-import os
-import importlib
+from rnnlm.utils.predict.predictor import Predictor
+from rnnlm.utils.trainer import Trainer
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.experiment.experiments_runner')
 
 
 class ExperimentsRunner:
@@ -24,7 +32,7 @@ class ExperimentsRunner:
             EarlyStoppingHook.should_stop = False
             LearningRateDecayHook.epoch_counter = 0
 
-            print("{} running experiment {}".format(datetime.now(), experiment.name))
+            logger.info("running experiment %s", experiment.name)
 
             shared_hyperparams = experiment.hyperparameters.shared_params
 
@@ -47,7 +55,7 @@ class ExperimentsRunner:
                                                              shared_hyperparams=shared_hyperparams,
                                                              checkpoint_path=experiment_results_path)
 
-            print("{} done running experiment {}".format(datetime.now(), experiment.name))
+            logger.info("finished running experiment %s", experiment.name)
 
     def _run_prediction_experiment(self,
                                    experiment,
@@ -84,7 +92,9 @@ class ExperimentsRunner:
                 raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
 
-                print("Converting raw data to tfrecord format")
+
+                logger.info("converting raw data to tfrecord format in experiment %s", experiment.name)
+
                 pre_training.main(raw_files=raw_files,
                                   tf_record_outputs=tf_record_outputs,
                                   features_vocab=features_vocab,
@@ -97,9 +107,9 @@ class ExperimentsRunner:
 
         learning_technique = experiment.learning_technique
 
-        print("Start training")
+        logger.info("start training experiment %s", experiment.name)
         self._train_according_to_learning_technique(trainer, learning_technique, shared_hyperparams)
-        print("End training")
+        logger.info("finished training experiment %s", experiment.name)
 
     def _collect_task_hyperparams(self, task, experiment):
         model_hyperparams = experiment.hyperparameters.get_or_default(key=task, default=None)

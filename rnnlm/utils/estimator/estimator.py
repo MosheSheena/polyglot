@@ -1,12 +1,18 @@
+import logging.config
 import os
-
-from rnnlm.utils.tf_io.io_service import load_dataset, create_dataset_from_tensor, create_vocab
-from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from collections import defaultdict
 from shutil import copy2
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+import yaml
+
+from rnnlm import config as rnnlm_config
+from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
+from rnnlm.utils.tf_io.io_service import load_dataset, create_dataset_from_tensor, create_vocab
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator')
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
@@ -126,9 +132,12 @@ def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
             tf.data.Dataset object representing the dataset
         """
         global dataset_step_counter
-        # TODO replace with logging
-        print("path = {}".format(tf_record_path))
-        print("dataset_steps = {}".format(dataset_step_counter[tf_record_path]))
+
+        logger.debug("TF records path=%s", tf_record_path)
+        logger.debug("dataset_steps=%s", dataset_step_counter[tf_record_path])
+
+        logger.info("training with dataset=%s", tf_record_path)
+
         shuffle = hyperparams.train.get_or_default(key="shuffle", default=False)
         shuffle_buffer_size = hyperparams.train.get_or_default(key="shuffle_buffer_size", default=10000)
         dataset = load_dataset(abs_tf_record_path=tf_record_path,
@@ -137,8 +146,6 @@ def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
                                skip_first_n=dataset_step_counter[tf_record_path],
                                shuffle=shuffle,
                                shuffle_buffer_size=shuffle_buffer_size)
-        # s = get_epoch_size_from_tf_dataset(dataset)
-        # print(s)
         return dataset
 
     return input_fn
@@ -175,11 +182,11 @@ def _predict_estimator(estimator, shared_hyperparams, hyperparams):
     # predict returns a generator object
     for p in predictions:
         predicted_word = id_2_word[p["arg_max"]]
-        print(predicted_word)
+        logger.info("predicted word=%s", predicted_word)
         num_predicted += 1
 
-    # prints batch_size * seq_len as expected
-    print(num_predicted)
+    # logs batch_size * seq_len as expected
+    logger.info("num predicted=%s", num_predicted)
 
 
 def _create_labels_for_embeddings_projector(checkpoint_path, hyperparams):
@@ -278,7 +285,7 @@ def train_and_evaluate_model(create_model,
                                        params=hyperparams)
 
     for i in range(num_epochs):
-        print("Starting training epoch #{}".format(i + 1))
+        logger.debug("starting training epoch #%s", i + 1)
         # Train and evaluate
         _train_estimator(estimator=estimator,
                          dataset=train_dataset,
@@ -288,9 +295,9 @@ def train_and_evaluate_model(create_model,
                             dataset=validation_dataset,
                             tf_record_path=valid_tf_record_path,
                             steps=epoch_size_valid)
-        print("Finished training epoch #{}".format(i + 1))
+        logger.debug("finished training epoch #%s", i + 1)
         if EarlyStoppingHook.should_stop:
-            print("early stopping detected, stop training")
+            logger.debug("early stopping detected. stopping training on epoch #%s", i + 1)
             break
 
     _evaluate_estimator(estimator=estimator,

@@ -1,4 +1,12 @@
+import logging.config
+
 import tensorflow as tf
+import yaml
+
+from rnnlm import config as rnnlm_config
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.early_stopping')
 
 
 class EarlyStoppingHook(tf.train.SessionRunHook):
@@ -64,9 +72,7 @@ class EarlyStoppingHook(tf.train.SessionRunHook):
         Returns:
             bool indicating whether to stop training or not
         """
-
-        # TODO - print to debug log
-        # print("Current loss: {} previous loss: {}".format(self.after_loss, self.before_loss))
+        logger.debug("current loss=%s .. previous loss=%s", self.after_loss, self.before_loss)
         EarlyStoppingHook.should_stop = EarlyStoppingHook.no_improve_counter >= self.max_no_improvement
-        # print("should_stop = {}".format(EarlyStoppingHook.should_stop))
+        logger.debug("expected stop=%s", EarlyStoppingHook.should_stop)
         return EarlyStoppingHook.should_stop

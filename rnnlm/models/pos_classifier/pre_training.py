@@ -1,5 +1,13 @@
+import logging.config
+
+import yaml
+
+from rnnlm import config as rnnlm_config
 from rnnlm.utils.tf_io import extractor
 from rnnlm.utils.tf_io.preprocessor.preprocess import preprocess_elements_with_vocab
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.models.pos_classifier.pre_training')
 
 
 def main(raw_files,
@@ -9,7 +17,8 @@ def main(raw_files,
          shared_hyperparams,
          hyperparams):
 
-    print("converting pos tf records")
+    logger.info("converting POS TF records")
+
     seq_len = shared_hyperparams.arch.sequence_length
     extract_fn = extractor.extract_words_and_their_pos_tags
 

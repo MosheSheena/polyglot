@@ -1,4 +1,12 @@
+import logging.config
+
 import tensorflow as tf
+import yaml
+
+from rnnlm import config as rnnlm_config
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.learning_rate_decay')
 
 
 class LearningRateDecayHook(tf.train.SessionRunHook):
@@ -25,7 +33,7 @@ class LearningRateDecayHook(tf.train.SessionRunHook):
                   self.lr_update_op,
                   self.hyperparams.train.learning_rate.start_value * lr_decay,
                   self.new_lr)
-        print("Learning rate: {}".format(session.run(self.current_lr)))
+        logger.debug("learning rate=%s", session.run(self.current_lr))
 
     def end(self, session):
         LearningRateDecayHook.epoch_counter += 1

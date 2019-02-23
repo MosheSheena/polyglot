@@ -1,7 +1,14 @@
+import logging.config
 import time
 
 import numpy as np
 import tensorflow as tf
+import yaml
+
+from rnnlm import config as rnnlm_config
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.perplexity')
 
 
 class MeasurePerplexityHook(tf.train.SessionRunHook):
@@ -37,11 +44,14 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
         self.iterations += self.shared_hyperparams.arch.sequence_length
 
         if self.step % 100 == 0:
-            print("mode: %s perplexity: %.3f speed: %.0f wps" %
-                  (self.mode, np.exp(self.costs / self.iterations),
-                   self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)))
+            logger.debug(
+                "mode: %s perplexity: %.3f speed: %.0f wps",
+                self.mode,
+                np.exp(self.costs / self.iterations),
+                self.iterations * self.hyperparams.train.batch_size / (time.time() - self.start_time)
+            )
 
         self.step += 1
 
     def end(self, session):
-        print("mode: %s perplexity: %.3f" % (self.mode, np.exp(self.costs / self.iterations)))
+        logger.info("mode: %s perplexity: %.3f", self.mode, np.exp(self.costs / self.iterations))

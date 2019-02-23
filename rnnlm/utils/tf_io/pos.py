@@ -1,5 +1,13 @@
-from nltk import pos_tag, sent_tokenize, word_tokenize
+import logging.config
 from collections import defaultdict
+
+import yaml
+from nltk import pos_tag, sent_tokenize, word_tokenize
+
+from rnnlm import config as rnnlm_config
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.tf_io.pos')
 
 
 def get_words_without_tags(words_list):
@@ -61,6 +69,6 @@ def gen_pos_dataset(gen_words):
 
         num_of_iterations += 1
 
-    print("num of diff tags = {}".format(len(count_diff_tags)))
-    print("tags = {}".format(count_diff_tags))
-    print("num of iterations = {}".format(num_of_iterations))
+    logger.info("number of different tags=%s", len(count_diff_tags))
+    logger.debug("tags found=%s", count_diff_tags)
+    logger.debug("total number of iterations=%s", num_of_iterations)

@@ -1,5 +1,13 @@
+import logging.config
+
+import yaml
+
+from rnnlm import config as rnnlm_config
 from rnnlm.utils.tf_io import extractor
 from rnnlm.utils.tf_io.preprocessor.preprocess import preprocess_elements_with_vocab
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.models.lstm_fast.pre_training')
 
 
 def main(raw_files,
@@ -10,7 +18,7 @@ def main(raw_files,
          hyperparams):
 
     # preprocess for classic training
-    print("converting language model data to tf record")
+    logger.info("converting language model data to tf record")
     seq_len = shared_hyperparams.arch.sequence_length
     x_shifts = hyperparams.data.get_or_default(key="num_shifts_x", default=seq_len)
     extract_fn = extractor.extract_x_y_words_with_x_shifting_by_n_each_yield
@@ -24,4 +32,3 @@ def main(raw_files,
                                            abs_vocab_path_features=features_vocab,
                                            abs_vocab_path_labels=labels_vocab,
                                            abs_output_tf_record_path=tf_record_path)
-

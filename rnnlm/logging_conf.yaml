@@ -1,0 +1,98 @@
+version: 1
+
+formatters:
+  fileFormatter:
+    format: '%(asctime)s - %(name)-70s - %(levelname)s - %(message)s'
+  consoleFormatter:
+    format: '%(name)-50s - %(levelname)s - %(message)s'
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: consoleFormatter
+    stream: ext://sys.stdout
+
+  file:
+    class: logging.handlers.RotatingFileHandler
+    formatter: fileFormatter
+    filename: polyglot.log
+    maxBytes: 1250000 # 10Mb file size
+    backupCount: 5 # polyglot.log polyglot.log.1 polyglot.log.2 ... polyglot.log.5
+
+loggers:
+  rnnlm.models.lstm_fast.pre_training:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.experiment.experiments_runner:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.models.gen_classifier.pre_training:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  main:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.tf_io.pos:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.trainer:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.estimator.estimator_hook.perplexity:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.estimator.estimator_hook.learning_rate_decay:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.estimator.estimator_hook.early_stopping:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.estimator.estimator_hook.loss:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.utils.estimator.estimator:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+  rnnlm.models.pos_classifier.pre_training:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
+root:
+  level: DEBUG
+  handlers: [file, console]

@@ -1,4 +1,12 @@
+import logging.config
+
 import tensorflow as tf
+import yaml
+
+from rnnlm import config as rnnlm_config
+
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.loss')
 
 
 class ShowNormalLossHook(tf.train.SessionRunHook):
@@ -18,5 +26,5 @@ class ShowNormalLossHook(tf.train.SessionRunHook):
 
         current_loss = results["loss"]
         if self.steps % 100 == 0:
-            print("loss: {}".format(current_loss))
+            logger.debug("loss=%s", current_loss)
         self.steps += 1
