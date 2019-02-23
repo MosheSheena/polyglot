@@ -1,13 +1,10 @@
 """
 A helper file containing all functions to aid in word generation process
-
 """
-# import statements
-import os
 import collections
-import tensorflow as tf
+import os
 
-from rnnlm.models.lstm_fast import model as lm_model
+import tensorflow as tf
 
 
 def find_file_by_extension(path, extension):
@@ -122,26 +119,3 @@ def create_tensor_mapping(tensor_dict, graph):
         tensor_name: graph.get_tensor_by_name(tensor_dict[tensor_name] + ":0")
         for tensor_name in tensor_dict.keys()
     }
-
-
-def build_multi_rnn_cell(hyperparams):
-    """
-    Build a multi RNN cell
-
-    Args:
-        hyperparams (Dict2obj):
-
-    Returns:
-        tf.nn.rnn_cell.MultiRNNCell:
-        A multi RNN cell comprised by the hyper parameters provided
-
-    """
-    return tf.nn.rnn_cell.MultiRNNCell(
-            [
-                lm_model.lstm_cell(hyperparams) for _ in range(
-                    hyperparams.arch.num_hidden_layers
-                )
-            ],
-            state_is_tuple=True
-        )
-# changes for commit
