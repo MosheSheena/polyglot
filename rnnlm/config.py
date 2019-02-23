@@ -2,7 +2,6 @@
 """
 Config file for misc constants for rnnlm module
 """
-import pathlib
+import os
 
-_HOME_DIR_PATH = str(pathlib.Path.home())
-LOGGING_CONF_PATH = _HOME_DIR_PATH + "/git/Bsc-Final-Project/rnnlm/logging_conf.yaml"
+LOGGING_CONF_PATH = os.getcwd() + "/rnnlm/logging_conf.yaml"

@@ -2,9 +2,9 @@ version: 1
 
 formatters:
   fileFormatter:
-    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format: '%(asctime)s - %(name)-70s - %(levelname)s - %(message)s'
   consoleFormatter:
-    format: '%(name)-12s: %(levelname)-8s %(message)s'
+    format: '%(name)-50s - %(levelname)s - %(message)s'
 
 handlers:
   console:
