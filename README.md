@@ -34,20 +34,28 @@ this is due to the fact that tf.data.Dataset loads in mini batches your data wit
 
 1. Open the experiment_config.json in Pycharm
 
-2. You should see something like this:
+2. Click on the "No Json Schema" button (marked red):
+![Imgur](https://i.imgur.com/LGnibsl.png)
 
-3. Click on the "No Json Schema" button (marked red)
+3. Choose "New Schema Mapping":
+![Imgur](https://i.imgur.com/aTavzTS.png)
 
-4. Choose "New Schema Mapping":
+4. Give the mapping any name you wish
 
-5. Give the mapping any name you wish
+5. Choose the file schema - schema.json:
+![Imgur](https://i.imgur.com/0QpjEno.png)
 
-6. Choose the file schema - schema.json:
+6. Choose Schema version - "JSON Schema Version 7"
 
-7. Choose Schema version - "JSON Schema Version 7"
-
-8. Your final settings should look this:
-
+7. Your final settings should look this:
+![Imgur](https://i.imgur.com/4xygoCl.png)
 
 ### Using The Web
+1. Go to https://www.jsonschemavalidator.net/
+2. Copy the content of schema.json to the left side of the web page
+3. Copy the content of experiments_config.json to the right side of the web page
+4. If your JSON is valid you should see the green message:
+![Imgur](https://i.imgur.com/EXc3bdM.png)
 
+5. If your json is invalid you should see the red message indication the error:
+![Imgur](https://i.imgur.com/lq4Jbi8.png)
