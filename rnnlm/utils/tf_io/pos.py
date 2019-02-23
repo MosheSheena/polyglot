@@ -1,23 +1,13 @@
-import logging
+import logging.config
 from collections import defaultdict
 
+import yaml
 from nltk import pos_tag, sent_tokenize, word_tokenize
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+from rnnlm import config as rnnlm_config
 
-fh = logging.FileHandler('pos.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(file_formatter)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-ch.setFormatter(console_formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.tf_io.pos')
 
 
 def get_words_without_tags(words_list):

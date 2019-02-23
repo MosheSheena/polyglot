@@ -1,27 +1,17 @@
 import importlib
-import logging
+import logging.config
 import os
 
+import yaml
+
+from rnnlm import config as rnnlm_config
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from rnnlm.utils.predict.predictor import Predictor
 from rnnlm.utils.trainer import Trainer
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-
-fh = logging.FileHandler('experiments_runner.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(file_formatter)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-ch.setFormatter(console_formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.experiment.experiments_runner')
 
 
 class ExperimentsRunner:
@@ -102,7 +92,7 @@ class ExperimentsRunner:
                                                                                  tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
 
-                logger.debug("converting raw data to tfrecord format in experiment %s", experiment.name)
+                logger.info("converting raw data to tfrecord format in experiment %s", experiment.name)
                 pre_training.main(raw_files=raw_files,
                                   tf_record_outputs=tf_record_outputs,
                                   features_vocab=features_vocab,

@@ -1,25 +1,14 @@
-import logging
+import logging.config
 import os
 
+import yaml
+
+from rnnlm import config as rnnlm_config
 from rnnlm.utils.experiment.experiments_runner import ExperimentsRunner
 from rnnlm.utils.tf_io.hyperparams.hyperparams import load_params
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_formatter = formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-fh = logging.FileHandler('main.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(file_formatter)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-ch.setFormatter(console_formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
-
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('main')
 
 if __name__ == "__main__":
     logger.info("starting experiment execution")

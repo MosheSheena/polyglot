@@ -1,24 +1,14 @@
-import logging
+import logging.config
 import time
 
 import numpy as np
 import tensorflow as tf
+import yaml
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+from rnnlm import config as rnnlm_config
 
-fh = logging.FileHandler('trainer.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(file_formatter)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-ch.setFormatter(console_formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.perplexity')
 
 
 class MeasurePerplexityHook(tf.train.SessionRunHook):

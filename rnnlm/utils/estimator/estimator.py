@@ -1,29 +1,18 @@
-import logging
+import logging.config
 import os
 from collections import defaultdict
 from shutil import copy2
 
 import numpy as np
 import tensorflow as tf
+import yaml
 
+from rnnlm import config as rnnlm_config
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.tf_io.io_service import load_dataset, create_dataset_from_tensor, create_vocab
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-
-fh = logging.FileHandler('estimator.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(file_formatter)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-ch.setFormatter(console_formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.estimator.estimator')
 
 # like tf.train.global_step, only per dataset
 dataset_step_counter = defaultdict(int)
@@ -146,6 +135,9 @@ def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
 
         logger.debug("TF records path=%s", tf_record_path)
         logger.debug("dataset_steps=%s", dataset_step_counter[tf_record_path])
+
+        logger.info("training with dataset=%s", tf_record_path)
+
         shuffle = hyperparams.train.get_or_default(key="shuffle", default=False)
         shuffle_buffer_size = hyperparams.train.get_or_default(key="shuffle_buffer_size", default=10000)
         dataset = load_dataset(abs_tf_record_path=tf_record_path,

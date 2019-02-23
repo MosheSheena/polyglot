@@ -1,24 +1,14 @@
-import logging
+import logging.config
 
+import yaml
+
+from rnnlm import config as rnnlm_config
 from rnnlm.utils.estimator.estimator import train_and_evaluate_model
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_formatter = formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-
-fh = logging.FileHandler('trainer.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(file_formatter)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-ch.setFormatter(console_formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
+logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
+logger = logging.getLogger('rnnlm.utils.trainer')
 
 
 class Trainer:
@@ -42,7 +32,7 @@ class Trainer:
         if len(self.tasks) != 1:
             raise ValueError("can only train a single task when normal training or no tasks given")
         task = self.tasks[0]
-        logger.debug("training using traditional training")
+        logger.info("training using traditional training")
         logger.info("training task %s", task.name)
         train_and_evaluate_model(create_model=self.create_model,
                                  create_loss=task.create_loss,
@@ -113,7 +103,7 @@ class Trainer:
             raise ValueError(
                 "transfer learning must have more than 1 task current is {}".format(self.tasks)
             )
-        logger.debug("training using transfer learning")
+        logger.info("training using transfer learning")
         for task in self.tasks:
             logger.info("training task %s", task.name)
             train_and_evaluate_model(create_model=self.create_model,
