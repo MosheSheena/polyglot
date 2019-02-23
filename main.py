@@ -10,6 +10,7 @@ from rnnlm.utils.tf_io.hyperparams.hyperparams import load_params
 logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
 logger = logging.getLogger('main')
 
+
 if __name__ == "__main__":
     logger.info("starting experiment execution")
 

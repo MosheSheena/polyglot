@@ -5,6 +5,7 @@ import os
 import yaml
 
 from rnnlm import config as rnnlm_config
+
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from rnnlm.utils.predict.predictor import Predictor
@@ -92,7 +93,9 @@ class ExperimentsRunner:
                                                                                  tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
 
+
                 logger.info("converting raw data to tfrecord format in experiment %s", experiment.name)
+
                 pre_training.main(raw_files=raw_files,
                                   tf_record_outputs=tf_record_outputs,
                                   features_vocab=features_vocab,

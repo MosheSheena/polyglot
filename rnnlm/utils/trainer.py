@@ -32,7 +32,9 @@ class Trainer:
         if len(self.tasks) != 1:
             raise ValueError("can only train a single task when normal training or no tasks given")
         task = self.tasks[0]
+
         logger.info("training using traditional training")
+
         logger.info("training task %s", task.name)
         train_and_evaluate_model(create_model=self.create_model,
                                  create_loss=task.create_loss,
@@ -103,7 +105,9 @@ class Trainer:
             raise ValueError(
                 "transfer learning must have more than 1 task current is {}".format(self.tasks)
             )
+
         logger.info("training using transfer learning")
+
         for task in self.tasks:
             logger.info("training task %s", task.name)
             train_and_evaluate_model(create_model=self.create_model,

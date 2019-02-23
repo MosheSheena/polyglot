@@ -19,6 +19,7 @@ def main(raw_files,
 
     # pre-process for classic training
     logger.info("converting generated data to tf record")
+
     seq_len = shared_hyperparams.arch.sequence_length
     x_shifts = hyperparams.problem.get_or_default(key="num_shifts_x", default=seq_len)
     extract_fn = extractor.extract_x_y_words_with_x_shifting_by_n_each_yield

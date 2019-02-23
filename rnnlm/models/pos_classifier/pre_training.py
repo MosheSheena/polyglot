@@ -18,6 +18,7 @@ def main(raw_files,
          hyperparams):
 
     logger.info("converting POS TF records")
+
     seq_len = shared_hyperparams.arch.sequence_length
     extract_fn = extractor.extract_words_and_their_pos_tags
 
