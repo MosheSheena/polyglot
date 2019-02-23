@@ -1,3 +1,4 @@
+tensorflow
 PyYAML
 numpy
 jsmin
