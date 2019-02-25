@@ -11,9 +11,11 @@ logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.loss')
 
 class ShowNormalLossHook(tf.train.SessionRunHook):
 
-    def __init__(self, loss, **kwargs):
+    def __init__(self, loss, mode, **kwargs):
         self.loss = loss
+        self.mode = mode
         self.steps = 0
+        self.current_loss = 0
 
     def before_run(self, run_context):
         fetches = {"loss": self.loss}
@@ -24,7 +26,10 @@ class ShowNormalLossHook(tf.train.SessionRunHook):
     def after_run(self, run_context, run_values):
         results = run_values.results
 
-        current_loss = results["loss"]
+        self.current_loss = results["loss"]
         if self.steps % 100 == 0:
-            logger.info("loss=%s", current_loss)
+            logger.info("mode: {}, loss: {}".format(self.mode, self.current_loss))
         self.steps += 1
+
+    def end(self, session):
+        logger.info("mode: {}, loss: {}".format(self.mode, self.current_loss))

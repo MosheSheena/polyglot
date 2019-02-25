@@ -9,6 +9,7 @@ from rnnlm import config as rnnlm_config
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 from rnnlm.utils.predict.predictor import Predictor
+from rnnlm.utils.task_data import TaskData
 from rnnlm.utils.trainer import Trainer
 
 logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
@@ -88,10 +89,9 @@ class ExperimentsRunner:
             pre_training = importlib.import_module("rnnlm.models.{}.pre_training".format(model))
             task = importlib.import_module("rnnlm.models.{}.task".format(model))
 
+            raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(tasks_hyperparams)
             if tasks_hyperparams.data.pre_train:
-                raw_files, tf_record_outputs, vocabs = _get_data_paths_each_task(tasks_hyperparams)
                 features_vocab, labels_vocab = vocabs
-
 
                 logger.info("converting raw data to tfrecord format in experiment %s", experiment.name)
 
@@ -103,7 +103,13 @@ class ExperimentsRunner:
                                   hyperparams=tasks_hyperparams)
 
             task_to_train = task.create_task(hyperparams=tasks_hyperparams)
-            trainer.add_task(task_to_train)
+            train_tf_record, valid_tf_record, test_tf_record = tf_record_outputs
+            task_data = TaskData(task=task_to_train,
+                                 train_tf_record_path=train_tf_record,
+                                 valid_tf_record_path=valid_tf_record,
+                                 test_tf_record_path=test_tf_record)
+
+            trainer.add_task(task_data)
 
         learning_technique = experiment.learning_technique
 
