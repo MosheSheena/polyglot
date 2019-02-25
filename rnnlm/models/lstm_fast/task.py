@@ -4,23 +4,13 @@ from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRat
 from rnnlm.utils.estimator.estimator_hook.init_legacy_model import InitLegacyModelHook
 from rnnlm.utils.estimator.estimator_hook.perplexity import MeasurePerplexityHook
 from rnnlm.utils.task import Task
-import os
 
 
 def create_task(hyperparams):
-    abs_data_path = os.path.join(os.getcwd(), hyperparams.data.data_path)
-    abs_tf_record_path = os.path.join(abs_data_path, hyperparams.data.tf_records_path)
-
-    train_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_train_file)
-    valid_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_valid_file)
-    test_tf_record_path = os.path.join(abs_tf_record_path, hyperparams.data.tf_record_test_file)
 
     lstm_fast_model = Task(name="lstm_fast_model",
                            create_loss=create_loss,
                            create_optimizer=create_optimizer,
-                           train_tf_record_path=train_tf_record_path,
-                           valid_tf_record_path=valid_tf_record_path,
-                           test_tf_record_path=test_tf_record_path,
                            hyperparams=hyperparams,
                            training_hooks=[MeasurePerplexityHook, LearningRateDecayHook, InitLegacyModelHook],
                            evaluation_hooks=[MeasurePerplexityHook, InitLegacyModelHook])

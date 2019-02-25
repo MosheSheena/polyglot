@@ -17,21 +17,22 @@ class Trainer:
         self.create_model = create_model
         self.checkpoint_path = checkpoint_path
         self.shared_hyperparams = shared_hyperparams
-        self.tasks = list()
+        self.tasks_data = list()
 
-    def add_task(self, task):
-        self.tasks.append(task)
+    def add_task(self, task_data):
+        self.tasks_data.append(task_data)
 
-    def remove_task(self, task):
-        self.tasks.remove(task)
+    def remove_task(self, task_data):
+        self.tasks_data.remove(task_data)
 
     def remove_all_tasks(self):
-        self.tasks.clear()
+        self.tasks_data.clear()
 
     def train_normal(self):
-        if len(self.tasks) != 1:
+        if len(self.tasks_data) != 1:
             raise ValueError("can only train a single task when normal training or no tasks given")
-        task = self.tasks[0]
+        task_data = self.tasks_data[0]
+        task = task_data.task
 
         logger.info("training using traditional training")
 
@@ -39,9 +40,9 @@ class Trainer:
         train_and_evaluate_model(create_model=self.create_model,
                                  create_loss=task.create_loss,
                                  create_optimizer=task.create_optimizer,
-                                 train_tf_record_path=task.train_tf_record_path,
-                                 valid_tf_record_path=task.valid_tf_record_path,
-                                 test_tf_record_path=task.test_tf_record_path,
+                                 train_tf_record_path=task_data.train_tf_record_path,
+                                 valid_tf_record_path=task_data.valid_tf_record_path,
+                                 test_tf_record_path=task_data.test_tf_record_path,
                                  num_epochs=task.hyperparams.train.num_epochs,
                                  epoch_size_train=task.hyperparams.train.epoch_size_train,
                                  epoch_size_valid=task.hyperparams.train.epoch_size_valid,
@@ -53,15 +54,16 @@ class Trainer:
                                  evaluation_hooks=task.evaluation_hooks)
 
     def train_multitask(self, switch_each_epoch, switch_each_batch, num_multitask_epochs):
-        if not len(self.tasks) > 1:
+        if not len(self.tasks_data) > 1:
             raise ValueError(
-                "multitask learning must have more than 1 task current is {}".format(self.tasks)
+                "multitask learning must have more than 1 task current is {}".format(self.tasks_data)
             )
         if not switch_each_epoch and not switch_each_batch:
             raise ValueError("switch_each_epoch or switch_each_batch must be True")
         for multi_task_epoch in range(num_multitask_epochs):
             logger.debug("starting multitask epoch #%s", multi_task_epoch + 1)
-            for task in self.tasks:
+            for task_data in self.tasks_data:
+                task = task_data.task
                 epoch_size_train = task.hyperparams.train.epoch_size_train
                 num_epochs = task.hyperparams.train.num_epochs
                 if switch_each_batch:
@@ -77,9 +79,9 @@ class Trainer:
                 train_and_evaluate_model(create_model=self.create_model,
                                          create_loss=task.create_loss,
                                          create_optimizer=task.create_optimizer,
-                                         train_tf_record_path=task.train_tf_record_path,
-                                         valid_tf_record_path=task.valid_tf_record_path,
-                                         test_tf_record_path=task.test_tf_record_path,
+                                         train_tf_record_path=task_data.train_tf_record_path,
+                                         valid_tf_record_path=task_data.valid_tf_record_path,
+                                         test_tf_record_path=task_data.test_tf_record_path,
                                          num_epochs=num_epochs,
                                          epoch_size_train=epoch_size_train,
                                          epoch_size_valid=task.hyperparams.train.epoch_size_valid,
@@ -101,21 +103,22 @@ class Trainer:
                 break
 
     def train_transfer_learning(self):
-        if not len(self.tasks) > 1:
+        if not len(self.tasks_data) > 1:
             raise ValueError(
-                "transfer learning must have more than 1 task current is {}".format(self.tasks)
+                "transfer learning must have more than 1 task current is {}".format(self.tasks_data)
             )
 
         logger.info("training using transfer learning")
 
-        for task in self.tasks:
+        for task_data in self.tasks_data:
+            task = task_data.task
             logger.info("training task %s", task.name)
             train_and_evaluate_model(create_model=self.create_model,
                                      create_loss=task.create_loss,
                                      create_optimizer=task.create_optimizer,
-                                     train_tf_record_path=task.train_tf_record_path,
-                                     valid_tf_record_path=task.valid_tf_record_path,
-                                     test_tf_record_path=task.test_tf_record_path,
+                                     train_tf_record_path=task_data.train_tf_record_path,
+                                     valid_tf_record_path=task_data.valid_tf_record_path,
+                                     test_tf_record_path=task_data.test_tf_record_path,
                                      num_epochs=task.hyperparams.train.num_epochs,
                                      epoch_size_train=task.hyperparams.train.epoch_size_train,
                                      epoch_size_valid=task.hyperparams.train.epoch_size_valid,
