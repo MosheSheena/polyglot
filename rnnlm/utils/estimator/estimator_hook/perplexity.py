@@ -44,7 +44,7 @@ class MeasurePerplexityHook(tf.train.SessionRunHook):
         self.iterations += self.shared_hyperparams.arch.sequence_length
 
         if self.step % 100 == 0:
-            logger.debug(
+            logger.info(
                 "mode: %s perplexity: %.3f speed: %.0f wps",
                 self.mode,
                 np.exp(self.costs / self.iterations),
