@@ -93,6 +93,12 @@ loggers:
     propagate: no
     disable_existing_loggers: False
 
+  rnnlm.utils.estimator.estimator_hook.hook_class_vars_handler:
+    level: DEBUG
+    handlers: [file, console]
+    propagate: no
+    disable_existing_loggers: False
+
 root:
   level: DEBUG
   handlers: [file, console]
