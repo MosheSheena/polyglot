@@ -285,7 +285,7 @@ def train_and_evaluate_model(create_model,
                                        params=hyperparams)
 
     for i in range(num_epochs):
-        logger.debug("starting training epoch #%s", i + 1)
+        logger.info("starting training epoch #%s", i + 1)
         # Train and evaluate
         _train_estimator(estimator=estimator,
                          dataset=train_dataset,
@@ -295,9 +295,9 @@ def train_and_evaluate_model(create_model,
                             dataset=validation_dataset,
                             tf_record_path=valid_tf_record_path,
                             steps=epoch_size_valid)
-        logger.debug("finished training epoch #%s", i + 1)
+        logger.info("finished training epoch #%s", i + 1)
         if EarlyStoppingHook.should_stop:
-            logger.debug("early stopping detected. stopping training on epoch #%s", i + 1)
+            logger.info("early stopping detected. stopping training on epoch #%s", i + 1)
             break
 
     _evaluate_estimator(estimator=estimator,
