@@ -6,14 +6,15 @@ import yaml
 
 from rnnlm import config as rnnlm_config
 
-from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
-from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
+from rnnlm.utils.estimator.estimator_hook.hook_class_vars_handler import HookClassVarsHandler
 from rnnlm.utils.predict.predictor import Predictor
 from rnnlm.utils.task_data import TaskData
 from rnnlm.utils.trainer import Trainer
 
 logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
 logger = logging.getLogger('rnnlm.utils.experiment.experiments_runner')
+
+class_var_handler = HookClassVarsHandler()
 
 
 class ExperimentsRunner:
@@ -28,10 +29,7 @@ class ExperimentsRunner:
 
         for experiment in self.experiment_config.experiments:
 
-            # TODO - global var managing
-            # define hooks global vars
-            EarlyStoppingHook.should_stop = False
-            LearningRateDecayHook.epoch_counter = 0
+            class_var_handler.reset_all()
 
             logger.info("running experiment %s", experiment.name)
 

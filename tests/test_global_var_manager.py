@@ -32,13 +32,13 @@ class TestGlobalVarManager(unittest.TestCase):
     def test_successful_creation(self):
         gm = GlobalVarManager(self.all_d)
         self.assertEqual(list(gm.vars.values()), self.all)
-        self.assertEqual(gm.original_values, gm.vars)
+        self.assertEqual(gm.initial_values, gm.vars)
 
     def test_add_var_after_creation(self):
         gm = GlobalVarManager({"1": self.st1, "2": self.dl1})
         gm.add({"3": self.st2})
         self.assertEqual(list(gm.vars.values()), [self.st1, self.dl1, self.st2])
-        self.assertEqual(list(gm.original_values.values()), [self.st1, self.dl1, self.st2])
+        self.assertEqual(list(gm.initial_values.values()), [self.st1, self.dl1, self.st2])
 
     def test_add_var_that_already_exists_should_throw_error(self):
         gm = GlobalVarManager(self.all_d)
@@ -65,14 +65,14 @@ class TestGlobalVarManager(unittest.TestCase):
     def test_retrieve_original_value_after_it_has_changed(self):
         gm = GlobalVarManager({"1": self.st2})
         gm.update({"1": "hello"})
-        self.assertEqual([self.st2], list(gm.original_values.values()))
+        self.assertEqual([self.st2], list(gm.initial_values.values()))
 
     def test_remove_var(self):
         gm = GlobalVarManager({"1": self.st2})
         gm.remove(["1"])
 
         self.assertEqual(list(gm.vars), [])
-        self.assertEqual(list(gm.original_values), [])
+        self.assertEqual(list(gm.initial_values), [])
         self.assertNotIn(self.st2, list(gm.vars))
 
     def test_remove_var_that_does_not_exist_should_throw_error(self):
@@ -94,7 +94,7 @@ class TestGlobalVarManager(unittest.TestCase):
         gm.update(update_dict)
 
         self.assertEqual(list(gm.vars.values()), updated_values)
-        self.assertEqual(list(gm.original_values.values()), self.all)
+        self.assertEqual(list(gm.initial_values.values()), self.all)
         gm.reset_all()
         self.assertEqual(list(gm.vars.values()), self.all)
 
