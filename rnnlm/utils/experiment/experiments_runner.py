@@ -1,4 +1,5 @@
 import importlib
+import json
 import logging.config
 import os
 
@@ -113,6 +114,9 @@ class ExperimentsRunner:
 
         logger.info("start training experiment %s", experiment.name)
         self._train_according_to_learning_technique(trainer, learning_technique, shared_hyperparams)
+        logger.info("saving a copy of the hyperparameters into the experiments results folder %s", checkpoint_path)
+        self._save_hyperparameters_to_experiment_results_folder(experiment=experiment,
+                                                                results_folder=checkpoint_path)
         logger.info("finished training experiment %s", experiment.name)
 
     def _collect_task_hyperparams(self, task, experiment):
@@ -145,6 +149,17 @@ class ExperimentsRunner:
                 "unsupported learning technique {}\nonly normal, transfer and multitask are supported.".format(
                     learning_technique)
             )
+
+    def _save_hyperparameters_to_experiment_results_folder(self, experiment, results_folder):
+        exp_name = experiment.name
+        for exp in self.experiment_config.experiments:
+            if exp.name == exp_name:
+                destination = os.path.join(results_folder, 'hyperparameters.json')
+                with open(destination, 'w') as f:
+                    json.dump(exp.hyperparameters.to_dict(), f, indent=4)
+                logger.info("saved a copy of hyperparameters in %s", destination)
+                return None
+        raise RuntimeError("Experiment mismatch error could not find experiment {}".format(exp_name))
 
 
 def _get_data_paths_each_task(hyperparams):
