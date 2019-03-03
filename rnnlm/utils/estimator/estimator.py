@@ -35,7 +35,6 @@ def _create_tf_estimator_spec(create_model,
         create_optimizer (func): function defining the optimizer
         training_hooks ([<Class>]): list of classes that inheritance from tf.train.SessionRunHook,
          defining training hooks.
-         second is a list of the args that that are required to create an instance of that hook.
         evaluation_hooks ([<Class>]): list of classes that inheritance from tf.train.SessionRunHook,
          defining evaluation hooks.
 

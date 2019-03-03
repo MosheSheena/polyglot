@@ -64,9 +64,9 @@
             },
             "batch_size": 64,
             "num_epochs": 5,
-            "epoch_size_train": 1,
-            "epoch_size_valid": 1,
-            "epoch_size_test": 1
+            "epoch_size_train": 1292,
+            "epoch_size_valid": 130,
+            "epoch_size_test": 156
           }
         },
         "pos_classifier": {
