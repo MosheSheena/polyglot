@@ -77,6 +77,8 @@ def _create_multi_rnn_cell(num_neurons_in_hidden_layer,
 
     initial_state = multi_rnn_cell.zero_state(batch_size, dtype)
 
+    tf.summary.histogram("initial_state", initial_state)
+
     return multi_rnn_cell, initial_state
 
 
@@ -214,6 +216,9 @@ def _flow_the_data_through_the_rnn_cells(data_inputs,
 
     output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, num_neurons_in_layer])
 
+    tf.summary.histogram("lstm_output", output)
+    tf.summary.histogram("final_state", state)
+
     return output, state
 
 
@@ -232,6 +237,8 @@ def _create_softmax(output,
                                     [vocab_size],
                                     dtype=dtype)
         softmax_b = softmax_b - 9.0
+        tf.summary.histogram("softmax_w_lstm", softmax_w)
+        tf.summary.histogram("softmax_b_lstm", softmax_b)
 
     with tf.variable_scope("pos_softmax"):
         softmax_w_pos = tf.get_variable("softmax_w_pos",
@@ -240,6 +247,8 @@ def _create_softmax(output,
         softmax_b_pos = tf.get_variable("softmax_b_pos",
                                         [vocab_size_pos],
                                         dtype=dtype)
+        tf.summary.histogram("softmax_w_pos", softmax_w_pos)
+        tf.summary.histogram("softmax_b_pos", softmax_b_pos)
 
     with tf.variable_scope("gen_softmax"):
         num_classifications = 2  # either a sentence is generated or not
@@ -249,6 +258,8 @@ def _create_softmax(output,
         softmax_b_gen = tf.get_variable("softmax_b_gen",
                                         [num_classifications],
                                         dtype=dtype)
+        tf.summary.histogram("softmax_w_gen", softmax_w_gen)
+        tf.summary.histogram("softmax_b_gen", softmax_b_gen)
 
     test_logits = tf.matmul(
         cell_out_placeholder,
@@ -281,12 +292,15 @@ def _create_logits(output,
                    softmax_b_gen):
     with tf.variable_scope("lstm_fast_logits"):
         logits = tf.matmul(output, softmax_w) + softmax_b
+        tf.summary.histogram("lstm_fast_logits", logits)
 
     with tf.variable_scope("pos_logits"):
         logits_pos = tf.matmul(output, softmax_w_pos) + softmax_b_pos
+        tf.summary.histogram("pos_logits", logits_pos)
 
     with tf.variable_scope("gen_logits"):
         logits_gen = tf.matmul(output, softmax_w_gen) + softmax_b_gen
+        tf.summary.histogram("gen_logits", logits_gen)
 
     return logits, logits_pos, logits_gen
 

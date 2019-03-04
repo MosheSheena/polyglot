@@ -3,6 +3,7 @@ import tensorflow as tf
 
 def create_optimizer(loss, hyperparams):
     lr = tf.Variable(hyperparams.train.learning_rate.start_value, trainable=False)
+    tf.summary.scalar("learning_rate", lr)
     t_vars = tf.trainable_variables()
     grads, _ = tf.clip_by_global_norm(tf.gradients(loss, t_vars),
                                       hyperparams.train.max_grad_norm)

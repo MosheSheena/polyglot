@@ -198,9 +198,16 @@ def _create_labels_for_embeddings_projector(checkpoint_path, hyperparams):
     metadata_file = os.path.join(data_path, hyperparams.data.vocab_path_features)
     destination = os.path.join(checkpoint_path, PROJECTOR_METADATA_FILE_NAME)
     copy2(metadata_file, destination)
-
     # the projector config files states what name is given to the metadata file
     copy2(PROJECTOR_CONFIG_FILE, checkpoint_path)
+
+    # TensorFlow creates a different folder for the eval
+    eval_checkpoint = os.path.join(checkpoint_path, "eval")
+    if not os.path.exists(eval_checkpoint):
+        os.makedirs(eval_checkpoint)
+    eval_destination = os.path.join(eval_checkpoint, PROJECTOR_METADATA_FILE_NAME)
+    copy2(metadata_file, eval_destination)
+    copy2(PROJECTOR_CONFIG_FILE, eval_checkpoint)
 
 
 def train_and_evaluate_model(create_model,
