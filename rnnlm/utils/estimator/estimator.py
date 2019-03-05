@@ -51,20 +51,23 @@ def _create_tf_estimator_spec(create_model,
         estimator_params["mode"] = mode
 
         # Create a model
-        model = create_model(features, mode, params, shared_hyperparams)
+        with tf.name_scope("model"):
+            model = create_model(features, mode, params, shared_hyperparams)
         estimator_params["model"] = model
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            softmax = tf.nn.softmax(model["logits"])
-            predictions = {
-                "logits": model["logits"],
-                "arg_max": tf.argmax(softmax, 1),
-                "softmax": softmax
-            }
+            with tf.name_scope("predict"):
+                softmax = tf.nn.softmax(model["logits"])
+                predictions = {
+                    "logits": model["logits"],
+                    "arg_max": tf.argmax(softmax, 1),
+                    "softmax": softmax
+                }
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         # Create a loss
-        loss, metrics = create_loss(model, labels, params)
+        with tf.name_scope("loss"):
+            loss, metrics = create_loss(model, labels, params)
         estimator_params["loss"] = loss
         estimator_params["metrics"] = metrics
 
@@ -85,7 +88,8 @@ def _create_tf_estimator_spec(create_model,
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             # Create an optimizer
-            train_op, optimizer_params = create_optimizer(loss, params)
+            with tf.name_scope("optimizer"):
+                train_op, optimizer_params = create_optimizer(loss, params)
             estimator_params["train_op"] = train_op
             estimator_params["optimizer_params"] = optimizer_params
 
