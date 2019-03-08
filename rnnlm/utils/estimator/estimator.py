@@ -74,6 +74,11 @@ def _create_tf_estimator_spec(create_model,
         _training_hooks = list()
         _evaluation_hooks = list()
 
+        perplexity = tf.math.exp(loss)
+        ppl = tf.math.pow([2], loss)
+        tf.summary.scalar("perplexity_e", perplexity)
+        tf.summary.scalar("perplexity_2", ppl)
+
         if mode == tf.estimator.ModeKeys.EVAL:
 
             if evaluation_hooks is not None:
