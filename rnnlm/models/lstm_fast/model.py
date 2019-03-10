@@ -204,7 +204,6 @@ def _flow_the_data_through_the_rnn_cells(data_inputs,
                                          seq_len,
                                          num_neurons_in_layer):
     outputs = []
-    # TODO - check if changes original initial_state
     state = initial_state
     with tf.variable_scope("rnn_cells_forward_propagation"):
         for time_step in range(seq_len):
@@ -349,7 +348,6 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
 
         input_embeddings, test_embeddings = _create_embeddings_layer(input_tensor=input_tensor,
                                                                      test_inputs=test_word_in,
-                                                                     # TODO - what about the pos vocab?
                                                                      vocab_size=vocab_size,
                                                                      num_neurons_in_layer=num_neurons_in_layer,
                                                                      dtype=dtype)

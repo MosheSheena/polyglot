@@ -15,7 +15,6 @@ def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
         if tf.FixedLenFeature -> return Tensor
         if tf.VarLenFeature -> return SparseTensor
     """
-    # TODO support for read of more than two variables (?)
     read_features = {
         "x": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_features),
         "y": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_labels),

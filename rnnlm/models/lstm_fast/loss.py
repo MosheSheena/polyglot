@@ -12,7 +12,6 @@ def create_loss(model, labels, hyperparams):
     metrics = dict()
 
     batch_size = hyperparams.train.batch_size
-    # num_steps = hyperparams.arch.sequence_length
     num_steps = labels.get_shape().as_list()[1]
 
     flat_labels = tf.reshape(labels, [-1])
@@ -22,4 +21,7 @@ def create_loss(model, labels, hyperparams):
         [tf.ones([batch_size * num_steps], dtype=data_type(hyperparams))],
         softmax_loss_function=new_softmax)
     loss = tf.reduce_sum(loss_vector) / batch_size
+    ppl = tf.math.pow([2.0], loss)
+    ppl = tf.reshape(ppl, [])
+    tf.summary.scalar("perplexity", ppl)
     return loss, metrics

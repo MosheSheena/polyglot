@@ -42,12 +42,10 @@ def write_tf_records(gen_fn_words,
 
             if preprocessor_feature_fn is not None:
                 x = preprocessor_feature_fn(x)
-            # TODO support float and byte features
             x_feature = _int64_feature_wrap(int_values=x)
 
             if preprocessor_label_fn is not None:
                 y = preprocessor_label_fn(y)
-            # TODO support float and byte features
             y_label = _int64_feature_wrap(int_values=y)
             feature_dict = {
                 "x": x_feature,
