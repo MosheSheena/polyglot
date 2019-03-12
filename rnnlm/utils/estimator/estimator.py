@@ -289,10 +289,15 @@ def train_and_evaluate_model(create_model,
                                     save_summary_steps=summary_steps,
                                     save_checkpoints_steps=save_checkpoint_steps,
                                     keep_checkpoint_max=keep_checkpoints_max)
+    start_from_checkpoint = shared_hyperparams.train.get_or_default(key='start_from_checkpoint', default=None)
+    ws = None
+    if start_from_checkpoint:
+        ws = tf.estimator.WarmStartSettings(ckpt_to_initialize_from=start_from_checkpoint)
     # Create the estimator itself
     estimator = tf.estimator.Estimator(model_fn=estimator_spec,
                                        config=config,
-                                       params=hyperparams)
+                                       params=hyperparams,
+                                       warm_start_from=ws)
 
     for i in range(num_epochs):
         logger.info("starting training epoch #%s", i + 1)
