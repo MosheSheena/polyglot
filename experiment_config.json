@@ -1,13 +1,11 @@
 {
   "experiments": [
     {
-      "name": "exp_1",
+      "name": "exp_3",
       "models": [
-        "lstm_fast",
-        "pos_classifier"
+        "lstm_fast"
       ],
-      "predict_mode": false,
-      "learning_technique": "transfer",
+      "learning_technique": "normal",
       "hyperparameters": {
         "shared_params": {
           "create_model": "lstm_fast",
@@ -26,7 +24,8 @@
             "early_stopping": {
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
-            }
+            },
+            "start_from_checkpoint": "results/exp_1"
           },
           "arch": {
             "sequence_length": 20,
@@ -63,10 +62,10 @@
               "decay_max_factor": 4
             },
             "batch_size": 64,
-            "num_epochs": 5,
-            "epoch_size_train": 1292,
-            "epoch_size_valid": 130,
-            "epoch_size_test": 156
+            "num_epochs": 20,
+            "epoch_size_train": 646,
+            "epoch_size_valid": 65,
+            "epoch_size_test": 78
           }
         },
         "pos_classifier": {
@@ -101,144 +100,6 @@
             "epoch_size_train": 1,
             "epoch_size_valid": 1,
             "epoch_size_test": 1
-          }
-        },
-        "gen_classifier": {
-          "data": {
-            "pre_train": true,
-            "data_path": "rnnlm/data",
-            "train_raw_data_file": "train_gen",
-            "valid_raw_data_file": "valid_gen",
-            "test_raw_data_file": "test_gen",
-            "vocab_path_features": "wordlist.rnn.final",
-            "vocab_path_labels": "generated_tags",
-            "vocab_size": 10000,
-            "vocab_size_pos": 37,
-            "tf_records_path": "tfrecords",
-            "tf_record_train_file": "train_gen.tfrecord",
-            "tf_record_valid_file": "valid_gen.tfrecord",
-            "tf_record_test_file": "test_gen.tfrecord",
-            "shuffle": false,
-            "shuffle_buffer_size": 10000
-          },
-          "train": {
-            "w_init_scale": 0.1,
-            "max_grad_norm": 5,
-            "learning_rate": {
-              "type": "decay",
-              "start_value": 1.0,
-              "decay": 0.8,
-              "decay_max_factor": 4
-            },
-            "batch_size": 64,
-            "num_epochs": 20,
-            "epoch_size_train": 1406,
-            "epoch_size_valid": 144,
-            "epoch_size_test": 178
-          }
-        }
-      }
-    },
-    {
-      "name": "exp_2",
-      "models": [
-        "lstm_fast"
-      ],
-      "predict_mode": false,
-      "learning_technique": "normal",
-      "hyperparameters": {
-        "shared_params": {
-          "create_model": "lstm_fast",
-          "data": {
-            "save_path": "results"
-          },
-          "train": {
-            "summary_steps": 100,
-            "save_checkpoint_steps": 200,
-            "keep_checkpoint_max": 5,
-            "multitask": {
-              "num_multitask_epochs": 1,
-              "switch_each_epoch": true,
-              "switch_each_batch": true
-            },
-            "early_stopping": {
-              "threshold": 0.001,
-              "max_steps_without_improvement": 10000
-            }
-          },
-          "arch": {
-            "sequence_length": 20,
-            "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5
-          }
-        },
-        "lstm_fast": {
-          "data": {
-            "pre_train": false,
-            "data_path": "rnnlm/data",
-            "train_raw_data_file": "train",
-            "valid_raw_data_file": "valid",
-            "test_raw_data_file": "test",
-            "vocab_path_features": "wordlist.rnn.final",
-            "vocab_path_labels": "wordlist.rnn.final",
-            "vocab_size": 10000,
-            "vocab_size_pos": 37,
-            "tf_records_path": "tfrecords",
-            "tf_record_train_file": "train.tfrecord",
-            "tf_record_valid_file": "valid.tfrecord",
-            "tf_record_test_file": "test.tfrecord",
-            "shuffle": false,
-            "shuffle_buffer_size": 10000
-          },
-          "train": {
-            "w_init_scale": 0.1,
-            "max_grad_norm": 5,
-            "learning_rate": {
-              "type": "decay",
-              "start_value": 1.0,
-              "decay": 0.8,
-              "decay_max_factor": 4
-            },
-            "batch_size": 64,
-            "num_epochs": 5,
-            "epoch_size_train": 1,
-            "epoch_size_valid": 1,
-            "epoch_size_test": 1
-          }
-        },
-        "pos_classifier": {
-          "data": {
-            "pre_train": false,
-            "data_path": "rnnlm/data",
-            "train_raw_data_file": "train",
-            "valid_raw_data_file": "valid",
-            "test_raw_data_file": "test",
-            "vocab_path_features": "wordlist.rnn.final",
-            "vocab_path_labels": "pos_tags",
-            "vocab_size": 10000,
-            "vocab_size_pos": 37,
-            "tf_records_path": "tfrecords",
-            "tf_record_train_file": "train_pos.tfrecord",
-            "tf_record_valid_file": "valid_pos.tfrecord",
-            "tf_record_test_file": "test_pos.tfrecord",
-            "shuffle": false,
-            "shuffle_buffer_size": 10000
-          },
-          "train": {
-            "w_init_scale": 0.1,
-            "max_grad_norm": 5,
-            "learning_rate": {
-              "type": "decay",
-              "start_value": 1.0,
-              "decay": 0.8,
-              "decay_max_factor": 4
-            },
-            "batch_size": 64,
-            "num_epochs": 20,
-            "epoch_size_train": 1406,
-            "epoch_size_valid": 144,
-            "epoch_size_test": 178
           }
         },
         "gen_classifier": {

@@ -22,7 +22,6 @@
         "required": [
           "name",
           "models",
-          "predict_mode",
           "learning_technique",
           "hyperparameters"
         ],
@@ -269,6 +268,13 @@
                             "minimum": 1
                           }
                         }
+                      },
+                      "start_from_checkpoint": {
+                        "$id": "#/properties/experiments/items/properties/hyperparameters/properties/shared_params/properties/train/properties/start_from_checkpoint",
+                        "type": "string",
+                        "title": "Directory of checkpoint to start from",
+                        "description": "Directory of checkpoint to start from, tensors from here will be loaded and the experiment will used pre trained tensors",
+                        "default": ""
                       }
                     }
                   },
