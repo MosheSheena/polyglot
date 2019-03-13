@@ -223,17 +223,18 @@ def _flow_the_data_through_the_rnn_cells(data_inputs,
 
 def _create_softmax(output,
                     num_neurons_in_layer,
-                    vocab_size,
+                    vocab_size_language_model,
                     vocab_size_pos,
+                    vocab_size_generated,
                     dtype,
                     cell_out_placeholder,
                     test_word_out):
     with tf.variable_scope("lstm_fast_softmax"):
         softmax_w = tf.get_variable("softmax_w",
-                                    [num_neurons_in_layer, vocab_size],
+                                    [num_neurons_in_layer, vocab_size_language_model],
                                     dtype=dtype)
         softmax_b = tf.get_variable("softmax_b",
-                                    [vocab_size],
+                                    [vocab_size_language_model],
                                     dtype=dtype)
         softmax_b = softmax_b - 9.0
         tf.summary.histogram("softmax_w_lstm", softmax_w)
@@ -250,12 +251,11 @@ def _create_softmax(output,
         tf.summary.histogram("softmax_b_pos", softmax_b_pos)
 
     with tf.variable_scope("gen_softmax"):
-        num_classifications = 2  # either a sentence is generated or not
         softmax_w_gen = tf.get_variable("softmax_w_gen",
-                                        [num_neurons_in_layer, num_classifications],
+                                        [num_neurons_in_layer, vocab_size_generated],
                                         dtype=dtype)
         softmax_b_gen = tf.get_variable("softmax_b_gen",
-                                        [num_classifications],
+                                        [vocab_size_generated],
                                         dtype=dtype)
         tf.summary.histogram("softmax_w_gen", softmax_w_gen)
         tf.summary.histogram("softmax_b_gen", softmax_b_gen)
@@ -327,8 +327,9 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
         batch_size = hyperparams.train.batch_size
         seq_len = shared_hyperparams.arch.sequence_length
         num_neurons_in_layer = shared_hyperparams.arch.hidden_layer_size
-        vocab_size = hyperparams.data.vocab_size
-        vocab_size_pos = hyperparams.data.vocab_size_pos
+        vocab_size_language_model = shared_hyperparams.arch.vocab_size_language_model
+        vocab_size_pos = shared_hyperparams.arch.vocab_size_pos
+        vocab_size_gen = shared_hyperparams.arch.vocab_size_generated
         keep_prob = shared_hyperparams.arch.keep_prob
         num_hidden_layers = shared_hyperparams.arch.num_hidden_layers
         dtype = data_type(hyperparams)
@@ -348,7 +349,7 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
 
         input_embeddings, test_embeddings = _create_embeddings_layer(input_tensor=input_tensor,
                                                                      test_inputs=test_word_in,
-                                                                     vocab_size=vocab_size,
+                                                                     vocab_size=vocab_size_language_model,
                                                                      num_neurons_in_layer=num_neurons_in_layer,
                                                                      dtype=dtype)
 
@@ -369,8 +370,9 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
 
         logits, logits_pos, logits_gen = _create_softmax(output=output,
                                                          num_neurons_in_layer=num_neurons_in_layer,
-                                                         vocab_size=vocab_size,
+                                                         vocab_size_language_model=vocab_size_language_model,
                                                          vocab_size_pos=vocab_size_pos,
+                                                         vocab_size_generated=vocab_size_gen,
                                                          dtype=dtype,
                                                          cell_out_placeholder=cell_out_placeholder,
                                                          test_word_out=test_word_out)

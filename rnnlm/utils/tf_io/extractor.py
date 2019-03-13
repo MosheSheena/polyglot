@@ -1,3 +1,5 @@
+import random
+
 from rnnlm.utils.tf_io.pos import gen_pos_dataset
 
 
@@ -308,3 +310,29 @@ def extract_words_and_their_pos_tags(opened_file, seq_len):
             yield words, tags
             words.clear()
             tags.clear()
+
+
+def extract_real_with_generated_dataset(real_dataset, seq_len, num_shifts, generated_dataset, max_size_words):
+    real_tag = 'REAL_SENTENCE'
+    generated_tag = 'GENERATED_SENTENCE'
+    gen_words_1 = _gen_n_words(real_dataset, n=seq_len, num_shifts=num_shifts)
+    gen_words_2 = _gen_next_word(generated_dataset)
+
+    n_rand = random.randrange(1, max_size_words)
+
+    while True:
+        try:
+            x = next(gen_words_1)
+            yield list(x), real_tag
+        except StopIteration:
+            break
+
+    while True:
+        try:
+            x = list()
+            for i in range(n_rand):
+                x.append(next(gen_words_2))
+            yield list(x), generated_tag
+        except StopIteration:
+            break
+
