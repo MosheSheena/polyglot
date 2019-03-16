@@ -32,9 +32,9 @@ def main(raw_files,
         with open(raw_path, 'r') as f, open(generated_path) as generated_f:
             data_extractor = extractor.extract_real_with_generated_dataset(real_dataset=f,
                                                                            seq_len=seq_len,
-                                                                           num_shifts=x_shifts,
+                                                                           num_shifts_real=x_shifts,
                                                                            generated_dataset=generated_f,
-                                                                           max_size_words=seq_len * 2)
+                                                                           num_shift_generated=x_shifts)
 
             preprocess_elements_with_vocab(extractor=data_extractor,
                                            abs_vocab_path_features=features_vocab,

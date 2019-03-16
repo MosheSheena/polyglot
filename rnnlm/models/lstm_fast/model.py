@@ -222,6 +222,7 @@ def _flow_the_data_through_the_rnn_cells(data_inputs,
 
 
 def _create_softmax(output,
+                    final_state,
                     num_neurons_in_layer,
                     vocab_size_language_model,
                     vocab_size_pos,
@@ -274,6 +275,7 @@ def _create_softmax(output,
     test_out = tf.identity(p_word, name="test_out")
 
     return _create_logits(output,
+                          final_state,
                           softmax_w,
                           softmax_b,
                           softmax_w_pos,
@@ -283,6 +285,7 @@ def _create_softmax(output,
 
 
 def _create_logits(output,
+                   final_state,
                    softmax_w,
                    softmax_b,
                    softmax_w_pos,
@@ -298,7 +301,8 @@ def _create_logits(output,
         tf.summary.histogram("pos_logits", logits_pos)
 
     with tf.variable_scope("gen_logits"):
-        logits_gen = tf.matmul(output, softmax_w_gen) + softmax_b_gen
+        flat_final_state = tf.stack(axis=1, values=final_state)[0][0]
+        logits_gen = tf.matmul(flat_final_state, softmax_w_gen) + softmax_b_gen
         tf.summary.histogram("gen_logits", logits_gen)
 
     return logits, logits_pos, logits_gen
@@ -369,6 +373,7 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
                                                                    num_neurons_in_layer=num_neurons_in_layer)
 
         logits, logits_pos, logits_gen = _create_softmax(output=output,
+                                                         final_state=final_state,
                                                          num_neurons_in_layer=num_neurons_in_layer,
                                                          vocab_size_language_model=vocab_size_language_model,
                                                          vocab_size_pos=vocab_size_pos,

@@ -17,7 +17,7 @@ def _gen_next_word(opened_file):
         buf = opened_file.read(3000)
         if not buf:
             break
-        words = (last+buf).split()
+        words = (last + buf).split()
         last = words.pop()
         for word in words:
             yield word
@@ -312,27 +312,31 @@ def extract_words_and_their_pos_tags(opened_file, seq_len):
             tags.clear()
 
 
-def extract_real_with_generated_dataset(real_dataset, seq_len, num_shifts, generated_dataset, max_size_words):
+def extract_real_with_generated_dataset(seq_len,
+                                        real_dataset,
+                                        num_shifts_real,
+                                        generated_dataset,
+                                        num_shift_generated):
     real_tag = 'REAL_SENTENCE'
     generated_tag = 'GENERATED_SENTENCE'
-    gen_words_1 = _gen_n_words(real_dataset, n=seq_len, num_shifts=num_shifts)
-    gen_words_2 = _gen_next_word(generated_dataset)
+    gen_words_1 = _gen_n_words(real_dataset, n=seq_len, num_shifts=num_shifts_real)
+    gen_words_2 = _gen_n_words(generated_dataset, n=seq_len, num_shifts=num_shift_generated)
 
-    n_rand = random.randrange(1, max_size_words)
+    has_real = True
+    has_gen = True
 
-    while True:
-        try:
-            x = next(gen_words_1)
-            yield list(x), real_tag
-        except StopIteration:
-            break
-
-    while True:
-        try:
-            x = list()
-            for i in range(n_rand):
-                x.append(next(gen_words_2))
-            yield list(x), generated_tag
-        except StopIteration:
-            break
+    while has_real or has_gen:
+        choice = random.randrange(0, 2)
+        if choice == 0 and has_real:
+            try:
+                x = next(gen_words_1)
+                yield list(x), list([real_tag])
+            except StopIteration:
+                has_real = False
+        else:
+            try:
+                x = next(gen_words_2)
+                yield list(x), list([generated_tag])
+            except StopIteration:
+                has_gen = False
 

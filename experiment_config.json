@@ -3,7 +3,7 @@
     {
       "name": "exp_3",
       "models": [
-        "pos_classifier"
+        "gen_classifier"
       ],
       "learning_technique": "normal",
       "hyperparameters": {
@@ -111,7 +111,7 @@
         },
         "gen_classifier": {
           "data": {
-            "pre_train": false,
+            "pre_train": true,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train",
             "valid_raw_data_file": "valid",
