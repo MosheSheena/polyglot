@@ -3,7 +3,7 @@
     {
       "name": "exp_3",
       "models": [
-        "lstm_fast"
+        "gen_classifier"
       ],
       "learning_technique": "normal",
       "hyperparameters": {
@@ -25,26 +25,31 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_checkpoint": "results/exp_1"
+            "start_from_checkpoint": ""
           },
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
             "hidden_layer_size": 200,
-            "keep_prob": 0.5
+            "keep_prob": 0.5,
+            "vocab_size_language_model": 10000,
+            "vocab_size_pos": 37,
+            "vocab_size_generated": 3
           }
         },
         "lstm_fast": {
           "data": {
-            "pre_train": false,
+            "pre_train": true,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train",
             "valid_raw_data_file": "valid",
             "test_raw_data_file": "test",
             "vocab_path_features": "wordlist.rnn.final",
             "vocab_path_labels": "wordlist.rnn.final",
-            "vocab_size": 10000,
-            "vocab_size_pos": 37,
+            "vocab_size_features": 10000,
+            "vocab_size_labels": 10000,
+            "shape_size_features": 20,
+            "shape_size_labels": 20,
             "tf_records_path": "tfrecords",
             "tf_record_train_file": "train.tfrecord",
             "tf_record_valid_file": "valid.tfrecord",
@@ -77,8 +82,10 @@
             "test_raw_data_file": "test",
             "vocab_path_features": "wordlist.rnn.final",
             "vocab_path_labels": "pos_tags",
-            "vocab_size": 10000,
-            "vocab_size_pos": 37,
+            "vocab_size_features": 10000,
+            "vocab_size_labels": 37,
+            "shape_size_features": 20,
+            "shape_size_labels": 20,
             "tf_records_path": "tfrecords",
             "tf_record_train_file": "train_pos.tfrecord",
             "tf_record_valid_file": "valid_pos.tfrecord",
@@ -106,13 +113,18 @@
           "data": {
             "pre_train": true,
             "data_path": "rnnlm/data",
-            "train_raw_data_file": "train_gen",
-            "valid_raw_data_file": "valid_gen",
-            "test_raw_data_file": "test_gen",
+            "train_raw_data_file": "train",
+            "valid_raw_data_file": "valid",
+            "test_raw_data_file": "test",
+            "train_generated_data_file": "rnnlm/data/generated_train",
+            "valid_generated_data_file": "rnnlm/data/generated_valid",
+            "test_generated_data_file": "rnnlm/data/generated_test",
             "vocab_path_features": "wordlist.rnn.final",
             "vocab_path_labels": "generated_tags",
-            "vocab_size": 10000,
-            "vocab_size_pos": 37,
+            "vocab_size_features": 10000,
+            "vocab_size_labels": 3,
+            "shape_size_features": 20,
+            "shape_size_labels": 1,
             "tf_records_path": "tfrecords",
             "tf_record_train_file": "train_gen.tfrecord",
             "tf_record_valid_file": "valid_gen.tfrecord",

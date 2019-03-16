@@ -27,7 +27,8 @@ def raw_to_tf_records(extractor_raw_data,
 
 def load_dataset(abs_tf_record_path,
                  batch_size,
-                 seq_len,
+                 feature_sample_size,
+                 label_sample_size,
                  dtype_features=tf.int64,
                  dtype_labels=tf.int64,
                  shuffle=False,
@@ -38,7 +39,8 @@ def load_dataset(abs_tf_record_path,
     Args:
         abs_tf_record_path (str): absolute path of the tf record file
         batch_size (int):
-        seq_len (int):
+        feature_sample_size (int): size of a chunk of a sample from the features data
+        label_sample_size(int): size of a chunk of a sample from the labels data
         dtype_features (tf.DType): should match to what was wrote to tf records
         dtype_labels(tf.DType): should match to what was wrote to tf records
         shuffle (bool): whether to shuffle the data
@@ -50,7 +52,8 @@ def load_dataset(abs_tf_record_path,
     """
     return reader.read_tf_records(abs_tf_record_path=abs_tf_record_path,
                                   batch_size=batch_size,
-                                  seq_len=seq_len,
+                                  feature_sample_size=feature_sample_size,
+                                  label_sample_size=label_sample_size,
                                   dtype_features=dtype_features,
                                   dtype_labels=dtype_labels,
                                   shuffle=shuffle,

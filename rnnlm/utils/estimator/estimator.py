@@ -121,7 +121,7 @@ def _create_tf_estimator_spec(create_model,
     return my_model_fn
 
 
-def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
+def _create_input_fn(tf_record_path, hyperparams):
     def input_fn():
         """
         This method is invoke each time we call estimator.train
@@ -145,7 +145,8 @@ def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
         shuffle_buffer_size = hyperparams.train.get_or_default(key="shuffle_buffer_size", default=10000)
         dataset = load_dataset(abs_tf_record_path=tf_record_path,
                                batch_size=hyperparams.train.batch_size,
-                               seq_len=shared_hyperparams.arch.sequence_length,
+                               feature_sample_size=hyperparams.data.shape_size_features,
+                               label_sample_size=hyperparams.data.shape_size_labels,
                                skip_first_n=dataset_step_counter[tf_record_path],
                                shuffle=shuffle,
                                shuffle_buffer_size=shuffle_buffer_size)
@@ -165,7 +166,7 @@ def _evaluate_estimator(estimator, dataset, tf_record_path, steps):
 
 
 def _predict_estimator(estimator, shared_hyperparams, hyperparams):
-    vocab_size = hyperparams.data.vocab_size
+    vocab_size = hyperparams.data.vocab_size_features
     batch_size = hyperparams.train.batch_size
     seq_len = shared_hyperparams.arch.sequence_length
 
@@ -264,14 +265,11 @@ def train_and_evaluate_model(create_model,
 
     # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
-                                     hyperparams=hyperparams,
-                                     shared_hyperparams=shared_hyperparams)
+                                     hyperparams=hyperparams)
     validation_dataset = _create_input_fn(tf_record_path=valid_tf_record_path,
-                                          hyperparams=hyperparams,
-                                          shared_hyperparams=shared_hyperparams)
+                                          hyperparams=hyperparams)
     test_dataset = _create_input_fn(tf_record_path=test_tf_record_path,
-                                    hyperparams=hyperparams,
-                                    shared_hyperparams=shared_hyperparams)
+                                    hyperparams=hyperparams)
 
     # Create estimator spec object
     estimator_spec = _create_tf_estimator_spec(create_model=create_model,

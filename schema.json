@@ -309,6 +309,12 @@
                     "train_raw_data_file",
                     "valid_raw_data_file",
                     "test_raw_data_file",
+                    "vocab_path_features",
+                    "vocab_path_labels",
+                    "vocab_size_features",
+                    "vocab_size_labels",
+                    "shape_size_features",
+                    "shape_size_labels",
                     "tf_record_train_file",
                     "tf_record_valid_file",
                     "tf_record_test_file"
@@ -389,24 +395,44 @@
                       ],
                       "pattern": "^(.*)$"
                     },
-                    "vocab_size": {
+                    "vocab_size_features": {
                       "type": "integer",
-                      "title": "Size of the vocabulary",
-                      "description": "Size of the vocabulary",
+                      "title": "Size of the features vocabulary",
+                      "description": "Size of the features vocabulary",
                       "default": 0,
                       "minimum": 1,
                       "examples": [
                         10000
                       ]
                     },
-                    "vocab_size_pos": {
+                    "vocab_size_labels": {
                       "type": "integer",
-                      "title": "Vocab size of the Part-of-Speech tags",
-                      "description": "Vocab size of the Part-of-Speech tags",
+                      "title": "Size of the labels vocabulary",
+                      "description": "Size of the labels vocabulary",
                       "default": 0,
                       "minimum": 1,
                       "examples": [
                         37
+                      ]
+                    },
+                    "shape_size_features" : {
+                      "type": "integer",
+                      "title": "Shape size of the features",
+                      "description": "Shape size of the features",
+                      "default": 0,
+                      "minimum": 1,
+                      "examples": [
+                        20
+                      ]
+                    },
+                    "shape_size_labels" : {
+                      "type": "integer",
+                      "title": "Shape size of the features",
+                      "description": "Shape size of the features",
+                      "default": 0,
+                      "minimum": 1,
+                      "examples": [
+                        1
                       ]
                     },
                     "tf_record_train_file": {

@@ -222,18 +222,20 @@ def _flow_the_data_through_the_rnn_cells(data_inputs,
 
 
 def _create_softmax(output,
+                    final_state,
                     num_neurons_in_layer,
-                    vocab_size,
+                    vocab_size_language_model,
                     vocab_size_pos,
+                    vocab_size_generated,
                     dtype,
                     cell_out_placeholder,
                     test_word_out):
     with tf.variable_scope("lstm_fast_softmax"):
         softmax_w = tf.get_variable("softmax_w",
-                                    [num_neurons_in_layer, vocab_size],
+                                    [num_neurons_in_layer, vocab_size_language_model],
                                     dtype=dtype)
         softmax_b = tf.get_variable("softmax_b",
-                                    [vocab_size],
+                                    [vocab_size_language_model],
                                     dtype=dtype)
         softmax_b = softmax_b - 9.0
         tf.summary.histogram("softmax_w_lstm", softmax_w)
@@ -250,12 +252,11 @@ def _create_softmax(output,
         tf.summary.histogram("softmax_b_pos", softmax_b_pos)
 
     with tf.variable_scope("gen_softmax"):
-        num_classifications = 2  # either a sentence is generated or not
         softmax_w_gen = tf.get_variable("softmax_w_gen",
-                                        [num_neurons_in_layer, num_classifications],
+                                        [num_neurons_in_layer, vocab_size_generated],
                                         dtype=dtype)
         softmax_b_gen = tf.get_variable("softmax_b_gen",
-                                        [num_classifications],
+                                        [vocab_size_generated],
                                         dtype=dtype)
         tf.summary.histogram("softmax_w_gen", softmax_w_gen)
         tf.summary.histogram("softmax_b_gen", softmax_b_gen)
@@ -274,6 +275,7 @@ def _create_softmax(output,
     test_out = tf.identity(p_word, name="test_out")
 
     return _create_logits(output,
+                          final_state,
                           softmax_w,
                           softmax_b,
                           softmax_w_pos,
@@ -283,6 +285,7 @@ def _create_softmax(output,
 
 
 def _create_logits(output,
+                   final_state,
                    softmax_w,
                    softmax_b,
                    softmax_w_pos,
@@ -298,7 +301,8 @@ def _create_logits(output,
         tf.summary.histogram("pos_logits", logits_pos)
 
     with tf.variable_scope("gen_logits"):
-        logits_gen = tf.matmul(output, softmax_w_gen) + softmax_b_gen
+        flat_final_state = tf.stack(axis=1, values=final_state)[0][0]
+        logits_gen = tf.matmul(flat_final_state, softmax_w_gen) + softmax_b_gen
         tf.summary.histogram("gen_logits", logits_gen)
 
     return logits, logits_pos, logits_gen
@@ -327,8 +331,9 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
         batch_size = hyperparams.train.batch_size
         seq_len = shared_hyperparams.arch.sequence_length
         num_neurons_in_layer = shared_hyperparams.arch.hidden_layer_size
-        vocab_size = hyperparams.data.vocab_size
-        vocab_size_pos = hyperparams.data.vocab_size_pos
+        vocab_size_language_model = shared_hyperparams.arch.vocab_size_language_model
+        vocab_size_pos = shared_hyperparams.arch.vocab_size_pos
+        vocab_size_gen = shared_hyperparams.arch.vocab_size_generated
         keep_prob = shared_hyperparams.arch.keep_prob
         num_hidden_layers = shared_hyperparams.arch.num_hidden_layers
         dtype = data_type(hyperparams)
@@ -348,7 +353,7 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
 
         input_embeddings, test_embeddings = _create_embeddings_layer(input_tensor=input_tensor,
                                                                      test_inputs=test_word_in,
-                                                                     vocab_size=vocab_size,
+                                                                     vocab_size=vocab_size_language_model,
                                                                      num_neurons_in_layer=num_neurons_in_layer,
                                                                      dtype=dtype)
 
@@ -368,9 +373,11 @@ def create_model(input_tensor, mode, hyperparams, shared_hyperparams):
                                                                    num_neurons_in_layer=num_neurons_in_layer)
 
         logits, logits_pos, logits_gen = _create_softmax(output=output,
+                                                         final_state=final_state,
                                                          num_neurons_in_layer=num_neurons_in_layer,
-                                                         vocab_size=vocab_size,
+                                                         vocab_size_language_model=vocab_size_language_model,
                                                          vocab_size_pos=vocab_size_pos,
+                                                         vocab_size_generated=vocab_size_gen,
                                                          dtype=dtype,
                                                          cell_out_placeholder=cell_out_placeholder,
                                                          test_word_out=test_word_out)

@@ -1,13 +1,18 @@
 import tensorflow as tf
 
 
-def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
+def _parse_fn(example_proto,
+              feature_sample_size,
+              label_sample_size,
+              dtype_features,
+              dtype_labels):
     """
     Parses a single example from tf record files into Tensor or SparseTensor
 
     Args:
         example_proto: (tf.train.Example) example from tf record file
-        seq_len (int):
+        feature_sample_size (int):
+        label_sample_size (int):
         dtype_features (tf.DType): should match to what was wrote to tf records
         dtype_labels (tf.DType): should match to what was wrote to tf records
 
@@ -16,8 +21,8 @@ def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
         if tf.VarLenFeature -> return SparseTensor
     """
     read_features = {
-        "x": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_features),
-        "y": tf.FixedLenFeature(shape=[seq_len], dtype=dtype_labels),
+        "x": tf.FixedLenFeature(shape=[feature_sample_size], dtype=dtype_features),
+        "y": tf.FixedLenFeature(shape=[label_sample_size], dtype=dtype_labels),
     }
     parsed_features = tf.parse_single_example(example_proto, read_features)
     return parsed_features["x"], parsed_features["y"]
@@ -25,7 +30,8 @@ def _parse_fn(example_proto, seq_len, dtype_features, dtype_labels):
 
 def read_tf_records(abs_tf_record_path,
                     batch_size,
-                    seq_len,
+                    feature_sample_size,
+                    label_sample_size,
                     dtype_features,
                     dtype_labels,
                     shuffle=False,
@@ -36,7 +42,7 @@ def read_tf_records(abs_tf_record_path,
     Args:
         abs_tf_record_path (str): absolute path to load the tf record file from
         batch_size (int):
-        seq_len (int):
+        feature_sample_size (int):
         dtype_features (tf.DType): should match to what was wrote to tf records
         dtype_labels(tf.DType): should match to what was wrote to tf records
         shuffle (bool): whether to shuffle or not
@@ -49,7 +55,7 @@ def read_tf_records(abs_tf_record_path,
 
     dataset = tf.data.TFRecordDataset(abs_tf_record_path)
     dataset = dataset.map(
-        lambda x: _parse_fn(x, seq_len, dtype_features, dtype_labels),
+        lambda x: _parse_fn(x, feature_sample_size, label_sample_size, dtype_features, dtype_labels),
         num_parallel_calls=4
     )  # parse into tensors
     dataset = dataset.repeat()
