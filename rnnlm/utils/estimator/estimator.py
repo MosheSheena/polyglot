@@ -121,7 +121,7 @@ def _create_tf_estimator_spec(create_model,
     return my_model_fn
 
 
-def _create_input_fn(tf_record_path, hyperparams, shared_hyperparams):
+def _create_input_fn(tf_record_path, hyperparams):
     def input_fn():
         """
         This method is invoke each time we call estimator.train
@@ -265,14 +265,11 @@ def train_and_evaluate_model(create_model,
 
     # Create the datasets
     train_dataset = _create_input_fn(tf_record_path=train_tf_record_path,
-                                     hyperparams=hyperparams,
-                                     shared_hyperparams=shared_hyperparams)
+                                     hyperparams=hyperparams)
     validation_dataset = _create_input_fn(tf_record_path=valid_tf_record_path,
-                                          hyperparams=hyperparams,
-                                          shared_hyperparams=shared_hyperparams)
+                                          hyperparams=hyperparams)
     test_dataset = _create_input_fn(tf_record_path=test_tf_record_path,
-                                    hyperparams=hyperparams,
-                                    shared_hyperparams=shared_hyperparams)
+                                    hyperparams=hyperparams)
 
     # Create estimator spec object
     estimator_spec = _create_tf_estimator_spec(create_model=create_model,
