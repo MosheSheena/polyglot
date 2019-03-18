@@ -61,7 +61,7 @@ class Trainer:
         if not switch_each_epoch and not switch_each_batch:
             raise ValueError("switch_each_epoch or switch_each_batch must be True")
         for multi_task_epoch in range(num_multitask_epochs):
-            logger.debug("starting multitask epoch #%s", multi_task_epoch + 1)
+            logger.info("starting multitask epoch #%s", multi_task_epoch + 1)
             for task_data in self.tasks_data:
                 task = task_data.task
                 epoch_size_train = task.hyperparams.train.epoch_size_train
@@ -96,7 +96,7 @@ class Trainer:
                 if EarlyStoppingHook.should_stop:
                     break
 
-            logger.debug("finished multitask epoch #%s", multi_task_epoch + 1)
+            logger.info("finished multitask epoch #%s", multi_task_epoch + 1)
 
             # break multitask training
             if EarlyStoppingHook.should_stop:
