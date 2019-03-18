@@ -3,7 +3,7 @@ import logging.config
 import tensorflow as tf
 import yaml
 
-from rnnlm import config as rnnlm_config
+from config.log import config as rnnlm_config
 
 logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
 logger = logging.getLogger('rnnlm.utils.estimator.estimator_hook.early_stopping')

@@ -2,7 +2,7 @@ import logging.config
 
 import yaml
 
-from rnnlm import config as rnnlm_config
+from config.log import config as rnnlm_config
 from rnnlm.utils.tf_io import extractor
 from rnnlm.utils.tf_io.preprocessor.preprocess import preprocess_elements_with_vocab
 

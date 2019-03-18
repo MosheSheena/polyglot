@@ -5,7 +5,7 @@ import os
 
 import yaml
 
-from rnnlm import config as rnnlm_config
+from config.log import config as rnnlm_config
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.estimator.estimator_hook.learning_rate_decay import LearningRateDecayHook
 
