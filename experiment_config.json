@@ -24,8 +24,7 @@
             "early_stopping": {
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
-            },
-            "start_from_checkpoint": ""
+            }
           },
           "arch": {
             "sequence_length": 20,
@@ -67,10 +66,10 @@
               "decay_max_factor": 4
             },
             "batch_size": 64,
-            "num_epochs": 20,
-            "epoch_size_train": 646,
-            "epoch_size_valid": 65,
-            "epoch_size_test": 78
+            "num_epochs": 1,
+            "epoch_size_train": 1,
+            "epoch_size_valid": 1,
+            "epoch_size_test": 1
           }
         }
       }
@@ -100,7 +99,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_checkpoint": "exp_1"
+            "start_from_experiment": "exp_1"
           },
           "arch": {
             "sequence_length": 20,
@@ -286,7 +285,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_checkpoint": "transfer_pos_lstm"
+            "start_from_experiment": "transfer_pos_lstm"
           },
           "arch": {
             "sequence_length": 20,
@@ -512,7 +511,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_checkpoint": "transfer_pos_lstm"
+            "start_from_experiment": "transfer_pos_lstm"
           },
           "arch": {
             "sequence_length": 20,
@@ -1457,7 +1456,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_checkpoint": "multitask_gen_lstm"
+            "start_from_experiment": "multitask_gen_lstm"
           },
           "arch": {
             "sequence_length": 20,
@@ -1609,7 +1608,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_checkpoint": "multitask_gen_pos_lstm"
+            "start_from_experiment": "multitask_gen_pos_lstm"
           },
           "arch": {
             "sequence_length": 20,
