@@ -287,10 +287,11 @@ def train_and_evaluate_model(create_model,
                                     save_summary_steps=summary_steps,
                                     save_checkpoints_steps=save_checkpoint_steps,
                                     keep_checkpoint_max=keep_checkpoints_max)
-    start_from_checkpoint = shared_hyperparams.train.get_or_default(key='start_from_checkpoint', default=None)
+    start_from_checkpoint = shared_hyperparams.train.get_or_default(key='start_from_experiment', default=None)
     ws = None
     if start_from_checkpoint:
-        ws = tf.estimator.WarmStartSettings(ckpt_to_initialize_from=start_from_checkpoint)
+        start_path = os.path.join(shared_hyperparams.data.save_path, start_from_checkpoint)
+        ws = tf.estimator.WarmStartSettings(ckpt_to_initialize_from=start_path)
     # Create the estimator itself
     estimator = tf.estimator.Estimator(model_fn=estimator_spec,
                                        config=config,
