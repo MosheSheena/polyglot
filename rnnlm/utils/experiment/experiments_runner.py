@@ -42,20 +42,25 @@ class ExperimentsRunner:
             shared_model_name = shared_hyperparams.create_model
             shared_layer_builder = importlib.import_module("rnnlm.models.{}.model".format(shared_model_name))
 
-            if experiment.get_or_default(key="predict_mode", default=False):
-                self._run_prediction_experiment(experiment=experiment,
-                                                create_model=shared_layer_builder.create_model,
-                                                shared_model_name=shared_model_name,
-                                                shared_hyperparams=shared_hyperparams,
-                                                checkpoint_path=experiment_results_path)
+            try:
 
-            else:
-                self._run_training_and_evaluation_experiment(experiment=experiment,
-                                                             create_model=shared_layer_builder.create_model,
-                                                             shared_hyperparams=shared_hyperparams,
-                                                             checkpoint_path=experiment_results_path)
+                if experiment.get_or_default(key="predict_mode", default=False):
+                    self._run_prediction_experiment(experiment=experiment,
+                                                    create_model=shared_layer_builder.create_model,
+                                                    shared_model_name=shared_model_name,
+                                                    shared_hyperparams=shared_hyperparams,
+                                                    checkpoint_path=experiment_results_path)
 
-            logger.info("finished running experiment %s", experiment.name)
+                else:
+                    self._run_training_and_evaluation_experiment(experiment=experiment,
+                                                                 create_model=shared_layer_builder.create_model,
+                                                                 shared_hyperparams=shared_hyperparams,
+                                                                 checkpoint_path=experiment_results_path)
+
+                logger.info("finished running experiment %s", experiment.name)
+            except Exception as e:
+                logger.exception("exception during experiment {}. info:{}".format(experiment.name, str(e)))
+                logger.exception("found errors in experiment {} skipping.".format(experiment.name))
 
     def _run_prediction_experiment(self,
                                    experiment,
