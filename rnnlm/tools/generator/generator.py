@@ -43,14 +43,14 @@ GENERATION_MSG = "Entered = {0} --> Generated = {1}"
 
 # Tensors required to load from model
 TENSORS_OF_MODEL_DICT = {
-    "word_in": "lstm_fast/test_word_in",
-    "word_out": "lstm_fast/test_word_out",
-    "initial_state": "lstm_fast/test_initial_state",
-    "state_in": "lstm_fast/test_state_in",
-    "state_out": "lstm_fast/test_state_out",
-    "cell_in": "lstm_fast/test_cell_in",
-    "cell_out": "lstm_fast/test_cell_out",
-    "test_out": "lstm_fast/test_out",
+    "word_in": "model/lstm_fast/test_word_in",
+    "word_out": "model/lstm_fast/test_word_out",
+    "initial_state": "model/lstm_fast/test_initial_state",
+    "state_in": "model/lstm_fast/test_state_in",
+    "state_out": "model/lstm_fast/test_state_out",
+    "cell_in": "model/lstm_fast/test_cell_in",
+    "cell_out": "model/lstm_fast/test_cell_out",
+    "test_out": "model/lstm_fast/test_out",
     "softmax_w": "lstm_fast/lstm_fast_softmax/softmax_w",
     "softmax_b": "lstm_fast/lstm_fast_softmax/softmax_b"
 }
