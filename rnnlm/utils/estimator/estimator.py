@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import yaml
 
-from rnnlm import config as rnnlm_config
+from config.log import config as rnnlm_config
 from rnnlm.utils.estimator.estimator_hook.early_stopping import EarlyStoppingHook
 from rnnlm.utils.tf_io.io_service import load_dataset, create_dataset_from_tensor, create_vocab
 

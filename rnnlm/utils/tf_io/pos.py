@@ -4,7 +4,7 @@ from collections import defaultdict
 import yaml
 from nltk import pos_tag, sent_tokenize, word_tokenize
 
-from rnnlm import config as rnnlm_config
+from config.log import config as rnnlm_config
 
 logging.config.dictConfig(yaml.load(open(rnnlm_config.LOGGING_CONF_PATH, 'r')))
 logger = logging.getLogger('rnnlm.utils.tf_io.pos')

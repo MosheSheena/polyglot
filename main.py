@@ -3,7 +3,7 @@ import os
 
 import yaml
 
-from rnnlm import config as rnnlm_config
+from config.log import config as rnnlm_config
 from rnnlm.utils.experiment.experiments_runner import ExperimentsRunner
 from rnnlm.utils.tf_io.hyperparams.hyperparams import load_params
 
