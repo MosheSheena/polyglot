@@ -88,14 +88,23 @@ def get_args():
         help="Absolute path to generate words file",
         required=False
     )
+    parser.add_argument(
+        "-l", "--limit",
+        type=int,
+        help="Number of words which afterwards the context will be reset. Higher number results in "
+             "higher computation time",
+        default=100,
+        required=False
+    )
 
     # Get arguments from command line
     args = parser.parse_args()
     model_path = args.model
     words_path = args.words
     gen_file_path = args.dest
+    context_limit = args.limit
 
-    return model_path, words_path, gen_file_path
+    return model_path, words_path, gen_file_path, context_limit
 
 
 def find_file_by_extension(path, extension):
@@ -511,29 +520,31 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
         else:
             end_of_feed_word = words[0]
 
-        word_queue = [end_of_feed_word]
         buffer = []
         buffer.extend(words)
 
-        with open(file=file_name, mode='w', buffering=io.DEFAULT_BUFFER_SIZE) as file:
-            for i in range(num_words):
-                gen_word, LM_CONTEXT = generate_word(
-                    graph=graph, sess=sess,
-                    word=word_queue[i],
-                    word_2_id=word_2_id, id_2_word=id_2_word,
-                    context=LM_CONTEXT
-                )
-                word_queue.append(gen_word)
-                buffer.append(gen_word)
+        last_word = end_of_feed_word
 
-            for word in buffer:
-                next_char = '\n' if word == START else ' '
-                file.write(word + next_char)
+        for i in range(num_words):
+            if i % action_args["context_limit"] == 0:
+                LM_CONTEXT = None
+            gen_word, LM_CONTEXT = generate_word(
+                graph=graph, sess=sess,
+                word=last_word,
+                word_2_id=word_2_id, id_2_word=id_2_word,
+                context=LM_CONTEXT
+            )
+
+            with open(file=file_name, mode='a+', buffering=io.DEFAULT_BUFFER_SIZE) as file:
+
+                next_char = '\n' if gen_word == START else ' '
+                file.write(gen_word + next_char)
+                last_word = gen_word
 
 
 def main():
     # Parsing the cli args passed to the script
-    model_path, word_path, gen_file_path = get_args()  # parsing the cli flags
+    model_path, word_path, gen_file_path, context_limit = get_args()  # parsing the cli flags
 
     # Loading the graph and session
     graph, sess = load_trained_model(log_dir_path=model_path)
@@ -564,6 +575,7 @@ def main():
             args = collect_action_arguments(action=action)
             args["action"] = action
             args["gen_file_path"] = gen_file_path
+            args["context_limit"] = context_limit
             execute_action(action_args=args, graph=graph, sess=sess, word_2_id=word_2_id, id_2_word=id_2_word)
             sys.exit(0)
 
