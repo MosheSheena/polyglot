@@ -6,7 +6,6 @@ A module meant to enable word / sentence generation using a model
 
 # Imports
 import argparse
-import io
 import os
 import random
 import sys
@@ -535,7 +534,7 @@ def execute_action(action_args, graph, sess, word_2_id, id_2_word):
                 context=LM_CONTEXT
             )
 
-            with open(file=file_name, mode='a+', buffering=io.DEFAULT_BUFFER_SIZE) as file:
+            with open(file=file_name, mode='a+') as file:
 
                 next_char = '\n' if gen_word == START else ' '
                 file.write(gen_word + next_char)
