@@ -9,8 +9,6 @@ def data_type(hyperparams):
 
 def create_loss(model, labels, hyperparams):
 
-    metrics = dict()
-
     batch_size = hyperparams.train.batch_size
     num_steps = labels.get_shape().as_list()[1]
 
@@ -24,4 +22,6 @@ def create_loss(model, labels, hyperparams):
     ppl = tf.math.pow([2.0], loss)
     ppl = tf.reshape(ppl, [])
     tf.summary.scalar("perplexity", ppl)
-    return loss, metrics
+    loss_dict = dict()
+
+    return loss, loss_dict
