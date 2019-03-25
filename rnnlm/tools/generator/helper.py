@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 A helper file containing all functions to aid in word generation process
 """
