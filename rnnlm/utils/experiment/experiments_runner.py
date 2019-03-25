@@ -27,11 +27,15 @@ class ExperimentsRunner:
 
     def run(self):
 
+        num_experiments = len(self.experiment_config.experiments)
+        logger.info("found %d experiments", num_experiments)
+
         for experiment in self.experiment_config.experiments:
 
             LearningRateDecayHook.epoch_counter = 0
             EarlyStoppingHook.should_stop = False
             
+            logger.info("-----------------------------")
             logger.info("running experiment %s", experiment.name)
 
             shared_hyperparams = experiment.hyperparameters.shared_params
@@ -61,6 +65,8 @@ class ExperimentsRunner:
             except Exception as e:
                 logger.exception("exception during experiment {}. info:{}".format(experiment.name, str(e)))
                 logger.exception("found errors in experiment {} skipping.".format(experiment.name))
+            finally:
+                logger.info("-----------------------------")
 
     def _run_prediction_experiment(self,
                                    experiment,
