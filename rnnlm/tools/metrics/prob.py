@@ -38,7 +38,7 @@ EXIT = 4
 UNK = '<unk>'
 
 # global context to be adjusted as the program is running
-LM_CONTEXT = None
+LSTM_CONTEXT = None
 
 
 def get_args():
@@ -383,7 +383,7 @@ def parse_kaldi_file(file_path):
 
 def main():
     # globals
-    global LM_CONTEXT
+    global LSTM_CONTEXT
 
     # ========== LOGGING SETUP ==========
     logger = logging.getLogger(__name__)

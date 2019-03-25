@@ -51,7 +51,7 @@ def _create_tf_estimator_spec(create_model,
         estimator_params["mode"] = mode
 
         # Create a model
-        with tf.name_scope("model"):
+        with tf.name_scope("Train"):
             model = create_model(features, mode, params, shared_hyperparams)
         estimator_params["model"] = model
 
