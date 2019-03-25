@@ -6,7 +6,6 @@ def data_type(hyperparams):
 
 
 def create_loss(model, labels, hyperparams):
-    metrics = dict()
 
     batch_size = hyperparams.train.batch_size
     num_steps = labels.get_shape().as_list()[1]
@@ -17,4 +16,6 @@ def create_loss(model, labels, hyperparams):
         [tf.ones([batch_size * num_steps], dtype=data_type(hyperparams))]
         )
     loss = tf.reduce_sum(loss_vector) / batch_size
-    return loss, metrics
+    loss_dict = dict()
+
+    return loss, loss_dict

@@ -584,7 +584,7 @@ def strip_start_of_sentence(word_list):
         word_list.remove(config.START)
     return word_list
 
-
+  
 def append_start_of_sentence_token(words):
     words = [config.START] + words  # adding </s> for start of sentence
     return words

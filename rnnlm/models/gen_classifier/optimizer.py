@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def create_optimizer(loss, hyperparams):
+def create_optimizer(loss, loss_dict, hyperparams):
     lr = tf.Variable(hyperparams.train.learning_rate.start_value, trainable=False)
     t_vars = tf.trainable_variables()
     grads, _ = tf.clip_by_global_norm(tf.gradients(loss, t_vars),

@@ -67,9 +67,9 @@ def _create_tf_estimator_spec(create_model,
 
         # Create a loss
         with tf.name_scope("loss"):
-            loss, metrics = create_loss(model, labels, params)
+            loss, loss_dict = create_loss(model, labels, params)
         estimator_params["loss"] = loss
-        estimator_params["metrics"] = metrics
+        estimator_params["metrics"] = loss_dict
 
         _training_hooks = list()
         _evaluation_hooks = list()
@@ -83,13 +83,12 @@ def _create_tf_estimator_spec(create_model,
 
             return tf.estimator.EstimatorSpec(mode=mode,
                                               loss=loss,
-                                              eval_metric_ops=metrics,
                                               evaluation_hooks=_evaluation_hooks)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             # Create an optimizer
             with tf.name_scope("optimizer"):
-                train_op, optimizer_params = create_optimizer(loss, params)
+                train_op, optimizer_params = create_optimizer(loss, loss_dict, params)
             estimator_params["train_op"] = train_op
             estimator_params["optimizer_params"] = optimizer_params
 

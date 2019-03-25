@@ -6,12 +6,6 @@ def data_type(hyperparams):
 
 
 def create_loss(model, labels, hyperparams):
-    metrics = dict()
-
-    batch_size = hyperparams.train.batch_size
-    num_steps = labels.get_shape().as_list()[1]
-
-    flat_labels = tf.reshape(labels, [-1])
 
     loss = tf.nn.softmax_cross_entropy_with_logits_v2(
         labels=labels,
@@ -19,5 +13,6 @@ def create_loss(model, labels, hyperparams):
     )
 
     loss = tf.reduce_mean(loss)
+    loss_dict = dict()
 
-    return loss, metrics
+    return loss, loss_dict
