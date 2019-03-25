@@ -1,0 +1,1 @@
+from rnnlm.models.gen_classifier.pre_training import main
