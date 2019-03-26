@@ -8,13 +8,10 @@ def data_type(hyperparams):
 def create_loss(model, labels, hyperparams):
 
     batch_size = hyperparams.train.batch_size
-    num_steps = labels.get_shape().as_list()[1]
 
-    loss_vector = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
-        logits=[model["logits_pos"]],
-        targets=[tf.reshape(labels, [-1])],
-        weights=[tf.ones([batch_size * num_steps], dtype=data_type(hyperparams))],
-        softmax_loss_function=unlearn1minprob_softmax
+    loss_vector = unlearn1minprob_softmax(
+        logits=model["logits_gen"],
+        labels=labels
         )
     loss = tf.reduce_sum(loss_vector) / batch_size
     loss_dict = dict()
@@ -40,7 +37,8 @@ def softmax_calc(labels, logits):
 
     t2 = tf.expand_dims(target, 1)
     range = tf.expand_dims(tf.range(tf.shape(target)[0]), 1)
+    range = tf.cast(range, dtype=tf.int64)
     ind = tf.concat([range, t2], 1)
     res = tf.gather_nd(logits, ind)
 
-    return res,row_sums,ind, f_logits
+    return res, row_sums, ind, f_logits
