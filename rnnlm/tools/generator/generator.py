@@ -188,7 +188,7 @@ def generate_word(
         id_2_word (dict):
         tensors (dict):
         context (tf.Tensor):
-        temperature (int):
+        temperature (float):
 
     Returns:
         tuple:
@@ -404,57 +404,55 @@ def execute_action(action_args, sess, word_2_id, id_2_word, tensors):
     words = action_args["initial_input"]
 
     words = convert_to_uppercase(words)
-    if ADD_START_FLAG:
-        words = append_start_of_sentence_token(words)
-    ADD_START_FLAG = True  # reset for next sentence
+    words = check_insert_start_of_sentence_token(words)
 
     if action == config.GEN_SENTENCE:
         sentence_len = int(action_args["sentence_len"])
 
-        word_queue = feed_language_model(
-            id_2_word,
-            sess,
-            tensors,
-            word_2_id,
-            words,
+        last_word_in_sequence = feed_language_model(
+            id_2_word=id_2_word,
+            sess=sess,
+            tensors=tensors,
+            word_2_id=word_2_id,
+            words=words,
             temperature=action_args["temperature"]
         )
 
         print_sentence = generate_words(
-            id_2_word,
-            sentence_len,
-            sess,
-            tensors,
-            word_2_id,
-            word_queue,
-            words,
+            id_2_word=id_2_word,
+            sentence_len=sentence_len,
+            sess=sess,
+            tensors=tensors,
+            word_2_id=word_2_id,
+            initial_word=last_word_in_sequence,
             temperature=action_args["temperature"]
         )
 
-        print(" ".join(print_sentence))
+        print(print_sentence)
 
     elif action == config.GEN_SENTENCES:
         num_words = int(action_args["num_words"])
         file_name = create_generation_file_name(action_args)
 
-        word_queue = feed_language_model(
-            id_2_word,
-            sess,
-            tensors,
-            word_2_id,
-            words,
+        last_word_in_sequence = feed_language_model(
+            id_2_word=id_2_word,
+            sess=sess,
+            tensors=tensors,
+            word_2_id=word_2_id,
+            words=words,
             temperature=action_args["temperature"]
         )
 
         generate_sentences_file(
-            action_args,
-            file_name,
-            id_2_word,
-            num_words,
-            sess,
-            tensors,
-            word_2_id,
-            word_queue,
+            action_args=action_args,
+            file_name=file_name,
+            id_2_word=id_2_word,
+            num_words=num_words,
+            sess=sess,
+            tensors=tensors,
+            word_2_id=word_2_id,
+            initial_sequence=words,
+            initial_word=last_word_in_sequence,
             temperature=action_args["temperature"]
         )
 
@@ -467,14 +465,16 @@ def generate_sentences_file(
     sess,
     tensors,
     word_2_id,
-    word_queue,
+    initial_sequence,
+    initial_word,
     temperature
 ):
     global LSTM_CONTEXT
 
-    for word in word_queue[:-1]:
-        write_to_file(file_name=file_name, word=word)
-    last_word = word_queue[-1]
+    for word in initial_sequence:
+        if word != config.START:
+            write_to_file(file_name=file_name, word=word)
+    last_word = initial_word
 
     for i in range(num_words):
         gen_word, LSTM_CONTEXT = generate_word(
@@ -525,27 +525,43 @@ def generate_words(
     sess,
     tensors,
     word_2_id,
-    word_queue,
-    words,
+    initial_word,
     temperature
 ):
+    """
+    Generate a sequence of words using an initial word
+
+    Args:
+        id_2_word (dict): a dict mapping indices to words in the vocabulary
+        sentence_len (int): required length to generated sentence
+        sess (tf.Session): the current session
+        tensors (dict): a dict mapping tensor names to tf.Tensor objects
+        word_2_id (dict): a dict mapping words from the vocabulary to indices
+        initial_word (str): initial input to the LM
+        temperature (float): hyper parameter to divide the logits by
+
+    Returns:
+        str: the generated sentence
+    """
     global LSTM_CONTEXT
-    print_sentence = []
-    print_sentence.extend(words)
+
+    sequence = list()
+    print_sentence = list()
+    sequence.append(initial_word)
+    print_sentence.append(initial_word)
 
     for i in range(sentence_len):
         gen_word, LSTM_CONTEXT = generate_word(
             sess=sess,
-            word=word_queue[i],
+            word=sequence[i],
             word_2_id=word_2_id,
             id_2_word=id_2_word,
             tensors=tensors,
             context=LSTM_CONTEXT,
             temperature=temperature
         )
-        word_queue.append(gen_word)
         print_sentence.append(gen_word)
-    return print_sentence
+    return ' '.join(print_sentence)
 
 
 def feed_language_model(
@@ -556,27 +572,39 @@ def feed_language_model(
     words,
     temperature
 ):
+    """
+    Feed the LM with all words in the sequence except for the last one.
+    The last word will be returned and used as the input for the LM to
+    generate it's predictions
+
+    Args:
+        id_2_word (dict): a dict mapping indices to words in the vocabulary
+        sess (tf.Session): the current session
+        tensors (dict): a dict mapping tensor names to tf.Tensor objects
+        word_2_id (dict): a dict mapping words from the vocabulary to indices
+        words (list): a sequence of words
+        temperature (float): hyper parameter to divide the logits by
+
+    Returns:
+        str: the last word in the sequence provided, so that will be passed as
+        an input to the LM to make a prediction
+    """
     global LSTM_CONTEXT
-    end_of_feed_word = None
 
     if len(words) > 1:
-        for i in range(len(words)):
+        for word in words[:-1]:
             gen_word, LSTM_CONTEXT = generate_word(
                 sess=sess,
-                word=words[i],
+                word=word,
                 word_2_id=word_2_id,
                 id_2_word=id_2_word,
                 tensors=tensors,
                 context=LSTM_CONTEXT,
                 temperature=temperature
             )
-            end_of_feed_word = gen_word
     else:
-        end_of_feed_word = words[0]
-    word_queue = words.copy()
-    word_queue.append(end_of_feed_word)
-    word_queue = strip_start_of_sentence(word_list=word_queue)
-    return word_queue
+        return words[0]
+    return words[-1]
 
 
 def strip_start_of_sentence(word_list):
@@ -585,9 +613,23 @@ def strip_start_of_sentence(word_list):
     return word_list
 
   
-def append_start_of_sentence_token(words):
-    words = [config.START] + words  # adding </s> for start of sentence
-    return words
+def check_insert_start_of_sentence_token(words):
+    """
+    Insert a </s> token to the start of a sequence of words if required
+
+    Args:
+        words (list): sequence of words
+
+    Returns:
+        list: sequence of words with or without </s>
+    """
+    global ADD_START_FLAG
+
+    if ADD_START_FLAG:
+        return [config.START] + words  # adding </s> for start of sentence
+    else:
+        ADD_START_FLAG = True
+        return words
 
 
 def convert_to_uppercase(words):
