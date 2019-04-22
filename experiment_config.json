@@ -954,7 +954,7 @@
         },
         "lstm_fast": {
           "data": {
-            "pre_train": true,
+            "pre_train": false,
             "num_shifts_x": 1,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train",
@@ -1131,7 +1131,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_experiment": "lm_hu_400_kp_06"
+            "start_from_experiment": "eo_lm_hu_400_kp_06"
           },
           "arch": {
             "sequence_length": 20,
@@ -1398,7 +1398,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_experiment": "lm_hu_400_kp_06"
+            "start_from_experiment": "eo_lm_hu_400_kp_06"
           },
           "arch": {
             "sequence_length": 20,
@@ -1704,7 +1704,7 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_experiment": "lm_hu_400_kp_06"
+            "start_from_experiment": "eo_lm_hu_400_kp_06"
           },
           "arch": {
             "sequence_length": 20,
