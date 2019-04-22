@@ -1,7 +1,7 @@
 {
   "experiments": [
     {
-      "name": "double_size_baseline_lm",
+      "name": "lm_hu_400_kp_06",
       "models": [
         "lstm_fast"
       ],
@@ -29,8 +29,8 @@
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
@@ -38,7 +38,7 @@
         },
         "lstm_fast": {
           "data": {
-            "pre_train": true,
+            "pre_train": false,
             "data_path": "rnnlm/data",
             "train_raw_data_file": "train",
             "valid_raw_data_file": "valid",
@@ -67,9 +67,9 @@
             },
             "batch_size": 64,
             "num_epochs": 20,
-            "epoch_size_train": 1292,
-            "epoch_size_valid": 130,
-            "epoch_size_test": 156
+            "epoch_size_train": 646,
+            "epoch_size_valid": 65,
+            "epoch_size_test": 78
           }
         }
       }
@@ -104,8 +104,8 @@
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
@@ -214,13 +214,13 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_experiment": "double_size_baseline_lm"
+            "start_from_experiment": "lm_hu_400_kp_06"
           },
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
@@ -334,8 +334,8 @@
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
@@ -481,13 +481,13 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_experiment": "double_size_baseline_lm"
+            "start_from_experiment": "lm_hu_400_kp_06"
           },
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
@@ -637,8 +637,8 @@
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
@@ -787,13 +787,13 @@
               "threshold": 0.001,
               "max_steps_without_improvement": 10000
             },
-            "start_from_experiment": "double_size_baseline_lm"
+            "start_from_experiment": "lm_hu_400_kp_06"
           },
           "arch": {
             "sequence_length": 20,
             "num_hidden_layers": 2,
-            "hidden_layer_size": 200,
-            "keep_prob": 0.5,
+            "hidden_layer_size": 400,
+            "keep_prob": 0.6,
             "vocab_size_language_model": 10000,
             "vocab_size_pos": 37,
             "vocab_size_generated": 3
